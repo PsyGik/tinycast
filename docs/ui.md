@@ -12,9 +12,10 @@ Read this before touching any view body, `Theme` value, or the panel chrome.
 
 Tinycast is a **command palette**: a borderless floating panel whose surface is just the
 OS behind-window blur under a 40% black scrim — there is no gray chrome. Everything on that surface is
-white at a fixed alpha ramp. The header and footer each have a panel-matched glass surface and a
-full-width hairline. Rows **dissolve** as they approach the bars; both surfaces mask anything beneath
-them. Popover menus are **Liquid Glass**.
+white at a fixed alpha ramp. The list is clipped to the band between the header and the footer, so
+the header needs no surface of its own and shares the list's tone; the footer is one flat
+`paletteFooterSurface` band. Each bar has a single full-width hairline. Popover menus are
+**Liquid Glass**.
 
 That paragraph describes **Dark**, which is the design. Light is the same design with the ink
 inverted: a white scrim over the same blur, and a black-alpha ramp at matched stops. Nothing about
@@ -41,10 +42,12 @@ These are the things that quietly break the look if changed. Preserve them unles
 - **No grays or arbitrary opaque fills on the surface.** Reach for `Theme.Colors.*` instead of `.gray`, `NSColor.windowBackground`, etc. Both palette bars repeat the panel surface to mask scrolling rows.
 - **Three things stay fixed in both appearances, on purpose.** The `EdgeDissolve`/`OverflowFade` gradients are **mask luminance, not color** — inverting them breaks the dissolve everywhere. `ExtensionTintColors` and a tinted `IconCache` tile keep white ink, because a saturated tile carries its own contrast. And `IconCache` cannot use a dynamic `NSColor` at all: it rasterizes off-main, so the surface is carried explicitly and is part of the cache key.
 - **An icon is drawn for a surface *and* a system icon style, and both move under you.** macOS restyles the icons `NSWorkspace` hands out when System Settings → Appearance → **Icon & widget style** changes, so `IconStyleMonitor` and Tinycast's own appearance both call `IconCache.invalidateStyled()`. **The monitor may not invalidate on the notification itself.** AppKit posts `NSWorkspaceIconAppearanceConfigurationDidChange` before IconServices has swapped what `NSWorkspace` vends — measured at 25–120ms behind, jittering run to run — and the images it hands back are live objects macOS restyles in place, so flattening one on the signal freezes the *outgoing* style into a bitmap nothing ever invalidates again. `IconStyleMonitor` therefore polls `IconCache.styleFingerprint()` until the pixels actually move, and only then invalidates. Waiting also sidesteps the cost: re-flattening every icon the instant a restyle begins forces a cold IconServices regeneration, measured at 160× the settled draw cost. That drops the cached bitmaps, bumps every cache key so an in-flight decode cannot repopulate a stale one, and moves `IconCache.style.generation`. **Any view that draws an icon must key its fetch on that generation** — wrap the view's own key in `IconRequest`, or call `IconCache.observeStyle()` where the icon is resolved synchronously in a `body`. It is reached through `IconCache` rather than injected precisely because icons are drawn in menus, popovers and every list, where a missed injection would be a silent staleness bug.
-- **Header and footer each have one full-width hairline boundary.** The header draws its separator
-  below the search field and the footer above its panel-matched surface; both surfaces hide scrolling
-  rows. The collapsed compact bar draws neither, centring its search row in `compactHeight`. Clipboard
-  and file search keep the vertical hairline between a list and its preview pane.
+- **Header and footer each have one full-width hairline boundary.** Both come from one private
+  `PaletteDivider`, so they cannot drift apart. The list is `.clipped()` to its own frame, which the
+  bars' safe-area insets already stop at both bars, so no row ever draws beneath either one; neither bar
+  carries a glass view of its own. The collapsed compact bar draws neither divider, centring its
+  search row in `compactHeight`. Clipboard and file search keep the vertical hairline between a list
+  and its preview pane.
 - **The palette corner is clipped once, at the root.** `RootPaletteView.body` ends with
   `.background(panelScrim) → .background(GlassEffectView()) → .clipShape(RoundedRectangle(palettePanel, .continuous))`.
   Keep that order; the scrim goes _over_ the glass, and the clip is last. Other windows keep the shared
@@ -188,7 +191,7 @@ radius) is the intentionally-smaller Settings shortcut-recorder chip.
 ### Typography (`Theme.Typography`)
 
 System text styles only — **no fixed point sizes in views**. Named palette sizes are explicit tokens:
-`searchField` (18pt Regular), `paletteRowTitle` (14pt Medium), the palette section label (12pt
+`searchField` (17pt Regular), `paletteRowTitle` (14pt Medium), the palette section label (12pt
 Semibold), and the optical SF Symbol treatment `menuSymbol` (14pt Medium). Use `rowTitle` (`.body`),
 `sectionHeader` (`.subheadline.medium`),
 `rowTrailing`/`bar`/`menuRow`/`keyCap` etc. as named.
@@ -211,7 +214,7 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 | `rowHover`        | white 0.05     | black 0.045    | mouse-hover fill (always fainter than selection) |
 | `menuHover`       | white 0.10     | black 0.09     | popover-menu row hover                           |
 | `separator`       | white 0.10     | black 0.12     | palette header/footer and list↔preview hairlines |
-| `bottomBarSurface`| white 0.035    | black 0.03     | subtle palette footer background                 |
+| `paletteFooterSurface` | sRGB 0.17 @ 0.81 | sRGB 0.90 @ 0.81 | palette footer band, measured off Raycast |
 | `controlSurface`  | white 0.10     | black 0.08     | filled keycaps, glyph tiles                      |
 | `border`          | white 0.20     | black 0.18     | outlined keycap borders                          |
 | `textPrimary`     | white 1.00     | black 1.00     | search text and caret, volume fill and knob      |
@@ -245,14 +248,16 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
 
 - **`PalettePanel`** is a borderless `NSPanel`: `isOpaque = false`, `backgroundColor = .clear`, `.palette` level (one above `.modalPanel`, so other apps' open panels never cover it), `hasShadow`, `animationBehavior = .none`. It hosts SwiftUI via `NSHostingView`. `PaletteWindowController` centers it slightly above screen center (`+8%`) and dismisses it on `windowDidResignKey`.
 - **The results layer fills the whole panel.** The header and bottom bar attach via
-  `.safeAreaInset(edge: .top/.bottom)` over the list. Both bars repeat the panel surface over glass
-  with a zero-radius glass view, so only the root palette clip rounds their outside corners; their
-  full-width hairlines separate the list from each surface. The list dissolves at the edges.
+  `.safeAreaInset(edge: .top/.bottom)`, and the list is clipped at both, so the bars need no glass of
+  their own and only the root palette clip rounds anything. Their full-width hairlines separate the
+  list from each bar.
 - **Header** (`headerHeight 45` plus 10pt top inset): sub-screens show a back chevron; the launcher
   shows a magnifying glass, then the plain `TextField` (no border/background).
 - **Compact keyboard entry:** pressing `↓` in the collapsed launcher expands the results and selects the first row without replacing or defocusing the shared search field.
-- **Bottom bar** (`bottomBarHeight 39`): a flat footer with an opaque-against-the-list surface and a
-  top hairline. A dimmed, untiled 18pt `bolt.fill` glyph stays on the left as the app-menu control;
+- **Bottom bar** (`bottomBarHeight 39`): a flat `paletteFooterSurface` band and a top hairline. On the
+  left, a command screen shows its command's launcher tile and name (the screen's `footerContext`, or
+  the mode.s built-in command); the launcher, Uninstall and extensions keep a dimmed 18pt `bolt.fill` as the
+  app-menu control;
   the right side has the primary action with a filled `↵` keycap, a vertical separator, and the Actions
   toggle with filled `⌘` and `K` keycaps. Form mode uses filled `⌘↵` keycaps too.
 - **`BarButton`** is the shared bar control: bare label at rest, a hover shape, `barButtonHeight 28`. `.capsule` remains the default for Notes and extension controls, `.rounded` serves header pop-ups, and `.flat` uses the `listRow` radius for the palette footer. Set `isSelected` and it fills with `selection` instead, which beats hover; the Notes formatting bar lights its buttons this way. Set `isCompact` for `sm` padding instead of `md`. Hover state lives inside it, so sweeping one never re-renders the palette body.

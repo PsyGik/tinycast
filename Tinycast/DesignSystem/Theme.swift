@@ -36,7 +36,7 @@ enum Theme {
 
     enum Radius {
         static let panel: CGFloat = 26
-        static let palettePanel: CGFloat = 12
+        static let palettePanel: CGFloat = 14
         static let listRow: CGFloat = 8
         static let paletteListRow: CGFloat = 6
         static let row: CGFloat = 10
@@ -369,7 +369,7 @@ enum Theme {
     /// System text styles (not hardcoded sizes) so the UI honors Dynamic Type.
     enum Typography {
         /// One size, two frameworks: `TextTrailingDragHandle` measures what the field renders.
-        static let searchFieldSize: CGFloat = 18
+        static let searchFieldSize: CGFloat = 17
         static let searchField = Font.system(size: searchFieldSize, weight: .regular)
         /// `NSFont` is not `Sendable`, hence the isolation; every reader is a view anyway.
         @MainActor static let searchFieldNSFont = NSFont.systemFont(
@@ -456,7 +456,9 @@ enum Theme {
             dark: .srgbInk(0, alpha: 0.72), light: .srgbInk(1, alpha: 0.72))
         static let menuHover = ramp(dark: 0.10, light: 0.09)
         static let separator = ramp(dark: 0.10, light: 0.12)
-        static let bottomBarSurface = ramp(dark: 0.035, light: 0.03)
+        /// Measured off Raycast: a near-opaque neutral, so the footer reads as a band over any backdrop.
+        static let paletteFooterSurface = adaptive(
+            dark: .srgbInk(0.17, alpha: 0.81), light: .srgbInk(0.90, alpha: 0.81))
         /// Small control surfaces: kbd chips, glyph tiles.
         static let controlSurface = ramp(dark: 0.10, light: 0.08)
         /// A pointer over a control should lift it above its resting surface.

@@ -289,6 +289,8 @@ struct RootPaletteView: View {
                         screen.body(selection: sel, scroll: scroll)
                     }
                 }
+                // The frame already stops at both bars; clipping keeps rows from drawing under them.
+                .clipped()
                 .safeAreaInset(edge: .top, spacing: 0) {
                     header
                         .opacity(screen.hidesSearchField ? 0 : 1)
@@ -302,7 +304,7 @@ struct RootPaletteView: View {
                             showActionGroup: showActionGroup,
                             formPrimaryShortcut: isExtensionForm,
                             showActions: screen.hasActions(at: sel),
-                            footerContext: screen.footerContext)
+                            footerContext: screen.footerContext ?? Self.footerContext(for: vm.mode))
                     }
                 }
                 // The panel has no title bar, so this thin top margin is the only place left to grab it.
@@ -746,8 +748,8 @@ struct RootPaletteView: View {
         .padding(.top, metrics.size.headerPadding)
         .padding(.bottom, isCollapsed ? metrics.size.headerPadding : 0)
         .frame(maxWidth: .infinity)
-        // Collapsed, nothing sits below the bar to divide it from or mask.
-        .background { if !isCollapsed { PaletteBarSurface(dividerEdge: .bottom) } }
+        // Collapsed, nothing sits below the bar to divide it from.
+        .overlay(alignment: .bottom) { if !isCollapsed { PaletteDivider() } }
         // Set after the show, so the field it names is focused rather than the search field.
         .onChange(of: vm.pendingArgumentEntryID) { focusPendingArgument() }
         .onChange(of: argumentFocused) { _, field in vm.noteEditingField(field != nil) }
@@ -903,7 +905,35 @@ struct RootPaletteView: View {
         .padding(.horizontal, metrics.spacing.xl)
         .frame(height: metrics.size.bottomBarHeight)
         .frame(maxWidth: .infinity)
-        .background(PaletteBarSurface(dividerEdge: .top))
+        .background(Theme.Colors.paletteFooterSurface)
+        .overlay(alignment: .top) { PaletteDivider() }
+    }
+
+    /// Kept out of `PaletteMode`: the pure palette harnesses compile it without `CommandID`.
+    private static func footerContext(for mode: PaletteMode) -> PaletteFooterContext? {
+        command(for: mode).map { PaletteFooterContext(title: $0.name, systemImage: $0.sfSymbol) }
+    }
+
+    /// The built-in command a screen belongs to, so the footer can name it as Raycast's does.
+    private static func command(for mode: PaletteMode) -> CommandID? {
+        switch mode {
+        case .clipboard: .clipboardHistory
+        case .ai: .quickAI
+        case .aiHistory: .aiChat
+        case .calculatorHistory: .calculatorHistory
+        case .emoji: .searchEmoji
+        case .fileSearch: .searchFiles
+        case .menuSearch: .searchMenuItems
+        case .switchWindows: .switchWindows
+        case .rooms: .switchRoom
+        case .roomWindows: .createRoom
+        case .schedule: .mySchedule
+        case .camera: .openCamera
+        case .quicklinks: .searchQuicklinks
+        case .snippets: .searchSnippets
+        case .dictionary: .define
+        case .launcher, .uninstall, .extensionCommand: nil
+        }
     }
 
     private func appMenuButton(context: PaletteFooterContext?) -> some View {
@@ -1479,7 +1509,8 @@ private struct FooterAppMenuButton: View {
             Group {
                 if let context = context() {
                     HStack(spacing: Theme.Spacing.sm) {
-                        SymbolImage(name: context.systemImage, size: 20, monochrome: true)
+                        EntryIconView(source: .symbol(context.systemImage))
+                            .frame(width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
                         Text(context.title).font(metrics.typography.rowTrailing)
                     }
                     .foregroundStyle(hovered ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
@@ -1522,30 +1553,11 @@ private struct HeaderBackButton: View {
     }
 }
 
-/// Its own glass, so rows scrolling under either bar never show through it.
-private struct PaletteBarSurface: View {
-    enum DividerEdge {
-        case top
-        case bottom
-    }
-
-    let dividerEdge: DividerEdge
-
-    private var dividerAlignment: Alignment {
-        switch dividerEdge {
-        case .top: .top
-        case .bottom: .bottom
-        }
-    }
-
+/// One hairline for both bars, so the header's and the footer's can never drift apart.
+private struct PaletteDivider: View {
     var body: some View {
-        Theme.Colors.bottomBarSurface
-            .background(Theme.Colors.panelScrim)
-            .background(GlassEffectView(cornerRadius: 0))
-            .overlay(alignment: dividerAlignment) {
-                Rectangle()
-                    .fill(Theme.Colors.separator)
-                    .frame(height: Theme.Size.hairline)
-            }
+        Rectangle()
+            .fill(Theme.Colors.separator)
+            .frame(height: Theme.Size.hairline)
     }
 }

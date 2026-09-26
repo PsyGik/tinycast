@@ -55,18 +55,20 @@ only the closure wiring; the behaviour is `PaletteCoordinator`'s.
 
 ## Panel shape
 
-The root clip uses `Theme.Radius.palettePanel` (12pt); independent windows keep the shared
+The root clip uses `Theme.Radius.palettePanel` (14pt); independent windows keep the shared
 `Theme.Radius.panel` (26pt). The launcher header leads with its magnifying-glass icon, with a full-width separator
 under the search field. Its 45pt search row plus 10pt top inset place that divider 55pt from the
-window top; in the launcher, the placeholder follows the icon slot. The header and footer
-both draw the `bottomBarSurface` tint over `panelScrim` and
-`GlassEffectView` with zero-radius glass, so scrolled rows never show through either bar and only the
-outer palette clip rounds them. Collapsed to the compact bar, the header drops both its surface and its
-divider and takes a matching 10pt bottom inset, so the search row sits centred in `compactHeight`.
+window top; in the launcher, the placeholder follows the icon slot. The list is clipped to the band
+between the bars, so the header has no surface and shares the list's tone, and the footer is one flat
+`paletteFooterSurface` band; neither bar has its own glass, so neither draws an edge of its own.
+Collapsed to the compact bar, the header drops its divider and takes a matching 10pt bottom inset, so
+the search row sits centred in `compactHeight`.
 Other modes retain their back chevron.
 
-The footer is 39pt tall, with a full-width top hairline. Its dimmed, untiled 18pt SF Symbol `bolt.fill`
-sits 12pt from the left edge as the app-menu control. The primary label is 12pt semibold, followed by
+The footer is 39pt tall, with a full-width top hairline. Its left control sits 12pt from the left
+edge: on a command screen it shows that command's 18pt launcher tile and name — `PaletteScreen.footerContext`
+when the screen supplies one, otherwise the built-in command its mode belongs to — and on the launcher, Uninstall and
+extension screens a dimmed, untiled 18pt `bolt.fill`. Either way it opens the app menu. The primary label is 12pt semibold, followed by
 a 24×22pt filled keycap; the 10pt separator is 13pt from that keycap and from Actions. Actions uses
 an 11pt label-to-keycap gap and two 24×22pt keycaps with a 2.5pt gap; the final cap ends 12pt from
 the right edge. All footer content shares one vertical centre line.
@@ -456,8 +458,8 @@ menu rebuild, then each menu filters its own rows and preserves section boundari
 match keeps the header, when present, and centres **No Results** in one row. The list has no edge
 dissolve beside a search field. Its resting inset travels with the scroll content, so rows can reach
 the panel edge without moving their initial position. Footer menus add 30pt to the standard menu
-width; their hover keeps the shared 10pt menu-row corner. The left app menu uses the dimmed, untiled
-`bolt.fill` glyph inside its existing control frame. `MenuPanel.inset` remains `Spacing.md`, matching the
+width; their hover keeps the shared 10pt menu-row corner. The left app menu keeps its existing
+control frame whether it shows the command context or the `bolt.fill` glyph. `MenuPanel.inset` remains `Spacing.md`, matching the
 footer's horizontal padding so its menu anchors stay aligned with the controls.
 
 ### The menu's own window
