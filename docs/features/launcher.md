@@ -39,6 +39,15 @@ earliest scope wins).
 - **`Model/SearchScopes.swift` and `Model/LauncherRankingStore.swift` are pure too** — the ranking store
   takes its clock via `now` and its path via `fileURL`, for `scopes-test` and `ranking-test`.
 
+## Palette row layout
+
+Launcher app rows use a 40pt pitch: the existing 24pt icon slot with 8pt vertical padding. Their
+selection strips keep 8pt side insets and use a 6pt continuous corner. The icon column begins 16pt
+from the panel edge, followed by a 12pt gap and a 14pt medium title. Subtitles and kind labels are
+13pt regular secondary text. Launcher section labels use the palette-only 12pt semibold style; later
+sections leave 18pt above the label and 4pt below it, for about 36pt between row groups. They have no
+item count.
+
 ## Search scopes
 
 `SearchScopes` (`Launcher/Model/SearchScopes.swift`) owns the paths; the list is user-editable in

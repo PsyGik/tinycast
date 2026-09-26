@@ -55,7 +55,8 @@ struct MenuSearchList: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(sections) { section in
-                        SectionHeader(title: section.label, isFirst: section.id == 0)
+                        SectionHeader(
+                            title: section.label, isFirst: section.id == 0, style: .palette)
                         ForEach(section.items) { item in
                             MenuSearchRow(
                                 item: item, path: isSearching ? item.menuPath : item.submenuPath,
@@ -106,7 +107,7 @@ private struct MenuSearchRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             Group {
                 if let icon {
                     Image(nsImage: icon).resizable()
@@ -117,12 +118,12 @@ private struct MenuSearchRow: View {
             }
             .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
             Text(item.title)
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
                 .layoutPriority(1)
             if !path.isEmpty {
                 Text(path)
-                    .font(metrics.typography.rowTrailing)
+                    .font(metrics.typography.paletteRowSecondary)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -138,9 +139,9 @@ private struct MenuSearchRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

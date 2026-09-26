@@ -48,7 +48,8 @@ struct ChatHistoryList: View {
                     ForEach(rows) { row in
                         switch row {
                         case .header(let title):
-                            SectionHeader(title: title, isFirst: row.id == rows.first?.id)
+                            SectionHeader(
+                                title: title, isFirst: row.id == rows.first?.id, style: .palette)
                         case .conversation(let conversation):
                             ChatHistoryRow(
                                 conversation: conversation,
@@ -96,7 +97,7 @@ private struct ChatHistoryRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             RoundedRectangle(cornerRadius: metrics.radius.thumbnail, style: .continuous)
                 .fill(Theme.Colors.controlSurface)
                 .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
@@ -107,24 +108,24 @@ private struct ChatHistoryRow: View {
                         .foregroundStyle(.secondary))
             VStack(alignment: .leading, spacing: metrics.spacing.xxs) {
                 Text(conversation.displayTitle)
-                    .font(metrics.typography.rowTitle)
+                    .font(metrics.typography.paletteRowTitle)
                     .lineLimit(1)
                 if !conversation.preview.isEmpty {
                     Text(conversation.preview)
-                        .font(metrics.typography.keyCap)
-                        .foregroundStyle(Theme.Colors.textTertiary)
+                        .font(metrics.typography.paletteRowSecondary)
+                        .foregroundStyle(Theme.Colors.textSecondary)
                         .lineLimit(1)
                 }
             }
             Spacer(minLength: 0)
             Text(conversation.updatedAt.formatted(date: .omitted, time: .shortened))
-                .font(metrics.typography.keyCap)
-                .foregroundStyle(Theme.Colors.textTertiary)
+                .font(metrics.typography.paletteRowSecondary)
+                .foregroundStyle(Theme.Colors.textSecondary)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

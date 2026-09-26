@@ -20,7 +20,7 @@ struct FileSearchList: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    SectionHeader(title: title, isFirst: true)
+                    SectionHeader(title: title, isFirst: true, style: .palette)
                     ForEach(results) { result in
                         FileSearchRow(result: result, selected: result.id == selectedID)
                             .selectionFrame(result.id == selectedID)
@@ -82,7 +82,7 @@ private struct FileSearchRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             Group {
                 if let image {
                     Image(nsImage: image).resizable()
@@ -94,15 +94,15 @@ private struct FileSearchRow: View {
             .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
             // The column is too narrow for a path beside the name; the preview states it instead.
             label
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

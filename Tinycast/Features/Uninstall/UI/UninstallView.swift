@@ -22,7 +22,7 @@ struct UninstallList: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    SectionHeader(title: summary, isFirst: true)
+                    SectionHeader(title: summary, isFirst: true, style: .palette)
                     ForEach(results) { candidate in
                         UninstallRow(
                             candidate: candidate,
@@ -82,7 +82,7 @@ private struct UninstallRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             // Smaller glyph, same `rowIcon` slot, so titles line up at one x across modes.
             SymbolImage(name: glyph, size: metrics.size.checkbox)
                 .foregroundStyle(candidate.isLocked ? Theme.Colors.textTertiary : .primary)
@@ -92,32 +92,32 @@ private struct UninstallRow: View {
                 .onTapGesture(perform: onToggle)
                 .tooltip(candidate.lockReason)
             Text(candidate.name)
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
                 .layoutPriority(1)
             Text(candidate.locationLabel)
-                .font(metrics.typography.rowTrailing)
+                .font(metrics.typography.paletteRowSecondary)
                 .foregroundStyle(Theme.Colors.textSecondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
             if let label = candidate.evidence.label {
                 Text(label)
-                    .font(metrics.typography.rowTrailing)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .font(metrics.typography.paletteRowSecondary)
+                    .foregroundStyle(Theme.Colors.textSecondary)
                     .lineLimit(1)
             }
             Spacer(minLength: metrics.spacing.md)
             Text(candidate.size?.formatted ?? "")
-                .font(metrics.typography.rowTrailing)
+                .font(metrics.typography.paletteRowSecondary)
                 .foregroundStyle(.secondary)
             FileIconView(path: candidate.path)
                 .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
         }
         .opacity(candidate.isLocked ? 0.55 : 1)
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

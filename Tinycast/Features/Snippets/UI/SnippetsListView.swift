@@ -60,7 +60,7 @@ private struct SnippetRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             RoundedRectangle(cornerRadius: metrics.radius.thumbnail, style: .continuous)
                 .fill(Theme.Colors.controlSurface)
                 .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
@@ -70,20 +70,20 @@ private struct SnippetRow: View {
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary))
             Text(record.snippet.name)
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
             Spacer(minLength: metrics.spacing.lg)
             if let keyword = record.snippet.keyword, !keyword.isEmpty {
                 Text(keyword)
-                    .font(metrics.typography.keyCap)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .font(metrics.typography.paletteRowSecondary)
+                    .foregroundStyle(Theme.Colors.textSecondary)
                     .lineLimit(1)
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

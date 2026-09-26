@@ -58,7 +58,8 @@ struct ClipboardList: View {
                     ForEach(rows) { row in
                         switch row {
                         case .header(let title):
-                            SectionHeader(title: title, isFirst: row.id == rows.first?.id)
+                            SectionHeader(
+                                title: title, isFirst: row.id == rows.first?.id, style: .palette)
                         case .item(let item, let slot):
                             ClipboardRow(
                                 item: item, selected: item.id == selectedID,
@@ -143,10 +144,10 @@ private struct ClipboardRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             thumbnail(item.colorValue)
             Text(previewText)
-                .font(metrics.typography.menuRow)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
                 .truncationMode(.tail)
             Spacer(minLength: 0)
@@ -158,9 +159,9 @@ private struct ClipboardRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

@@ -23,6 +23,21 @@ struct InterfaceMetrics: Equatable, Sendable {
         var md: CGFloat { scaledPoints(Theme.Spacing.md, scale) }
         var lg: CGFloat { scaledPoints(Theme.Spacing.lg, scale) }
         var xl: CGFloat { scaledPoints(Theme.Spacing.xl, scale) }
+        var paletteSectionSpacing: CGFloat {
+            scaledPoints(Theme.Spacing.paletteSectionSpacing, scale)
+        }
+        var footerPrimaryKeyCapGap: CGFloat {
+            scaledPoints(Theme.Spacing.footerPrimaryKeyCapGap, scale)
+        }
+        var footerSeparatorGap: CGFloat {
+            scaledPoints(Theme.Spacing.footerSeparatorGap, scale)
+        }
+        var footerActionsKeyCapGap: CGFloat {
+            scaledPoints(Theme.Spacing.footerActionsKeyCapGap, scale)
+        }
+        var footerKeyCapGap: CGFloat {
+            scaledPoints(Theme.Spacing.footerKeyCapGap, scale)
+        }
         var dialogInset: CGFloat { scaledPoints(Theme.Spacing.dialogInset, scale) }
         var xxl: CGFloat { scaledPoints(Theme.Spacing.xxl, scale) }
         var xxxl: CGFloat { scaledPoints(Theme.Spacing.xxxl, scale) }
@@ -40,6 +55,7 @@ struct InterfaceMetrics: Equatable, Sendable {
         var panel: CGFloat { scaledPoints(Theme.Radius.panel, scale) }
         var palettePanel: CGFloat { scaledPoints(Theme.Radius.palettePanel, scale) }
         var listRow: CGFloat { scaledPoints(Theme.Radius.listRow, scale) }
+        var paletteListRow: CGFloat { scaledPoints(Theme.Radius.paletteListRow, scale) }
         var row: CGFloat { scaledPoints(Theme.Radius.row, scale) }
         var emojiCell: CGFloat { scaledPoints(Theme.Radius.emojiCell, scale) }
         var menu: CGFloat { scaledPoints(Theme.Radius.menu, scale) }
@@ -74,6 +90,8 @@ struct InterfaceMetrics: Equatable, Sendable {
         var calendarBarWidth: CGFloat { scaledPoints(Theme.Size.calendarBarWidth, scale) }
         var calendarBarHeight: CGFloat { scaledPoints(Theme.Size.calendarBarHeight, scale) }
         var keyCap: CGFloat { scaledPoints(Theme.Size.keyCap, scale) }
+        var footerKeyCapWidth: CGFloat { scaledPoints(Theme.Size.footerKeyCapWidth, scale) }
+        var footerKeyCapHeight: CGFloat { scaledPoints(Theme.Size.footerKeyCapHeight, scale) }
         var compactKeyCap: CGFloat { scaledPoints(Theme.Size.compactKeyCap, scale) }
         var heroKeyCap: CGFloat { scaledPoints(Theme.Size.heroKeyCap, scale) }
         var menuButton: CGFloat { scaledPoints(Theme.Size.menuButton, scale) }
@@ -87,6 +105,8 @@ struct InterfaceMetrics: Equatable, Sendable {
         var menuIcon: CGFloat { scaledPoints(Theme.Size.menuIcon, scale) }
         var menuBrandIcon: CGFloat { scaledPoints(Theme.Size.menuBrandIcon, scale) }
         var barBrandIcon: CGFloat { scaledPoints(Theme.Size.barBrandIcon, scale) }
+        var footerBrandIcon: CGFloat { scaledPoints(Theme.Size.footerBrandIcon, scale) }
+        var footerSeparatorHeight: CGFloat { scaledPoints(Theme.Size.footerSeparatorHeight, scale) }
         var menuRowSpacing: CGFloat { scaledPoints(Theme.Size.menuRowSpacing, scale) }
         var menuSectionHeader: CGFloat { scaledPoints(Theme.Size.menuSectionHeader, scale) }
         /// Derived like `Theme`'s, so the row cap still counts whole rows at every size.
@@ -155,6 +175,19 @@ struct InterfaceMetrics: Equatable, Sendable {
                 : .system(size: scaledPoints(18, scale), weight: .medium)
         }
 
+        var paletteRowTitle: Font {
+            scale == 1
+                ? Theme.Typography.paletteRowTitle
+                : .system(
+                    size: scaledPoints(Theme.Typography.paletteRowTitleSize, scale), weight: .medium)
+        }
+        var paletteRowSecondary: Font { font(Theme.Typography.paletteRowSecondary, .body) }
+        var paletteSectionHeader: Font {
+            font(Theme.Typography.paletteSectionHeader, .callout, .semibold)
+        }
+        var footerPrimaryLabel: Font {
+            font(Theme.Typography.footerPrimaryLabel, .callout, .semibold)
+        }
         var rowTitle: Font { font(Theme.Typography.rowTitle, .body) }
         var rowTrailing: Font { font(Theme.Typography.rowTrailing, .callout) }
         var sectionHeader: Font { font(Theme.Typography.sectionHeader, .subheadline, .medium) }

@@ -644,7 +644,8 @@ struct RootPaletteView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 0) {
             // Matches the list rows and section headers' own indent below.
-            headerGutter(width: metrics.spacing.md * 2)
+            headerGutter(
+                width: vm.mode == .launcher ? metrics.spacing.md : metrics.spacing.md * 2)
             // Every sub-screen leaves the same way, so the slot reads the same on all of them.
             if vm.mode != .launcher {
                 HeaderBackButton(help: backHelp, action: goBack)
@@ -722,17 +723,13 @@ struct RootPaletteView: View {
                     accessory, isOpen: openMenu == .extensionAccessory,
                     action: toggleExtensionSearchAccessory)
             }
-            headerGutter(width: metrics.spacing.md * 2)
+            headerGutter(width: tabOpensChat ? metrics.spacing.xl : metrics.spacing.md * 2)
         }
         // Identical metrics in both states, so typing can't move the search bar.
         .frame(height: metrics.size.headerHeight)
         .padding(.top, metrics.size.headerPadding)
         .frame(maxWidth: .infinity)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Theme.Colors.separator)
-                .frame(height: Theme.Size.hairline)
-        }
+        .background(PaletteBarSurface(dividerEdge: .bottom))
         // Set after the show, so the field it names is focused rather than the search field.
         .onChange(of: vm.pendingArgumentEntryID) { focusPendingArgument() }
         .onChange(of: argumentFocused) { _, field in vm.noteEditingField(field != nil) }
@@ -886,15 +883,10 @@ struct RootPaletteView: View {
                     showActions: showActions)
             }
         }
-        .padding(.horizontal, metrics.spacing.md)
+        .padding(.horizontal, metrics.spacing.xl)
         .frame(height: metrics.size.bottomBarHeight)
         .frame(maxWidth: .infinity)
-        .background(PaletteFooterSurface())
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Theme.Colors.separator)
-                .frame(height: Theme.Size.hairline)
-        }
+        .background(PaletteBarSurface(dividerEdge: .top))
     }
 
     private var appMenuButton: some View {
@@ -908,33 +900,35 @@ struct RootPaletteView: View {
     ) -> some View {
         HStack(spacing: 0) {
             BarButton(chrome: .flat, isCompact: true, action: activateSelection) {
-                HStack(spacing: metrics.spacing.sm) {
+                HStack(spacing: metrics.spacing.footerPrimaryKeyCapGap) {
                     Text(primaryActionLabel)
-                        .font(metrics.typography.bar)
+                        .font(metrics.typography.footerPrimaryLabel)
                         .foregroundStyle(pillTint)
                     if formPrimaryShortcut {
-                        HStack(spacing: metrics.spacing.xxs) {
-                            KeyCapChip(text: "⌘", style: .filled)
-                            KeyCapChip(text: "↵", style: .filled)
+                        HStack(spacing: metrics.spacing.footerKeyCapGap) {
+                            KeyCapChip(text: "⌘", style: .filled, scale: .footer)
+                            KeyCapChip(text: "↵", style: .filled, scale: .footer)
                         }
                     } else {
-                        KeyCapChip(text: "↵", style: .filled)
+                        KeyCapChip(text: "↵", style: .filled, scale: .footer)
                     }
                 }
             }
             if showActions {
                 Rectangle()
                     .fill(Theme.Colors.separator)
-                    .frame(width: Theme.Size.hairline, height: metrics.size.barButtonHeight)
-                    .padding(.horizontal, metrics.spacing.xs)
-                BarButton(chrome: .flat, isCompact: true, action: toggleActions) {
-                    HStack(spacing: metrics.spacing.sm) {
+                    .frame(width: Theme.Size.hairline, height: metrics.size.footerSeparatorHeight)
+                    .padding(.horizontal, metrics.spacing.footerSeparatorGap)
+                BarButton(
+                    chrome: .flat, isCompact: true, trailingInset: 0, action: toggleActions
+                ) {
+                    HStack(spacing: metrics.spacing.footerActionsKeyCapGap) {
                         Text("Actions")
-                            .font(metrics.typography.bar)
+                            .font(metrics.typography.rowTrailing)
                             .foregroundStyle(Theme.Colors.textSecondary)
-                        HStack(spacing: metrics.spacing.xxs) {
-                            KeyCapChip(text: "⌘", style: .filled)
-                            KeyCapChip(text: "K", style: .filled)
+                        HStack(spacing: metrics.spacing.footerKeyCapGap) {
+                            KeyCapChip(text: "⌘", style: .filled, scale: .footer)
+                            KeyCapChip(text: "K", style: .filled, scale: .footer)
                         }
                     }
                 }
@@ -1464,12 +1458,13 @@ private struct FooterAppMenuButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .scaledToFit()
-                .frame(width: metrics.size.barBrandIcon, height: metrics.size.barBrandIcon)
-                .opacity(hovered ? 0.75 : 0.45)
-                .frame(width: metrics.size.menuButton, height: metrics.size.menuButton)
+            SymbolImage(name: "bolt.fill", size: metrics.size.footerBrandIcon, monochrome: true)
+                .foregroundStyle(hovered ? Theme.Colors.textSecondary : Theme.Colors.textTertiary)
+                .frame(
+                    width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
+                .frame(
+                    width: metrics.size.menuButton, height: metrics.size.menuButton,
+                    alignment: .leading)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -1501,11 +1496,30 @@ private struct HeaderBackButton: View {
     }
 }
 
-/// Its own glass, so rows scrolling under the footer never show through it.
-private struct PaletteFooterSurface: View {
+/// Its own glass, so rows scrolling under either bar never show through it.
+private struct PaletteBarSurface: View {
+    enum DividerEdge {
+        case top
+        case bottom
+    }
+
+    let dividerEdge: DividerEdge
+
+    private var dividerAlignment: Alignment {
+        switch dividerEdge {
+        case .top: .top
+        case .bottom: .bottom
+        }
+    }
+
     var body: some View {
         Theme.Colors.bottomBarSurface
             .background(Theme.Colors.panelScrim)
-            .background(GlassEffectView())
+            .background(GlassEffectView(cornerRadius: 0))
+            .overlay(alignment: dividerAlignment) {
+                Rectangle()
+                    .fill(Theme.Colors.separator)
+                    .frame(height: Theme.Size.hairline)
+            }
     }
 }

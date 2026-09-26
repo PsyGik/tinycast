@@ -80,7 +80,7 @@ private struct RoomPickerRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             badge
             Group {
                 if let appURL {
@@ -91,19 +91,20 @@ private struct RoomPickerRowView: View {
             }
             .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
             Text(title)
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: metrics.spacing.md)
             Text(trailing)
-                .font(metrics.typography.rowTrailing)
+                .font(metrics.typography.paletteRowSecondary)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.sm)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.row, style: .continuous).fill(fill)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
+                .fill(fill)
         )
         .armedHover($hovered)
         .accessibilityElement(children: .combine)
