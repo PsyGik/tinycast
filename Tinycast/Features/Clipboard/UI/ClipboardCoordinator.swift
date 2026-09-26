@@ -12,6 +12,8 @@ final class ClipboardCoordinator {
     private let paletteCoordinator: PaletteCoordinator
     /// Dialogs, for the one action here that can't be undone.
     private unowned let core: AppCore
+    /// One Copy Text at a time: a newer trigger cancels the helper an older one is waiting on.
+    private var textTask: Task<Void, Never>?
 
     init(
         clipboardStore: ClipboardStore,
@@ -68,12 +70,21 @@ final class ClipboardCoordinator {
         clipboardStore.enforceLimits()
     }
 
-    /// ↵ runs the configured default; ⌘↵ the other one, so the two chords stay a swapped pair.
-    func activate(_ item: ClipboardItem, inverted: Bool = false) {
-        if (settings.clipboardDefaultAction == .copy) != inverted {
-            copyToClipboard(item)
-        } else {
-            paste(item)
+    /// ↵ runs the configured default and the other chords follow it; false when `chord` has none.
+    @discardableResult
+    func activate(_ item: ClipboardItem, chord: ClipboardChord = .return) -> Bool {
+        guard let action = settings.clipboardDefaultAction.action(for: chord, on: item) else {
+            return false
+        }
+        perform(action, on: item)
+        return true
+    }
+
+    func perform(_ action: ClipboardDefaultAction, on item: ClipboardItem) {
+        switch action {
+        case .paste: paste(item)
+        case .copy: copyToClipboard(item)
+        case .pastePlainText: pasteAsPlainText(item)
         }
     }
 
@@ -85,6 +96,15 @@ final class ClipboardCoordinator {
             selectClip(item)
         } else {
             reportUnavailable(item)
+        }
+    }
+
+    /// A file's path stays valid text after the file goes, so this never reports it missing.
+    func pasteAsPlainText(_ item: ClipboardItem) {
+        let previous = windowController.previousApp
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        if Paster.pastePlainText(item, store: clipboardStore, previousApp: previous) {
+            selectClip(item)
         }
     }
 
@@ -106,9 +126,9 @@ final class ClipboardCoordinator {
     func deleteAllClips() async {
         guard
             await core.confirm(
-                title: "Clear clipboard history?",
-                message: "Every entry goes, pinned ones included. This can't be undone.",
-                symbol: PaletteMode.clipboard.systemImage, confirmTitle: "Clear History")
+                title: "Delete All Entries",
+                message: "Are you sure you want to proceed with deleting all clipboard history entries?",
+                symbol: PaletteMode.clipboard.systemImage, confirmTitle: "Delete All")
         else { return }
         clearHistory()
     }
@@ -148,11 +168,6 @@ final class ClipboardCoordinator {
         return clipURL(for: item).map(ClipDragPayload.file)
     }
 
-    /// A landed drop is a finished errand, so the palette leaves as it does after a paste.
-    func clipDropped() {
-        paletteCoordinator.hidePalette(restoreFocus: false)
-    }
-
     func openClip(_ item: ClipboardItem) {
         guard let url = clipURL(for: item) else { return }
         paletteCoordinator.hidePalette(restoreFocus: false)
@@ -165,6 +180,37 @@ final class ClipboardCoordinator {
         paletteCoordinator.hidePalette(restoreFocus: false)
         Paster.copyPlainText(path)
         core.showMessage("Copied path")
+    }
+
+    /// ⇧⌘T / “Copy Text” — OCRs the image in the bundled helper and copies what it reads.
+    func copyImageText(_ item: ClipboardItem) {
+        guard let path = item.imagePath ?? item.filePath else { return }
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        core.showProgress("Reading text…")
+        let changeCount = NSPasteboard.general.changeCount
+        textTask?.cancel()
+        textTask = Task {
+            do {
+                // A stat on an unmounted or network volume can stall, so it stays off the main actor.
+                let exists = await Task.detached { FileManager.default.fileExists(atPath: path) }.value
+                try Task.checkCancellation()
+                guard exists else {
+                    return item.kind == .file
+                        ? reportUnavailable(item)
+                        : core.showMessage("That image is no longer available.", tone: .danger)
+                }
+                let text = try await ClipboardTextWorker.extract(item)
+                guard !text.isEmpty else { return core.showMessage("No text found", tone: .neutral) }
+                guard NSPasteboard.general.changeCount == changeCount else {
+                    return core.showMessage("Clipboard changed, text not copied", tone: .neutral)
+                }
+                Paster.copyPlainText(text)
+                core.showMessage("Copied text")
+            } catch is CancellationError {
+            } catch {
+                core.showMessage("Couldn’t read the text", tone: .danger)
+            }
+        }
     }
 
     /// Nil once the file is gone, so every action reports rather than silently no-opping.

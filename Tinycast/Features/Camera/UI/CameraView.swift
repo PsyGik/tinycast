@@ -23,7 +23,7 @@ struct CameraView: View {
             width: Theme.Size.cameraCommandPanelWidth,
             height: Theme.Size.cameraCommandPanelHeight)
         .background(Theme.Colors.panelScrim)
-        .background(VisualEffectView())
+        .background(GlassEffectView())
         .overlay(alignment: .bottomTrailing) {
             if coordinator.actionsMenuOpen {
                 ZStack(alignment: .bottomTrailing) {

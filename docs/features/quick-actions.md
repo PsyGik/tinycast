@@ -9,8 +9,8 @@ action.
 A **custom Quick Action** is a name, a glyph and a prompt, run through the same provider. It takes a
 shortcut and a launcher row like any other.
 
-Quick Actions is the provider layer's second consumer. It shares nothing with AI Chat but the
-provider protocol and the connections behind it.
+Quick Actions is the provider layer's second consumer. It shares the provider connections and
+selectable Markdown renderer with AI Chat.
 
 ## Invariants
 
@@ -170,7 +170,7 @@ the panel. System Settings has no anchor for the sheet itself, so the last click
 ## The panel
 
 `QuickActionPanel` is Tinycast's **fourth borderless surface**, beside the dialog, the notes panel
-and the join preview. It takes the same recipe — `panelScrim`, then `VisualEffectView`, then the
+and the join preview. It takes the same recipe — `panelScrim`, then `GlassEffectView`, then the
 clip — and sits at `.floating` like the join preview, so a failure report still lands on top of it.
 Its footer speaks the same button language as a dialog's — `ModalActionButtonStyle`, with Replace
 as the `.primary` role — so every borderless surface answers in one voice rather than dropping Aqua
@@ -183,8 +183,8 @@ which is a closed two-case enum measured once at present time — a growing stre
 Non-activating, so the target app keeps its selection while the panel holds key. Keys go through
 `sendEvent`: `↵` replaces, `⌘C` copies, `esc` dismisses; click-away dismisses like every other
 borderless surface. The panel is anchored by its **top-left** and re-measured as the reply arrives —
-centring on every measure would walk it up the screen. `MarkdownView` and `MarkdownBlock.parse` are
-reused from chat; neither takes palette state.
+centring on every measure would walk it up the screen. Summarize uses chat's `ChatMarkdownText` and
+`MarkdownBlock.parse`, keeping its whole result selectable across paragraphs and headings.
 
 The body is a `ScrollView` with its height **set** rather than capped: a scroll view has no ideal
 height, so `NSHostingView.fittingSize` measures it as nothing and the body collapses to a slot. The
@@ -199,15 +199,15 @@ result already fits, since dimming text that needs no scrolling reads as a defec
 
 Three things here were settled by rendering them, not by reasoning:
 `scrollEdgeEffectStyle` draws nothing in this panel — it renders a material where a scroll view meets
-a safe area, and over `panelScrim` + `VisualEffectView` that composites to nothing. `safeAreaBar`
+a safe area, and over `panelScrim` + `GlassEffectView` that composites to nothing. `safeAreaBar`
 makes it visible but lays its bars *over* the content instead of insetting it, so text runs through
 the buttons and escapes the corner clip. And a ramp starting at the panel edge rather than below the
 bar leaves text about 60% visible behind the title.
 
-`TextDiffEngine` shows what changed when the output is the input, edited. Its LCS matrix is
+`TextDiffEngine` shows what changed when the output is the input, edited. Its traceback is
 quadratic, so past `maxTokens` a side it degrades to whole-text rather than asking for gigabytes.
-At the cap the matrix is the feature's largest allocation, so its cells are `UInt16` rather than
-`Int` — no LCS length can exceed `maxTokens`, and the six bytes an `Int` adds are 96 MB of zeroes.
+It keeps one rolling `UInt16` score row and one insert-or-delete bit per token pair — equality is
+re-checked during traceback — so the cap costs about 2 MB where a full score matrix cost 32 MB.
 
 ## Reading the selection
 

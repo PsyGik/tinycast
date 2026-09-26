@@ -53,26 +53,13 @@ The command palette is a borderless floating `NSPanel` hosting SwiftUI; see
 Everything resolved "once per summon" is resolved there deliberately, not per render. `AppCore` holds
 only the closure wiring; the behaviour is `PaletteCoordinator`'s.
 
-## Background transparency
+## Panel shape
 
-General settings' **Background transparency** slider adjusts the palette's existing tint over the
-system blur, with five detents at -100, -50, 0, 50, and 100. Its center and Reset both use
-`paletteTransparency = 0`, which returns the original
-`panelScrim` token unchanged in Light and Dark. Negative values make the tint more opaque; positive
-values make it more transparent. The setting is saved when a drag ends and on keyboard adjustments.
-`PaletteBackground` observes it separately from the result list, and keeps the existing blur view.
-Custom detents add a faint white border, one physical pixel wide. The two more transparent Dark
-detents use a one-point white gradient border, brightest at the top with softer sides and a faint
-lower reflection. They disable the system window shadow, which also draws a black outline outside
-the content.
-The existing window reader supplies the panel to `PaletteBackground`; appearance and transparency
-changes update its shadow. The center keeps the original shadow and adds no border.
-
-The root clip and transparency edge use `Theme.Radius.palettePanel` (12pt); independent windows keep
-the shared `Theme.Radius.panel` (26pt). The launcher header has no leading icon, with a full-width
-separator under the search field. Other modes retain their back chevron. The footer repeats the
-panel's scrim-over-vibrancy surface at the current transparency, then its subtle `bottomBarSurface`
-tint, so list rows never show through it in Light or Dark.
+The root clip uses `Theme.Radius.palettePanel` (12pt); independent windows keep the shared
+`Theme.Radius.panel` (26pt). The launcher header has no leading icon, with a full-width separator
+under the search field. Other modes retain their back chevron. The footer draws its own `panelScrim`
+over `GlassEffectView`, then its subtle `bottomBarSurface` tint, so list rows never show through it in
+Light or Dark.
 
 ## Screens
 
@@ -87,7 +74,7 @@ palette returns to the launcher *and* chat starts a new conversation, at once or
 unfinished chat is a thing being done, exactly like a typed query, so the screen and the conversation
 are reset together rather than the screen alone. A reply still streaming is the one exception — it was
 asked for, and resetting would throw the answer away. Nothing is lost either way: a conversation is
-written to Chat History as soon as it has a message.
+written to Chat History, and the AI Chat window's sidebar, as soon as it has a message.
 
 Each `PaletteMode` maps to one type conforming to `PaletteScreen`, and the protocol is what keeps the
 selection invariant honest: a screen exposes `rows` as its single source of visible order, and the
@@ -95,6 +82,13 @@ palette indexes into it. Adding a mode means adding a conformer, not a branch in
 A chord aimed at the selected row — ⌃X, ⇧⌘F, ⌘Y and the rest — follows the same rule:
 `PaletteShortcut` recognises the key and carries its compact-bar and open-menu guards, and the screen
 answers through `perform(_:at:)`, so a new chord never adds a cast to the shell.
+
+Where a reset leaves the highlight is the screen's to say too. Every reset — an open, a new query, a
+new filter — goes through `RootPaletteView.land()`, which reads `landingSelection`, so handlers that
+fire in one update agree whatever order they run in. `onAppear` lands as well: the first show builds
+the view after `prepare` has run, so no change handler ever sees that reset. The landing is row 0 on
+every screen but the clipboard, which lands past its pins
+([clipboard.md](clipboard.md#pinned-entries)).
 
 | Mode | Screen | Inner list |
 | --- | --- | --- |
@@ -139,8 +133,8 @@ that returning looks like never having left — and offers four motions over it:
 | `pushCarryingQuery(mode:)` | the same step, with the query and row kept: Tab's hop into the ring |
 | `pop()` | restore the screen underneath; `false` when this one is the root |
 
-`pop()` bumps `followToken` rather than `resetToken`: the reset token exists to snap a list to the
-top, which would throw away the very selection being restored.
+`pop()` bumps `followToken` rather than `resetToken`: the reset token exists to land a list afresh,
+which would throw away the very selection being restored.
 
 **Escape clears a non-empty query before it leaves the screen**, so one press clears and the next
 leaves: an extension screen exits itself first (it keeps a stack the palette cannot see), then a
@@ -162,13 +156,13 @@ pops, a root one closes — so `backHelp` says which, rather than promising a st
 a close. It lights to `textPrimary` under the pointer over `Theme.Duration.hover`, and
 `HeaderBackButton` keeps that hover state to itself so the header around it never re-renders.
 
-The launcher advertises the first hop in the header — `AI Chat` beside a `⇥` cap, matching the footer's
-label-and-key pairing. It is drawn only when Tab really would open chat, a condition read
+The launcher advertises the first hop in the header — `Quick AI` beside a `⇥` cap, the footer's own
+pairing of a label with its key. It is drawn only when Tab really would open Quick AI, a condition read
 back out of `PaletteTabAction` rather than restated, so a hint can never promise a destination the
 key does not go to: an argument field to walk takes Tab first, and the hint steps aside for it.
 
 `PaletteTabAction` decides where Tab goes *and* what happens to the typed text. The clipboard hands
-the query over, since one search narrows either list. **From the launcher, Tab `.ask`s** — chat opens
+the query over, since one search narrows either list. **From the launcher, Tab `.ask`s** — Quick AI opens
 fresh with the typed text already sent, so one key turns a search into a question. Leaving chat is
 still a `.freshScreen`: that field holds a half-written message rather than a query, and a draft
 dropped into a filter matches nothing. `.ask` is its own case rather than a `carryQuery(.ai)` because
@@ -194,7 +188,8 @@ these invariants:
 - The search field sits at **one structural position, always**. It is never moved inside an `if`:
   flipping the branch tears down its field editor, which drops first responder mid-navigation. Only
   its *width* changes — it is sized to its own text so the chips sit right after it, as they do in
-  Raycast.
+  Raycast. That width is a ceiling rather than a size, and the spacer after the strip is given room
+  last, so a long query is squeezed before the strip can run into the screen's own header controls.
 - **`Placement` is what a strip does to the field beside it.** `.afterQuery` (root search) drops the
   prompt and squeezes the field to the typed text, so the chips follow what was typed and a glyph
   anchors them to the row. `.besideSearchField` (a screen of its own, where that row is already
@@ -410,8 +405,11 @@ closes the open menu rather than reopening it on that row.
 Every row closes the menu behind it — `activateMenuItem` is the one path, and a row that reorders the
 list under itself (Move Favorite Up/Down) is no exception, so no row ever runs against a rebuilt menu.
 
-`PopoverMenuItem.startsSection` draws a separator with 6pt above and below it. That height joins the
-menu's exact sizing, but the separator takes no selection index, so navigation still walks only rows.
+`PopoverMenuItem.startsSection` draws a separator with the list inset (8pt) above and below it, so a
+row sits as far from it as from the search field's hairline. That height joins the menu's exact
+sizing, but the separator takes no selection index, so navigation still walks only rows. A menu
+taller than its cap ends its viewport mid-row, so the fold never lands on a separator or section
+title, and both hairlines are one device pixel.
 Built-in action menus mark boundaries between opening or copying, managing the item, settings, and
 deletion. Menus offering one kind of action, such as calculator copies, color formats, or emoji
 transfers, keep their rows in one group.
@@ -542,8 +540,11 @@ Panel-owned chords use the same translation directly. A ⌘ chord translates thr
 Command table, so "Dvorak – QWERTY ⌘" keeps giving QWERTY positions while Command is held; a ⌃ chord
 translates without it, since only Command is remapped. A non-ASCII input source or IME therefore
 cannot turn ⌘K into a different logical key, while Dvorak and other ASCII layouts keep their own
-letter positions. No replacement event is synthesized, and unmodified typing stays on the active
-input source and follows the normal composition path.
+letter positions. A key SwiftUI spells in the private-use area — the arrows, and the page, home and
+forward-delete keys — skips the recovery outright: `UCKeyTranslate` answers those keycodes with ASCII
+control characters, which the ASCII test would otherwise accept in place of the key itself, and a
+layout has no letter position to recover for them anyway. No replacement event is synthesized, and
+unmodified typing stays on the active input source and follows the normal composition path.
 
 ## The keyboard belongs to the search field
 

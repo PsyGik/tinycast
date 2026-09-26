@@ -22,8 +22,9 @@ struct AISettingsView: View {
         return Form {
             Section {
                 Toggle(isOn: $appSettings.aiEnabled) {
-                    SettingsRowTitle(.aiAI, "Enable AI")
-                    Text("Nothing is loaded or sent while it is off.")
+                    SettingsFeatureToggleLabel(
+                        anchor: .aiAI, title: "Enable AI",
+                        subtitle: "Nothing is loaded or sent while it is off.")
                 }
                 SettingsRow(
                     title: "Providers", subtitle: providerSummary, anchor: .aiProviders
@@ -126,6 +127,14 @@ struct AISettingsView: View {
                 SettingsRowTitle(.aiChat, "Web search")
                 Text("Codex and OpenRouter only. Prompts go to a search engine.")
             }
+            Picker(selection: $settings.toolRounds) {
+                ForEach(AIToolRounds.allCases) { Text($0.title).tag($0) }
+            } label: {
+                SettingsRowTitle(.aiChat, "Tool call rounds")
+                Text(
+                    "A reply stops after this many; Unlimited runs until Stop. "
+                        + "API connections, Codex and Claude.")
+            }
         } header: {
             SettingsSectionHeader(.aiChat)
         }
@@ -137,7 +146,7 @@ struct AISettingsView: View {
             Picker(selection: $settings.opensTo) {
                 ForEach(AIOpensTo.allCases) { Text($0.title).tag($0) }
             } label: {
-                SettingsRowTitle(.aiConversations, "Opens to")
+                SettingsRowTitle(.aiConversations, "Quick AI opens to")
             }
             if settings.opensTo == .recent {
                 Picker(selection: $settings.newChatAfter) {
@@ -150,7 +159,7 @@ struct AISettingsView: View {
                 ForEach(AIRetention.allCases) { Text($0.title).tag($0) }
             } label: {
                 SettingsRowTitle(.aiConversations, "Keep conversations")
-                Text("Older ones are deleted.")
+                Text("Older ones are deleted, except pinned chats.")
             }
             .onChange(of: settings.retention) { core.aiChatCoordinator.applyRetention() }
         } header: {
@@ -566,7 +575,11 @@ struct AISettingsView: View {
         var parts: [String] = []
         if let version = status.version { parts.append("Version " + version) }
         parts.append(modelCount(status.models))
-        if let caveat = kind.isolationCaveat { parts.append(caveat) }
+        if let caveat = kind.isolationCaveat(
+            hasManagedMCPPolicy: InstalledAIManager.hasManagedMCPPolicy)
+        {
+            parts.append(caveat)
+        }
         return parts.joined(separator: " · ")
     }
 

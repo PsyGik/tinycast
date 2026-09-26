@@ -15,13 +15,16 @@ struct WindowManagementSettingsView: View {
                 enableTitle: "Enable window management",
                 enableSubtitle: "Moves the last window you used. Needs Accessibility.",
                 isEnabled: $settings.windowManagementEnabled,
-                showsInLauncher: $settings.windowManagementShowInLauncher)
+                showsInLauncher: $settings.windowManagementShowInLauncher,
+                showsIcon: true,
+                showsHeader: false)
 
             Group {
                 options
                 WindowLayoutsSection(
                     onEdit: { editor = WindowLayoutEditRequest(layout: $0) },
                     onDelete: { pendingDeletion = $0 })
+                RoomsSection()
                 FeatureCommandsSection(
                     owner: .windowManagement, anchor: .windowManagementLayoutCommands)
                 CustomWindowSizesSection(onEdit: {

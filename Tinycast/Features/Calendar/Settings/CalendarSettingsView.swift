@@ -15,7 +15,9 @@ struct CalendarSettingsView: View {
                     "Reads \(core.calendarCoordinator.span.possessivePhrase) events for join links. "
                     + "Nothing leaves this Mac.",
                 isEnabled: enabledBinding,
-                showsInLauncher: $settings.calendarShowInLauncher)
+                showsInLauncher: $settings.calendarShowInLauncher,
+                showsIcon: true,
+                showsHeader: false)
 
             Section {
                 Picker(selection: $settings.calendarLauncherLimit) {
@@ -107,6 +109,11 @@ struct CalendarSettingsView: View {
                 .settingsEnabled(settings.calendarMenuBarDisplay != .disabled)
                 Toggle(isOn: $settings.menuBarLinkedEventsOnly) {
                     SettingsRowTitle(.calendarMenuBar, "Only show events with meetings")
+                }
+                .toggleStyle(.checkbox)
+                .settingsEnabled(settings.calendarMenuBarDisplay != .disabled)
+                Toggle(isOn: $settings.calendarMenuBarHidesWhenEmpty) {
+                    SettingsRowTitle(.calendarMenuBar, "Hide when there are no upcoming events")
                 }
                 .toggleStyle(.checkbox)
                 .settingsEnabled(settings.calendarMenuBarDisplay != .disabled)

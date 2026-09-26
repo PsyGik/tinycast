@@ -17,7 +17,7 @@ RAM.**
   <a href="https://discord.gg/v2Eeb4QQy3">
     <img alt="Join the Tinycast Discord"
          src="https://img.shields.io/badge/Discord-Join-5865F2?style=flat&logo=discord&logoColor=white"></a>
-  <a href="https://buy.polar.sh/polar_cl_NDVFC20DKQpLcNawsh97QzbARBXD3WNn8v35R0mbJmT">
+  <a href="https://tinycast.dev/support">
     <img alt="Support Tinycast"
          src="https://img.shields.io/badge/Support-Tip%20the%20dev-EA4AAA?style=flat&logo=polar&logoColor=white"></a>
 </p>
@@ -37,7 +37,7 @@ Tinycast is **free, and it stays that way**. If it earns a place in your daily f
 keep it actively maintained. GitHub Sponsors isn't available in my country, so please support here:
 
 <p align="center">
-  <a href="https://buy.polar.sh/polar_cl_NDVFC20DKQpLcNawsh97QzbARBXD3WNn8v35R0mbJmT">
+  <a href="https://tinycast.dev/support">
     <img alt="Support Tinycast" width="188" height="44" src="docs/support-button.svg"></a><br>
   <sub>Payments are handled securely by <a href="https://polar.sh">Polar.sh</a>.</sub>
 </p>
@@ -70,7 +70,9 @@ keep it actively maintained. GitHub Sponsors isn't available in my country, so p
 - **Notes** — an unlimited collection of plain Markdown files in one floating editor, searchable from
   the palette and rendered as you write.
 - **Emoji picker** — a searchable emoji grid, one keystroke away.
-- **AI chat** — use your own key or an installed AI account, chat from the palette. Off out of the box, like every AI feature.
+- **AI chat** — use your own key or an installed AI account: ask Quick AI from the palette, or keep
+  longer conversations in the AI Chat window, with a searchable, pinnable history. Off out of the box,
+  like every AI feature.
 - **Quick Actions** — fix grammar, rewrite, translate or summarize the selected text in any app.
 - **Raycast extensions** — run the ones you already have natively, rendered as SwiftUI.
 - **Backup and import** — export your settings to a file, or import your setup from Raycast.

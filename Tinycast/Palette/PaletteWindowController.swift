@@ -8,10 +8,12 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     private var panel: PalettePanel?
     private(set) var previousApp: NSRunningApplication?
     /// Our key window at summon time, so hiding hands focus back to Settings, not a stale app.
-    private weak var previousOwnWindow: NSWindow?
+    private(set) weak var previousOwnWindow: NSWindow?
     private var popToRootTimer: Timer?
     // Reopen beat the timeout, so select the preserved query.
     private var queryWasPreserved = false
+    /// Set by a pop to root while hidden and spent by the next show: that screen is already fresh.
+    private(set) var isPoppedToRoot = false
     /// Resolved once per show; the top edge is the one that must not drift.
     private var anchor: CGPoint?
     /// Live only between mouse-down and mouse-up on a drag handle; nil means a move was ours.
@@ -43,6 +45,9 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     var isVisible: Bool { panel?.isVisible ?? false }
 
+    /// Where the panel sits in screen coordinates, so an overlay drawn under it can avoid it.
+    var visibleFrame: CGRect? { panel.flatMap { $0.isVisible ? $0.frame : nil } }
+
     /// What the palette covered when it was summoned, for anything it expands into on dismissal.
     var previousTarget: InjectionTarget? {
         InjectionTarget.behindPalette(ownWindow: previousOwnWindow, app: previousApp)
@@ -50,19 +55,20 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     func show() {
         Signposts.interval("PaletteWindowController.show") {
+            isPoppedToRoot = false
             // Summoned over one of our own windows: there is no external paste or focus target.
             let frontmost = NSWorkspace.shared.frontmostApplication
-            if frontmost?.processIdentifier == NSRunningApplication.current.processIdentifier {
-                previousApp = nil
-                // Never the palette itself: a mode switch re-shows it while it already holds key.
-                if let key = NSApp.keyWindow, key !== panel { previousOwnWindow = key }
-            } else {
-                previousApp = frontmost
-                previousOwnWindow = nil
-            }
+            let ownPID = NSRunningApplication.current.processIdentifier
+            previousApp = frontmost?.processIdentifier == ownPID ? nil : frontmost
+            // Recorded even when another app is frontmost: our panels take key without activating.
+            let key = NSApp.keyWindow
+            // A mode switch re-shows the palette while it holds key; keep what it recorded then.
+            if key !== panel { previousOwnWindow = key }
             // Once per summon, and from `previousApp`, so the label names the paste target.
             core.palette.pasteTarget = PasteTarget(app: previousApp)
             let panel = ensurePanel()
+            // Undo a sink a modal left behind, unless one is still up.
+            if NSApp.modalWindow == nil { panel.level = .palette }
             // Open disarmed: a pointer already over a row must not highlight it.
             core.palette.disarmHoverHighlight(pointerAt: NSEvent.mouseLocation)
             // Re-resolve the anchor now, then hold it so resizes never move the window.
@@ -132,8 +138,8 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     private func attachPastedFile() -> Bool {
         let files = PasteboardFiles.urls(on: .general)
         switch core.palette.mode {
-        case .ai: return core.aiChatCoordinator.attachPastedFile(files: files)
-        case .launcher: return core.aiChatCoordinator.attachPastedFileFromLauncher(files: files)
+        case .ai: return core.quickAICoordinator.attachPastedFile(files: files)
+        case .launcher: return core.quickAICoordinator.attachPastedFileFromLauncher(files: files)
         default: return false
         }
     }
@@ -143,6 +149,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         commandEscapeTap.disable()
         core.inputSourceSwitcher.endSession()
         core.calendarCoordinator.paletteDidHide()
+        core.roomCoordinator.paletteDidHide()
         core.palette.noteVisible(false)
         core.clipboardStore.setTextSearchActive(false)
         // Drop the anchor, so the next summon re-resolves for the screen in use then.
@@ -187,6 +194,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     /// The screen only: a conversation is not a typed query, and `Opens To` decides its lifetime.
     private func popToRoot() {
         core.palette.prepare(mode: .launcher)
+        isPoppedToRoot = true
     }
 
     /// Skip the Pop to Root Search delay, for a close that means to reset as well as hide.
@@ -219,15 +227,21 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     // MARK: - NSWindowDelegate
 
-    /// Not for one of our own dialogs: hiding would tear down a command mid-`confirmAlert`.
+    /// Not for a dialog or a modal: hiding tears down a running command.
     func windowDidResignKey(_ notification: Notification) {
         guard isVisible, !core.isShowingDialog else { return }
         if core.palette.menuOpen { return }
+        // A file panel sets its own level under ours, so sink rather than dismiss.
+        if NSApp.modalWindow != nil {
+            panel?.level = .normal
+            return
+        }
         core.paletteCoordinator.hidePalette(restoreFocus: false)
     }
 
     /// Re-bump a turn later: on the first show a synchronous bump lands before `onChange`.
     func windowDidBecomeKey(_ notification: Notification) {
+        panel?.level = .palette
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             core.palette.focusToken = UUID()
@@ -324,7 +338,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
                 core.extensionCoordinator.exitExtensionScreen()
                 return true
             }
-            if core.palette.mode == .ai, core.aiChatCoordinator.removeLastAttachment() {
+            if core.palette.mode == .ai, core.quickAICoordinator.removeLastAttachment() {
                 return true
             }
             if core.palette.pop() { return true }

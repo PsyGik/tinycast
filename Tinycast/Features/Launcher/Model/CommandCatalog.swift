@@ -52,13 +52,14 @@ extension SettingsTab {
         switch self {
         case .quicklinks:
             [.createQuicklink, .searchQuicklinks, .importQuicklinks, .exportQuicklinks]
-        case .ai: [.aiChat]
+        case .ai: [.quickAI, .aiChat]
         case .quickActions: [.fixGrammar, .rewrite, .translate, .summarize]
         case .fileSearch: [.searchFiles]
         case .notes: [.showNotes, .createNote, .searchNotes]
         case .snippets: [.searchSnippets, .createSnippet]
         case .navigation: [.switchWindows, .searchMenuItems]
-        case .windowManagement: [.createWindowLayout, .captureWindowLayout]
+        case .windowManagement:
+            [.createWindowLayout, .captureWindowLayout, .switchRoom, .createRoom]
         case .clipboard: [.clipboardHistory]
         case .emoji: [.searchEmoji]
         case .calendar:
