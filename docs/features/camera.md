@@ -25,8 +25,11 @@ controller and footer are all that stay in [calendar.md](calendar.md).
   which would hand back a photo that is not what the user framed.
 - **The standalone command keeps its menu in the camera panel.** Its inset preview and action bar
   belong only to `CameraView`; the `⌘K` menu is an in-window `PopoverMenu`, so focusing it cannot
-  resign the panel and trigger click-away close. `CameraPanel`'s `onActions` handler defaults to nil,
-  leaving Calendar's join preview keys unchanged.
+  resign the panel and trigger click-away close. `CameraPanel`'s optional menu handlers default to
+  nil, leaving Calendar's join preview keys unchanged. With the menu open, ↑/↓ moves between
+  selectable rows without wrapping, and ↵ or keypad Enter activates the selection. Escape clears a
+  non-empty search first, then closes the menu; ⌘K closes it immediately. With the menu closed, ↵
+  takes a photo and Escape closes the camera.
 - **A photo reaches the clipboard as PNG.** The camera's own encoding is decoded and re-encoded off
   main, because `ClipboardManager` records `.png` and `.tiff` and nothing else.
 - **`AVCaptureSession` is not `Sendable`, and only `CaptureBox` crosses that line.** The blocking
@@ -39,7 +42,7 @@ controller and footer are all that stay in [calendar.md](calendar.md).
 | Piece | Holds |
 | --- | --- |
 | `Service/CameraSession.swift` | access, start/stop, device cycling, the photo, and the box |
-| `UI/CameraCoordinator.swift` | the standalone panel's lifecycle, mirror state, the clipboard write |
+| `UI/CameraCoordinator.swift` | the standalone panel's lifecycle, action-menu state, mirror state, the clipboard write |
 | `UI/CameraView.swift` | the standalone surface: inset stage over blur and scrim, with its action bar |
 | `UI/CameraActionBar.swift` | the standalone flat bar: Camera, Take Photo and Actions controls |
 | `UI/CameraActionsMenu.swift` | the standalone `⌘K` menu, with mirror state and available camera actions |

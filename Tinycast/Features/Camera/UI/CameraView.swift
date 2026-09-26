@@ -32,8 +32,7 @@ struct CameraView: View {
                         .onTapGesture { coordinator.dismissActionsMenu() }
                         .accessibilityHidden(true)
                     CameraActionsMenu(
-                        coordinator: coordinator,
-                        onDismiss: coordinator.dismissActionsMenu
+                        coordinator: coordinator
                     )
                     .padding(.trailing, Theme.Size.cameraCommandInset)
                     .padding(.bottom, Theme.Size.cameraCommandBarHeight + Theme.Spacing.md)
