@@ -52,8 +52,6 @@ enum Theme {
         static let dialogSymbol: CGFloat = 16
         /// The dialog and HUD surface, so a dialog reads as a sibling of the palette.
         static let dialog: CGFloat = 20
-        static let cameraPanel: CGFloat = 24
-        static let cameraPreview: CGFloat = 8
         static let thumbnail: CGFloat = 6
         /// A shape small enough that `thumbnail` would round it into a circle.
         static let glyph: CGFloat = 2
@@ -276,17 +274,6 @@ enum Theme {
         static let dialogIcon: CGFloat = 32
         /// 16:9 at the dialog's own width, so the two surfaces read as siblings.
         static let cameraPreview = CGSize(width: 420, height: 236)
-        /// 16:9 again, wider: the standalone camera is the surface, not a confirmation on one.
-        static let cameraStage = CGSize(width: 560, height: 315)
-        static let cameraCommandInset: CGFloat = 16
-        static let cameraCommandBarHeight: CGFloat = 52
-        static let cameraActionsMenuWidth: CGFloat = 220
-        static var cameraCommandPanelWidth: CGFloat {
-            cameraStage.width + cameraCommandInset * 2
-        }
-        static var cameraCommandPanelHeight: CGFloat {
-            cameraStage.height + cameraCommandInset + cameraCommandBarHeight
-        }
         /// Wider than a dialog: a Quick Action's result is prose to read, not a sentence to answer.
         static let quickActionPanel: CGFloat = 520
         /// Matched to the title's cap height; a row-sized glyph beside it reads as an error.

@@ -150,6 +150,8 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         core.inputSourceSwitcher.endSession()
         core.calendarCoordinator.paletteDidHide()
         core.roomCoordinator.paletteDidHide()
+        // An ordered-out window never fires onDisappear, and the camera light must go out with it.
+        if core.palette.mode == .camera { core.cameraCoordinator.stop() }
         core.palette.noteVisible(false)
         core.clipboardStore.setTextSearchActive(false)
         // Drop the anchor, so the next summon re-resolves for the screen in use then.
