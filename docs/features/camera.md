@@ -15,8 +15,10 @@ the video in once the capture session is running.
   first when it is undetermined, so the TCC prompt never takes key from a palette already up, then
   navigates to `.camera` immediately with `feed == nil`, which `CameraStage` draws as a black stage.
   `CameraSession.configure` builds the session, input and photo output off main, and `start()` settles
-  once `startRunning` returns; the video fades in on that. Calendar still awaits `start()` before its
-  panel appears, so it never sees `nil`.
+  once `startRunning` returns. `ApertureReveal` covers the stage meanwhile with a six-blade lens iris
+  that idles nearly shut, then opens and turns to reveal the video once the feed settles, so the user
+  never watches a blank stage; under Reduce Motion it steps aside for the plain fade. Calendar still
+  awaits `start()` before its panel appears, so it never sees `nil` and never draws the iris.
 - **The camera stops on every exit, including one mid-start.** Leaving the mode stops it from the
   screen's `onDisappear`. `PaletteWindowController.hide` stops it explicitly while the mode is still
   `.camera`, because an ordered-out window never fires `onDisappear`, and then leaves the screen, so a
@@ -52,6 +54,7 @@ the video in once the capture session is running.
 | `UI/CameraCoordinator.swift` | palette session lifecycle, mirror state, and the clipboard write |
 | `UI/CameraScreen.swift` | full-bleed palette preview, back button, footer context, and Actions rows |
 | `UI/CameraStage.swift` | the shared stage — the hosted preview layer, or why there is no video |
+| `UI/ApertureReveal.swift` | the palette screen's lens iris over the stage while the camera warms up |
 | `UI/CameraPanel.swift` | Calendar's shared borderless preview panel: ↵ and Esc, cursor-screen centring |
 | `UI/CameraButton.swift` | Calendar's join-preview button: `ModalActionButtonStyle` plus a key-cap tooltip |
 

@@ -312,6 +312,9 @@ enum Theme {
         /// How a borderless surface arrives and leaves; the exit is shorter, so it feels quick.
         static let enter: TimeInterval = 0.18
         static let exit: TimeInterval = 0.12
+        /// The camera iris: a slow idle while the camera warms up, then one decisive opening.
+        static let apertureBreath: TimeInterval = 1.1
+        static let apertureOpen: TimeInterval = 0.55
         /// A dialog moves with its launcher dimming; its fade-in is a shorter sub-beat.
         static let dialogEnter: TimeInterval = 0.12
         static let dialogExit: TimeInterval = 0.10
@@ -420,6 +423,9 @@ enum Theme {
 
         /// The ramp's inverse: the scrim darkens the dark surface and lightens the light one.
         static let panelScrim = adaptive(dark: .srgbInk(0, alpha: 0.40), light: .srgbInk(1, alpha: 0.55))
+        /// Fixed in both appearances: the iris is a lens over a camera stage, not a surface.
+        static let apertureBlade = Color(white: 0.11)
+        static let apertureSeam = Color.white.opacity(0.10)
         /// Modal separation inside Tinycast: the launcher recedes while its dialog is in front.
         static let dialogDimming = adaptive(
             dark: .srgbInk(0, alpha: 0.34), light: .srgbInk(0, alpha: 0.34))

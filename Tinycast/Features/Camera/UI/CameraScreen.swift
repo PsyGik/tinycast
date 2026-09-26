@@ -37,7 +37,9 @@ struct CameraScreen: PaletteScreen {
 
     func body(selection: Int, scroll: ScrollIntent) -> AnyView {
         AnyView(
-            CameraStage(feed: coordinator.feed, mirrored: coordinator.mirrored)
+            ApertureReveal(settled: coordinator.feed != nil) {
+                CameraStage(feed: coordinator.feed, mirrored: coordinator.mirrored)
+            }
                 .overlay(alignment: .topLeading) {
                     Button(action: goBack) {
                         Image(systemName: "arrow.left")
