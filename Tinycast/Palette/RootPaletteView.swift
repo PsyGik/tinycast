@@ -1458,11 +1458,10 @@ private struct FooterAppMenuButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .scaledToFit()
-                .frame(width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
-                .opacity(hovered ? 0.75 : 0.45)
+            SymbolImage(name: "bolt.fill", size: metrics.size.footerBrandIcon, monochrome: true)
+                .foregroundStyle(hovered ? Theme.Colors.textSecondary : Theme.Colors.textTertiary)
+                .frame(
+                    width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
                 .frame(
                     width: metrics.size.menuButton, height: metrics.size.menuButton,
                     alignment: .leading)
@@ -1516,7 +1515,7 @@ private struct PaletteBarSurface: View {
     var body: some View {
         Theme.Colors.bottomBarSurface
             .background(Theme.Colors.panelScrim)
-            .background(GlassEffectView())
+            .background(GlassEffectView(cornerRadius: 0))
             .overlay(alignment: dividerAlignment) {
                 Rectangle()
                     .fill(Theme.Colors.separator)

@@ -244,16 +244,16 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
 
 - **`PalettePanel`** is a borderless `NSPanel`: `isOpaque = false`, `backgroundColor = .clear`, `.palette` level (one above `.modalPanel`, so other apps' open panels never cover it), `hasShadow`, `animationBehavior = .none`. It hosts SwiftUI via `NSHostingView`. `PaletteWindowController` centers it slightly above screen center (`+8%`) and dismisses it on `windowDidResignKey`.
 - **The results layer fills the whole panel.** The header and bottom bar attach via
-  `.safeAreaInset(edge: .top/.bottom)` over the list. The header stays transparent and draws a bottom
-  hairline; the footer draws a panel-matched surface and top hairline so rows cannot show through it.
-  The list dissolves at the edges.
-- **Header** (`headerHeight 44`): sub-screens show a back chevron; the launcher has no leading icon,
-  then the plain `TextField` (no border/background).
+  `.safeAreaInset(edge: .top/.bottom)` over the list. Both bars repeat the panel surface over glass
+  with a zero-radius glass view, so only the root palette clip rounds their outside corners; their
+  full-width hairlines separate the list from each surface. The list dissolves at the edges.
+- **Header** (`headerHeight 45` plus 10pt top inset): sub-screens show a back chevron; the launcher
+  has no leading icon, then the plain `TextField` (no border/background).
 - **Compact keyboard entry:** pressing `↓` in the collapsed launcher expands the results and selects the first row without replacing or defocusing the shared search field.
-- **Bottom bar** (`bottomBarHeight 52`): a flat footer with an opaque-against-the-list surface and a
-  top hairline. The dimmed Tinycast app icon stays on the left as the app-menu control; the right side
-  has the primary action with a filled `↵` keycap, a vertical separator, and the Actions toggle with
-  filled `⌘` and `K` keycaps. Form mode uses filled `⌘↵` keycaps too.
+- **Bottom bar** (`bottomBarHeight 39`): a flat footer with an opaque-against-the-list surface and a
+  top hairline. A dimmed, untiled 18pt `bolt.fill` glyph stays on the left as the app-menu control;
+  the right side has the primary action with a filled `↵` keycap, a vertical separator, and the Actions
+  toggle with filled `⌘` and `K` keycaps. Form mode uses filled `⌘↵` keycaps too.
 - **`BarButton`** is the shared bar control: bare label at rest, a hover shape, `barButtonHeight 28`. `.capsule` remains the default for Notes and extension controls, `.rounded` serves header pop-ups, and `.flat` uses the `listRow` radius for the palette footer. Set `isSelected` and it fills with `selection` instead, which beats hover; the Notes formatting bar lights its buttons this way. Set `isCompact` for `sm` padding instead of `md`. Hover state lives inside it, so sweeping one never re-renders the palette body.
 
 ---

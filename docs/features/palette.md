@@ -60,14 +60,14 @@ The root clip uses `Theme.Radius.palettePanel` (12pt); independent windows keep 
 under the search field. Its 45pt search row plus 10pt top inset place that divider 55pt from the
 window top; in the launcher, the placeholder begins 16pt from the left edge. The header and footer
 both draw the `bottomBarSurface` tint over `panelScrim` and
-`GlassEffectView`, so scrolled rows never show through either bar. Other modes retain their back
-chevron.
+`GlassEffectView` with zero-radius glass, so scrolled rows never show through either bar and only the
+outer palette clip rounds them. Other modes retain their back chevron.
 
-The footer is 39pt tall, with a full-width top hairline. Its dimmed 18pt app mark sits 12pt from the
-left edge. The primary label is 12pt semibold, followed by a 24×22pt filled keycap; the 10pt separator
-is 13pt from that keycap and from Actions. Actions uses an 11pt label-to-keycap gap, two 24×22pt
-keycaps with a 2.5pt gap, and the final cap ends 12pt from the right edge. All footer content shares
-one vertical centre line.
+The footer is 39pt tall, with a full-width top hairline. Its dimmed, untiled 18pt SF Symbol `bolt.fill`
+sits 12pt from the left edge as the app-menu control. The primary label is 12pt semibold, followed by
+a 24×22pt filled keycap; the 10pt separator is 13pt from that keycap and from Actions. Actions uses
+an 11pt label-to-keycap gap and two 24×22pt keycaps with a 2.5pt gap; the final cap ends 12pt from
+the right edge. All footer content shares one vertical centre line.
 
 Opening or resetting to launcher row zero scrolls to the list's origin anchor, which is placed after
 the list's top padding. This leaves the first section label fully below the header divider.
