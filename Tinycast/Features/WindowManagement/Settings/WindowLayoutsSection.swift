@@ -63,19 +63,21 @@ struct WindowLayoutsSection: View {
     }
 }
 
-/// One layout's shortcut, launcher checkbox and actions, shaped like the window-command row.
 private struct WindowLayoutSettingsRow: View {
     let layout: WindowLayout
     let onEdit: () -> Void
     let onDelete: () -> Void
 
     @Environment(AppCore.self) private var core
+    @Environment(AppSettings.self) private var settings
     @Environment(VisibilityStore.self) private var visibility
 
     var body: some View {
         SettingsRow(title: layout.name, subtitle: layout.summary) {
             SymbolImage(name: layout.symbol, size: 13)
         } trailing: {
+            AliasField(entry: entry)
+                .settingsEnabled(isAliasEnabled)
             ShortcutRecorder(action: .windowLayout(id: layout.id))
 
             Button {
@@ -119,9 +121,17 @@ private struct WindowLayoutSettingsRow: View {
         }
     }
 
+    private var entry: AppEntry { AppEntry(layout) }
+
+    private var isAliasEnabled: Bool {
+        settings.windowManagementEnabled
+            && settings.windowLayoutsShowInLauncher
+            && visibility.isItemVisible(entry)
+    }
+
     private var visibilityBinding: Binding<Bool> {
         Binding(
-            get: { visibility.isItemVisible(AppEntry(layout)) },
-            set: { visibility.setItemVisible($0, for: AppEntry(layout)) })
+            get: { visibility.isItemVisible(entry) },
+            set: { visibility.setItemVisible($0, for: entry) })
     }
 }

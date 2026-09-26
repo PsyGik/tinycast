@@ -607,6 +607,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Holding a bound hotkey does **not** stack dialogs
 - Window commands move the window you were last in; cycle-on-repeat steps ½ → ⅓ → ⅔
 - "Top Half" lands flush with the top of the visible frame, on a secondary display too
+- Set `lh` on Left Half, then type `lh` in the launcher: Left Half ranks first and ↵ tiles the front
+  window. Repeat with a custom size and a layout; each alias ranks its row first and ↵ runs it.
+- Hiding an entry from search or turning off its Show in launcher switch dims and disables its alias
+  field; window commands and custom sizes share their switch, while layouts have their own.
 
 ### Extensions
 
