@@ -1,8 +1,9 @@
 # Camera
 
 One camera, two surfaces. `Open Camera` is a palette screen with a full-bleed live preview, while
-Calendar's pre-meeting preview remains its separate panel. The command starts its capture session before
-navigation, hides the palette search header, and keeps the normal 39pt footer below the preview.
+Calendar's pre-meeting preview remains its separate panel. The command opens its screen at once over a
+dark stage, hides the palette search header, keeps the normal 39pt footer below the preview, and fades
+the video in once the capture session is running.
 
 ## Invariants
 
@@ -10,14 +11,20 @@ navigation, hides the palette search header, and keeps the normal 39pt footer be
   `CameraSession.init` stores a `Purpose` and touches nothing else — no device, no discovery session,
   no TCC read. The camera permission prompt is raised by `start()`, from the gesture that asked for
   it, and never on launch.
-- **The camera settles before the screen opens, and stops on every exit.** `start()` resolves access
-  and blocks on `startRunning` first, then hands a settled `Feed` up — so the first frame is live
-  video rather than a stage swapped out from under the user, and the TCC prompt never takes key from
-  a panel already up. The camera light never outlives the palette screen: leaving the mode stops it
-  from the screen's `onDisappear`, and `PaletteWindowController.hide` stops it explicitly while the
-  mode is still `.camera`, because an ordered-out window never fires `onDisappear`. It also drops the
-  `AVCaptureSession`, so every open builds its own: a reused session with no output of its own — the
-  preview's — restarts to a black stage.
+- **The screen opens at once; only the permission prompt waits.** `showInPalette()` asks for access
+  first when it is undetermined, so the TCC prompt never takes key from a palette already up, then
+  navigates to `.camera` immediately with `feed == nil`, which `CameraStage` draws as a black stage.
+  `CameraSession.configure` builds the session, input and photo output off main, and `start()` settles
+  once `startRunning` returns; the video fades in on that. Calendar still awaits `start()` before its
+  panel appears, so it never sees `nil`.
+- **The camera stops on every exit, including one mid-start.** Leaving the mode stops it from the
+  screen's `onDisappear`. `PaletteWindowController.hide` stops it explicitly while the mode is still
+  `.camera`, because an ordered-out window never fires `onDisappear`, and then leaves the screen, so a
+  reopen never lands on a stage with no session behind it. `stop()` bumps a generation that a start
+  still in flight checks: a session that finishes warming up after its screen has gone is stopped
+  there, and the coordinator also stops it if it settles with no camera screen showing. `stop()` drops
+  the `AVCaptureSession`, so every open builds its own: a reused session with no output of its own —
+  the preview's — restarts to a black stage.
 - **Escape, the back button, and the Actions menu return through palette navigation.** They use the
   existing Escape/back paths, so the configured Escape behavior remains honored. The screen has no
   focusable view, so SwiftUI's `onKeyPress(.escape)` never fires there; `PaletteWindowController`
@@ -32,7 +39,8 @@ navigation, hides the palette search header, and keeps the normal 39pt footer be
 - **A photo reaches the clipboard as PNG.** The camera's own encoding is decoded and re-encoded off
   main, because `ClipboardManager` records `.png` and `.tiff` and nothing else.
 - **`AVCaptureSession` is not `Sendable`, and only `CaptureBox` crosses that line.** The blocking
-  calls — `startRunning`, `stopRunning`, and the begin/commit around a device swap — run in
+  calls — building the session, `startRunning`, `stopRunning`, and the begin/commit around a device
+  swap — run in
   `Task.detached` behind that one `@unchecked Sendable` box, which is private to `CameraSession.swift`.
   There is no second actor.
 

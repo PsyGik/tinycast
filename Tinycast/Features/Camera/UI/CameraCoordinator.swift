@@ -4,7 +4,8 @@ import AppKit
 @MainActor
 @Observable
 final class CameraCoordinator {
-    private(set) var feed: CameraSession.Feed = .noCamera
+    /// `nil` while the camera warms up, which the stage shows as dark until video fades in.
+    private(set) var feed: CameraSession.Feed?
     private(set) var canSwitchCamera = false
     var mirrored = true
 
@@ -14,14 +15,26 @@ final class CameraCoordinator {
 
     init(core: AppCore) { self.core = core }
 
-    /// The session settles before the screen is visible, so its first frame is never black.
+    /// The screen opens at once, as Raycast's does; warm-up happens behind a dark stage.
     func showInPalette() async {
         guard !opening else { return }
         opening = true
         defer { opening = false }
-        feed = await session.start()
-        canSwitchCamera = session.hasMultipleDevices
+        // The one wait kept up front: the prompt would take key from a palette already showing it.
+        if Permissions.cameraAccess() == .notDetermined {
+            _ = await Permissions.requestCameraAccess()
+        }
+        feed = nil
+        canSwitchCamera = false
         core.paletteCoordinator.navigate(to: .camera)
+        let started = await session.start()
+        // Settled with no camera screen up: release it, or the light stays on for nothing.
+        guard core.palette.mode == .camera, core.paletteCoordinator.isVisible else {
+            session.stop()
+            return
+        }
+        feed = started
+        canSwitchCamera = session.hasMultipleDevices
     }
 
     func stop() { session.stop() }

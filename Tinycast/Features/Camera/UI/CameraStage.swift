@@ -3,18 +3,30 @@ import SwiftUI
 
 /// What every camera surface puts above its footer: live video, or why there is none.
 struct CameraStage: View {
-    let feed: CameraSession.Feed
+    /// `nil` is a camera still warming up; Calendar only ever passes a settled feed.
+    let feed: CameraSession.Feed?
     var mirrored = true
 
     var body: some View {
-        switch feed {
-        case .live(let capture):
-            CameraFeed(session: capture, mirrored: mirrored)
-        case .denied:
-            unavailable("Tinycast has no access to the camera.")
-        case .noCamera:
-            unavailable("No camera on this Mac.")
+        Group {
+            switch feed {
+            case nil:
+                Color.black
+            case .live(let capture):
+                CameraFeed(session: capture, mirrored: mirrored)
+                    .transition(.opacity)
+            case .denied:
+                unavailable("Tinycast has no access to the camera.")
+            case .noCamera:
+                unavailable("No camera on this Mac.")
+            }
         }
+        .animation(.easeOut(duration: Theme.Duration.enter), value: isLive)
+    }
+
+    private var isLive: Bool {
+        if case .live = feed { return true }
+        return false
     }
 
     private func unavailable(_ message: String) -> some View {
