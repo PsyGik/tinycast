@@ -56,9 +56,9 @@ only the closure wiring; the behaviour is `PaletteCoordinator`'s.
 ## Panel shape
 
 The root clip uses `Theme.Radius.palettePanel` (12pt); independent windows keep the shared
-`Theme.Radius.panel` (26pt). The launcher header has no leading icon, with a full-width separator
+`Theme.Radius.panel` (26pt). The launcher header leads with its magnifying-glass icon, with a full-width separator
 under the search field. Its 45pt search row plus 10pt top inset place that divider 55pt from the
-window top; in the launcher, the placeholder begins 16pt from the left edge. The header and footer
+window top; in the launcher, the placeholder follows the icon slot. The header and footer
 both draw the `bottomBarSurface` tint over `panelScrim` and
 `GlassEffectView` with zero-radius glass, so scrolled rows never show through either bar and only the
 outer palette clip rounds them. Collapsed to the compact bar, the header drops both its surface and its
