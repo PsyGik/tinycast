@@ -9,9 +9,6 @@ struct CameraScreen: PaletteScreen {
     var primaryActionTitle: String { "Take Photo" }
     var hidesSearchField: Bool { true }
     var actsWithoutRows: Bool { true }
-    var footerContext: PaletteFooterContext? {
-        PaletteFooterContext(title: CommandID.openCamera.name, systemImage: CommandID.openCamera.sfSymbol)
-    }
 
     func actions(at selection: Int) -> PopoverMenuContent? {
         let live: Bool

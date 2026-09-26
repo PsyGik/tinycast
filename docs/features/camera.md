@@ -52,7 +52,7 @@ the video in once the capture session is running.
 | --- | --- |
 | `Service/CameraSession.swift` | access, start/stop, device cycling, the photo, and the box |
 | `UI/CameraCoordinator.swift` | palette session lifecycle, mirror state, and the clipboard write |
-| `UI/CameraScreen.swift` | full-bleed palette preview, back button, footer context, and Actions rows |
+| `UI/CameraScreen.swift` | full-bleed palette preview, back button, and Actions rows |
 | `UI/CameraStage.swift` | the shared stage — the hosted preview layer, or why there is no video |
 | `UI/ApertureReveal.swift` | the palette screen's lens iris over the stage while the camera warms up |
 | `UI/CameraPanel.swift` | Calendar's shared borderless preview panel: ↵ and Esc, cursor-screen centring |
