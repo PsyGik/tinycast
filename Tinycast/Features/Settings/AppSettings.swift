@@ -217,7 +217,16 @@ final class AppSettings {
 
     /// Scales the palette and its floating siblings only. Read through `InterfaceSize.metrics`.
     var interfaceSize: InterfaceSize {
-        didSet { defaults.set(interfaceSize.rawValue, forKey: Key.interfaceSize.rawValue) }
+        didSet {
+            defaults.set(interfaceSize.rawValue, forKey: Key.interfaceSize.rawValue)
+            let shift = Double(
+                (oldValue.metrics.size.panelWidth - interfaceSize.metrics.size.panelWidth) / 2)
+            if shift != 0 {
+                palettePositions = palettePositions.mapValues { offset in
+                    offset.count == 2 ? [offset[0] + shift, offset[1]] : offset
+                }
+            }
+        }
     }
 
     /// Summon the launcher as a slim search bar that expands into the full list on typing.
@@ -258,11 +267,24 @@ final class AppSettings {
         didSet { defaults.set(palettePositions, forKey: Key.palettePosition.rawValue) }
     }
 
+    var paletteExpandedCenterDisplays: Set<String> {
+        didSet {
+            defaults.set(
+                Array(paletteExpandedCenterDisplays),
+                forKey: Key.paletteExpandedCenterDisplays.rawValue)
+        }
+    }
+
     func palettePosition(on display: String) -> CGPoint? {
         palettePositions[display].flatMap { $0.count == 2 ? CGPoint(x: $0[0], y: $0[1]) : nil }
     }
 
-    func setPalettePosition(_ offset: CGPoint?, on display: String) {
+    func setPalettePosition(_ offset: CGPoint?, on display: String, expandedCenter: Bool) {
+        if offset != nil && expandedCenter {
+            paletteExpandedCenterDisplays.insert(display)
+        } else {
+            paletteExpandedCenterDisplays.remove(display)
+        }
         guard let offset else {
             palettePositions.removeValue(forKey: display)
             return
@@ -619,6 +641,8 @@ final class AppSettings {
         palettePositions =
             defaults.dictionary(forKey: Key.palettePosition.rawValue)
             as? [String: [Double]] ?? [:]
+        paletteExpandedCenterDisplays =
+            Set(defaults.stringArray(forKey: Key.paletteExpandedCenterDisplays.rawValue) ?? [])
         fileSearchEnabled = defaults.bool(forKey: Key.fileSearchEnabled.rawValue)
         // Unset seeds home; a stored empty array is a cleared list that searches nothing.
         fileSearchScopes =
