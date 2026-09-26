@@ -83,15 +83,15 @@ private struct RoomRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             EntryIconView(source: .symbol(symbol))
                 .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
-                    .font(metrics.typography.rowTitle)
+                    .font(metrics.typography.paletteRowTitle)
                     .lineLimit(1)
                 Text(subtitle)
-                    .font(metrics.typography.rowTrailing)
+                    .font(metrics.typography.paletteRowSecondary)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -99,7 +99,7 @@ private struct RoomRowView: View {
             if let layout {
                 HStack(spacing: metrics.spacing.sm) {
                     Text(layout.title)
-                        .font(metrics.typography.rowTrailing)
+                        .font(metrics.typography.paletteRowSecondary)
                         .foregroundStyle(.secondary)
                     // Tab changes the selected room's layout, so only that row advertises it.
                     if selected { KeyCapChip(text: "⇥", style: .outline) }
@@ -107,9 +107,10 @@ private struct RoomRowView: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.sm)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.row, style: .continuous).fill(fill)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
+                .fill(fill)
         )
         .armedHover($hovered)
         .accessibilityElement(children: .combine)

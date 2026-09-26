@@ -54,7 +54,7 @@ private struct WindowSwitchRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             Group {
                 if let iconURL = entry.iconURL {
                     EntryIconView(source: .file(stamp: entry.iconStamp), fileURL: iconURL)
@@ -65,20 +65,20 @@ private struct WindowSwitchRow: View {
             .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
             .opacity(entry.isMinimized ? 0.5 : 1)
             Text(entry.displayTitle)
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .foregroundStyle(entry.isMinimized ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: metrics.spacing.md)
             Text(trailing)
-                .font(metrics.typography.rowTrailing)
+                .font(metrics.typography.paletteRowSecondary)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

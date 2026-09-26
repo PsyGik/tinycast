@@ -51,7 +51,8 @@ struct QuicklinkList: View {
                     ForEach(rows) { row in
                         switch row {
                         case .header(let title):
-                            SectionHeader(title: title, isFirst: row.id == rows.first?.id)
+                            SectionHeader(
+                                title: title, isFirst: row.id == rows.first?.id, style: .palette)
                         case .item(let quicklink):
                             QuicklinkRow(
                                 quicklink: quicklink, selected: quicklink.id == selectedID
@@ -99,17 +100,17 @@ private struct QuicklinkRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             Image(nsImage: IconCache.symbolIcon(named: quicklink.symbol))
                 .resizable()
                 .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
             VStack(alignment: .leading, spacing: metrics.spacing.xxs) {
                 Text(quicklink.name)
-                    .font(metrics.typography.rowTitle)
+                    .font(metrics.typography.paletteRowTitle)
                     .lineLimit(1)
                 Text(quicklink.link)
-                    .font(metrics.typography.rowTrailing)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .font(metrics.typography.paletteRowSecondary)
+                    .foregroundStyle(Theme.Colors.textSecondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -128,9 +129,9 @@ private struct QuicklinkRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

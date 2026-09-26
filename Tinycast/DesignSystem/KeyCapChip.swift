@@ -11,13 +11,21 @@ struct KeyCapChip: View {
     enum Scale {
         case compact
         case standard
+        case footer
         case hero
 
-        func side(_ metrics: InterfaceMetrics) -> CGFloat {
+        func size(_ metrics: InterfaceMetrics) -> CGSize {
             switch self {
-            case .compact: metrics.size.compactKeyCap
-            case .standard: metrics.size.keyCap
-            case .hero: metrics.size.heroKeyCap
+            case .compact:
+                CGSize(width: metrics.size.compactKeyCap, height: metrics.size.compactKeyCap)
+            case .standard:
+                CGSize(width: metrics.size.keyCap, height: metrics.size.keyCap)
+            case .footer:
+                CGSize(
+                    width: metrics.size.footerKeyCapWidth,
+                    height: metrics.size.footerKeyCapHeight)
+            case .hero:
+                CGSize(width: metrics.size.heroKeyCap, height: metrics.size.heroKeyCap)
             }
         }
 
@@ -26,6 +34,7 @@ struct KeyCapChip: View {
             switch self {
             case .compact: metrics.typography.compactKeyCap
             case .standard: metrics.typography.keyCap
+            case .footer: metrics.typography.keyCap
             case .hero: metrics.typography.heroKeyCap
             }
         }
@@ -41,12 +50,13 @@ struct KeyCapChip: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: metrics.radius.keyCap, style: .continuous)
+        let size = scale.size(metrics)
         Text(text)
             .font(scale.font(metrics))
             .foregroundStyle(Theme.Colors.textSecondary)
             .offset(y: text == "↵" ? Self.returnGlyphDrop : 0)
             .padding(.horizontal, metrics.spacing.xs)
-            .frame(minWidth: scale.side(metrics), minHeight: scale.side(metrics))
+            .frame(minWidth: size.width, minHeight: size.height)
             .background {
                 switch style {
                 case .filled: shape.fill(Theme.Colors.controlSurface)

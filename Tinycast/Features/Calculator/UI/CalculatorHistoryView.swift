@@ -65,7 +65,8 @@ struct CalculatorHistoryList: View {
                     ForEach(rows) { row in
                         switch row {
                         case .header(let title):
-                            SectionHeader(title: title, isFirst: row.id == rows.first?.id)
+                            SectionHeader(
+                                title: title, isFirst: row.id == rows.first?.id, style: .palette)
                         case .calc(let result):
                             CalculatorCard(result: result, selected: calcSelected)
                                 .contentShape(Rectangle())
@@ -120,7 +121,7 @@ private struct CalcHistoryRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             RoundedRectangle(cornerRadius: metrics.radius.thumbnail, style: .continuous)
                 .fill(Theme.Colors.controlSurface)
                 .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
@@ -131,19 +132,19 @@ private struct CalcHistoryRow: View {
                         .foregroundStyle(.secondary)
                 )
             Text(format.localizedExpression(entry.expression))
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.tail)
             Spacer(minLength: metrics.spacing.xl)
             Text(format.localized(entry.result))
-                .font(metrics.typography.rowTitle.weight(.semibold))
+                .font(metrics.typography.paletteRowTitle.weight(.semibold))
                 .lineLimit(1)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

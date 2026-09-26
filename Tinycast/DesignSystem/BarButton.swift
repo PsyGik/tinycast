@@ -43,6 +43,7 @@ struct BarButton<Label: View>: View {
     var isSelected = false
     /// `sm` padding, so a 16-point glyph frame makes a square as tall as the bar.
     var isCompact = false
+    var trailingInset: CGFloat?
     let action: () -> Void
     @ViewBuilder let label: Label
     @State private var hovered = false
@@ -52,7 +53,10 @@ struct BarButton<Label: View>: View {
         let shape = chrome.shape(metrics)
         return Button(action: action) {
             label
-                .padding(.horizontal, isCompact ? metrics.spacing.sm : metrics.spacing.md)
+                .padding(.leading, isCompact ? metrics.spacing.sm : metrics.spacing.md)
+                .padding(
+                    .trailing,
+                    trailingInset ?? (isCompact ? metrics.spacing.sm : metrics.spacing.md))
                 .frame(height: metrics.size.barButtonHeight)
                 .contentShape(shape)
                 .background(shape.fill(fill))

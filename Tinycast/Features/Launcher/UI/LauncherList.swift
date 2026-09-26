@@ -142,12 +142,14 @@ struct LauncherList: View {
                             ForEach(rows) { row in
                                 switch row {
                                 case .header(let title):
-                                    SectionHeader(title: title, isFirst: row.id == rows.first?.id)
+                                    SectionHeader(
+                                        title: title, isFirst: row.id == rows.first?.id,
+                                        style: .palette)
                                 case .fallbackHeader(let title):
                                     SectionHeader(
                                         title: title, isFirst: row.id == rows.first?.id,
                                         configure: fallbacks?.onConfigure,
-                                        configureHelp: "Configure Fallbacks…")
+                                        configureHelp: "Configure Fallbacks…", style: .palette)
                                 case .card(let card):
                                     LeadCardView(card: card, selected: cardSelected)
                                         .contentShape(Rectangle())
@@ -250,7 +252,7 @@ private struct AppRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             AppIconView(app: app, pointSize: metrics.size.rowIcon)
                 .frame(width: metrics.size.rowIcon, height: metrics.size.rowIcon)
                 .overlay(alignment: .bottom) {
@@ -267,17 +269,17 @@ private struct AppRow: View {
                 }
             }
             Text(app.name)
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
             if let subtitle = app.subtitle {
                 Text(subtitle)
-                    .font(metrics.typography.rowTrailing)
+                    .font(metrics.typography.paletteRowSecondary)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             if let alias = aliases.alias(for: app.preferenceKey) {
                 Text(alias)
-                    .font(metrics.typography.rowTrailing)
+                    .font(metrics.typography.paletteRowSecondary)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -291,7 +293,7 @@ private struct AppRow: View {
             Spacer()
             if let refresh = app.backgroundRefresh {
                 ExtensionRefreshIndicator(state: refresh)
-                    .font(metrics.typography.rowTrailing)
+                    .font(metrics.typography.paletteRowSecondary)
             }
             // Holding ⌘ turns the trailing label into the chord that launches this row.
             if let slot, palette.commandHeld {
@@ -303,14 +305,14 @@ private struct AppRow: View {
                 MeetingEntryContent(entryID: app.id) { MeetingTiming(meeting: $0, now: $1) }
             } else {
                 Text(app.kindLabel)
-                    .font(metrics.typography.rowTrailing)
+                    .font(metrics.typography.paletteRowSecondary)
                     .foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

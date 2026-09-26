@@ -48,7 +48,8 @@ struct ScheduleList: View {
                     ForEach(rows) { row in
                         switch row {
                         case .header(let title):
-                            SectionHeader(title: title, isFirst: row.id == rows.first?.id)
+                            SectionHeader(
+                                title: title, isFirst: row.id == rows.first?.id, style: .palette)
                         case .meeting(let meeting):
                             MeetingRow(
                                 meeting: meeting, now: now, selected: meeting.id == selectedID
@@ -89,7 +90,7 @@ private struct MeetingRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.lg) {
+        HStack(spacing: metrics.spacing.xl) {
             SymbolImage(
                 name: meeting.link?.provider.sfSymbol ?? "calendar", size: metrics.size.rowIcon * 0.7
             )
@@ -97,15 +98,15 @@ private struct MeetingRow: View {
             .foregroundStyle(meeting.isInProgress(now: now) ? Theme.Colors.brand : .secondary)
             CalendarBar(color: meeting.calendarColor)
             Text(meeting.title)
-                .font(metrics.typography.rowTitle)
+                .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
             Spacer(minLength: metrics.spacing.md)
             MeetingTiming(meeting: meeting, now: now)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.lg)
+        .padding(.vertical, metrics.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

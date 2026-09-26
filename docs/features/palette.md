@@ -57,9 +57,24 @@ only the closure wiring; the behaviour is `PaletteCoordinator`'s.
 
 The root clip uses `Theme.Radius.palettePanel` (12pt); independent windows keep the shared
 `Theme.Radius.panel` (26pt). The launcher header has no leading icon, with a full-width separator
-under the search field. Other modes retain their back chevron. The footer draws its own `panelScrim`
-over `GlassEffectView`, then its subtle `bottomBarSurface` tint, so list rows never show through it in
-Light or Dark.
+under the search field. Its 45pt search row plus 10pt top inset place that divider 55pt from the
+window top; in the launcher, the placeholder begins 16pt from the left edge. The header and footer
+both draw the `bottomBarSurface` tint over `panelScrim` and
+`GlassEffectView`, so scrolled rows never show through either bar. Other modes retain their back
+chevron.
+
+The footer is 39pt tall, with a full-width top hairline. Its dimmed 18pt app mark sits 12pt from the
+left edge. The primary label is 12pt semibold, followed by a 24×22pt filled keycap; the 10pt separator
+is 13pt from that keycap and from Actions. Actions uses an 11pt label-to-keycap gap, two 24×22pt
+keycaps with a 2.5pt gap, and the final cap ends 12pt from the right edge. All footer content shares
+one vertical centre line.
+
+Opening or resetting to launcher row zero scrolls to the list's origin anchor, which is placed after
+the list's top padding. This leaves the first section label fully below the header divider.
+
+Palette list rows share a 24pt leading slot, 12pt icon gap, 8pt horizontal and vertical insets, and
+6pt selection corner. Single-line rows are 40pt tall with 14pt medium primary text and 13pt regular
+secondary labels; multiline rows retain their natural height. Extension rows keep their own style.
 
 ## Screens
 

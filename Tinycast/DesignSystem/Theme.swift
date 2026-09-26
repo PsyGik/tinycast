@@ -10,6 +10,11 @@ enum Theme {
         static let md: CGFloat = 8
         static let lg: CGFloat = 10
         static let xl: CGFloat = 12
+        static let paletteSectionSpacing: CGFloat = 18
+        static let footerPrimaryKeyCapGap: CGFloat = 10.5
+        static let footerSeparatorGap: CGFloat = 7
+        static let footerActionsKeyCapGap: CGFloat = 11
+        static let footerKeyCapGap: CGFloat = 2.5
         /// Outer inset of Tinycast's dialog content.
         static let dialogInset: CGFloat = 18
         static let xxl: CGFloat = 20
@@ -33,6 +38,7 @@ enum Theme {
         static let panel: CGFloat = 26
         static let palettePanel: CGFloat = 12
         static let listRow: CGFloat = 8
+        static let paletteListRow: CGFloat = 6
         static let row: CGFloat = 10
         /// Emoji tiles are roomier than list rows, so their corners take one larger step.
         static let emojiCell: CGFloat = 12
@@ -92,7 +98,7 @@ enum Theme {
         static let noteTrafficLightInset: CGFloat = 20
         /// Fraction of visible height above the palette's top edge; it grows downward.
         static let paletteTopMarginFraction: CGFloat = 0.18
-        static let headerHeight: CGFloat = 44
+        static let headerHeight: CGFloat = 45
         /// Fixed slot for the header glyph, so the field starts at one x in every mode.
         static let headerIconSlot: CGFloat = 22
         /// The narrowest a strip squeezes the search field to: the caret and a few characters.
@@ -108,7 +114,7 @@ enum Theme {
         /// Dash and gap of the drop guides, equal so the line reads evenly.
         static let dropGuideDash: CGFloat = 4
         static let dropGuideWidth: CGFloat = 2
-        static let bottomBarHeight: CGFloat = 52
+        static let bottomBarHeight: CGFloat = 39
         /// A `BarButton`'s hover capsule, shared by the footer group and the header's filter.
         static let barButtonHeight: CGFloat = 28
         static let rowIcon: CGFloat = 24
@@ -120,6 +126,8 @@ enum Theme {
         /// The same bar in the menu bar and its menu, sized to the system's 13pt menu text.
         static let menuBarCalendarBarHeight: CGFloat = 12
         static let keyCap: CGFloat = 18
+        static let footerKeyCapWidth: CGFloat = 24
+        static let footerKeyCapHeight: CGFloat = 22
         /// Settings shortcut-recorder keycap — smaller than the palette's `keyCap` chip.
         static let recorderKeyCap: CGFloat = 16
         /// Fixed so the recorder can't resize as its binding changes.
@@ -182,6 +190,8 @@ enum Theme {
         static let menuBrandIcon: CGFloat = 14
         /// The same mark in a header bar button, matched to the callout symbol beside it.
         static let barBrandIcon: CGFloat = 12
+        static let footerBrandIcon: CGFloat = 18
+        static let footerSeparatorHeight: CGFloat = 10
         /// A sent image in the transcript; a staged one is a small preview in a composer pill.
         static let chatImageThumb: CGFloat = 96
         static let chatAttachmentGlyph: CGFloat = 16
@@ -366,15 +376,20 @@ enum Theme {
     /// System text styles (not hardcoded sizes) so the UI honors Dynamic Type.
     enum Typography {
         /// One size, two frameworks: `TextTrailingDragHandle` measures what the field renders.
-        static let searchFieldSize: CGFloat = 20
+        static let searchFieldSize: CGFloat = 18
         static let searchField = Font.system(size: searchFieldSize, weight: .regular)
         /// `NSFont` is not `Sendable`, hence the isolation; every reader is a view anyway.
         @MainActor static let searchFieldNSFont = NSFont.systemFont(
             ofSize: searchFieldSize, weight: .regular)
         static let headerIcon = Font.system(size: 18, weight: .medium)
         static let rowTitle = Font.body
+        static let paletteRowTitleSize: CGFloat = 14
+        static let paletteRowTitle = Font.system(size: paletteRowTitleSize, weight: .medium)
         static let rowTrailing = Font.callout
         static let sectionHeader = Font.subheadline.weight(.medium)
+        static let paletteSectionHeader = Font.callout.weight(.semibold)
+        static let paletteRowSecondary = Font.body
+        static let footerPrimaryLabel = Font.callout.weight(.semibold)
         /// A borderless panel's own title, which names the surface rather than a section inside it.
         static let panelTitle = Font.headline
         /// The big value line on the calculator answer card (both source and target sides).
