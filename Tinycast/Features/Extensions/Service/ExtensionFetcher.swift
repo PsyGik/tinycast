@@ -74,6 +74,7 @@ enum ExtensionAsyncProcess {
         let task: Process
         let stdout: Pipe
         let stderr: Pipe
+        let exit: ProcessExit
 
         /// A child filling the 64 KB pipe blocks before it can exit, so the drain comes first.
         func collect(timeout: Double?) -> [String: Any] {
@@ -81,7 +82,7 @@ enum ExtensionAsyncProcess {
             if let timeout, timeout > 0 { watchdog = terminationWatchdog(after: timeout / 1000) }
             let outData = stdout.fileHandleForReading.readDataToEndOfFile()
             let errData = stderr.fileHandleForReading.readDataToEndOfFile()
-            task.waitUntilExit()
+            exit.wait()
             watchdog?.cancel()
 
             return [

@@ -64,7 +64,7 @@ enum ShellCommandRunner {
     private static let unlinedLimit = 4 * 1024
     /// How long a stopped command is given to leave politely before it is killed.
     private static let stopGrace: DispatchTimeInterval = .seconds(2)
-    /// `waitUntilExit` blocks, so it stays off the cooperative pool; concurrent, not serial.
+    /// The exit wait blocks, so it stays off the cooperative pool; concurrent, not serial.
     private static let queue = DispatchQueue(
         label: "com.tinycast.shell-command", qos: .userInitiated, attributes: .concurrent)
 
@@ -113,12 +113,13 @@ enum ShellCommandRunner {
             errors?.remove()
         }
 
+        let exit = ProcessExit(of: process)
         do {
             try process.run()
         } catch {
             return ShellCommandResult(termination: .launchFailed(error.localizedDescription))
         }
-        process.waitUntilExit()
+        exit.wait()
 
         return ShellCommandResult(
             termination: .exited(status: process.terminationStatus),
@@ -292,7 +293,7 @@ enum ShellCommandRunner {
         [loadingShellEnvironment ? "-ilc" : "-lc", command, "tinycast"] + arguments
     }
 
-    /// A temp file, not a `Pipe`: nothing drains a pipe until `waitUntilExit` returns.
+    /// A temp file, not a `Pipe`: nothing drains a pipe until the exit wait returns.
     private final class StreamCapture: @unchecked Sendable {
         let url: URL
         let handle: FileHandle
