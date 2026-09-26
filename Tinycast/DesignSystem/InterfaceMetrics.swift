@@ -37,6 +37,8 @@ struct InterfaceMetrics: Equatable, Sendable {
         let scale: CGFloat
 
         var panel: CGFloat { scaledPoints(Theme.Radius.panel, scale) }
+        var palettePanel: CGFloat { scaledPoints(Theme.Radius.palettePanel, scale) }
+        var listRow: CGFloat { scaledPoints(Theme.Radius.listRow, scale) }
         var row: CGFloat { scaledPoints(Theme.Radius.row, scale) }
         var emojiCell: CGFloat { scaledPoints(Theme.Radius.emojiCell, scale) }
         var menu: CGFloat { scaledPoints(Theme.Radius.menu, scale) }

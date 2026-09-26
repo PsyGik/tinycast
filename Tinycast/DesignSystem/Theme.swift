@@ -29,6 +29,8 @@ enum Theme {
 
     enum Radius {
         static let panel: CGFloat = 26
+        static let palettePanel: CGFloat = 12
+        static let listRow: CGFloat = 8
         static let row: CGFloat = 10
         /// Emoji tiles are roomier than list rows, so their corners take one larger step.
         static let emojiCell: CGFloat = 12
@@ -397,6 +399,7 @@ enum Theme {
             dark: .srgbInk(0, alpha: 0.72), light: .srgbInk(1, alpha: 0.72))
         static let menuHover = ramp(dark: 0.10, light: 0.09)
         static let separator = ramp(dark: 0.10, light: 0.12)
+        static let bottomBarSurface = ramp(dark: 0.035, light: 0.03)
         /// Small control surfaces: kbd chips, glyph tiles.
         static let controlSurface = ramp(dark: 0.10, light: 0.08)
         /// Control borders: outlined kbd chips.

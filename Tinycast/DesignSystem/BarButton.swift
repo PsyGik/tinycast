@@ -18,10 +18,10 @@ private struct HeaderMenuSymbol: View {
     }
 }
 
-/// A bar control's hover chrome; footer pills and header pop-ups share `barControl` as one family.
 enum BarButtonChrome {
     case capsule
     case rounded
+    case flat
 
     func shape(_ metrics: InterfaceMetrics) -> AnyShape {
         switch self {
@@ -30,6 +30,9 @@ enum BarButtonChrome {
         case .rounded:
             return AnyShape(
                 RoundedRectangle(cornerRadius: metrics.radius.barControl, style: .continuous))
+        case .flat:
+            return AnyShape(
+                RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous))
         }
     }
 }

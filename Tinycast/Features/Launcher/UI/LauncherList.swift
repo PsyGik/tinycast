@@ -265,11 +265,6 @@ private struct AppRow: View {
                     .font(metrics.typography.rowTrailing)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .padding(.horizontal, metrics.spacing.sm)
-                    .padding(.vertical, metrics.spacing.xxs)
-                    .background(
-                        RoundedRectangle(cornerRadius: metrics.radius.menu, style: .continuous)
-                            .fill(Theme.Colors.controlSurface))
             }
             if let caps = shortcutCaps {
                 HStack(spacing: metrics.spacing.xxs) {
@@ -298,9 +293,9 @@ private struct AppRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.sm)
+        .padding(.vertical, metrics.spacing.lg)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.row, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

@@ -279,7 +279,8 @@ struct RootPaletteView: View {
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if !isCollapsed {
                         bottomBar(
-                            pillLabel: screen.primaryActionTitle, showActionGroup: showActionGroup,
+                            primaryActionLabel: screen.primaryActionTitle,
+                            showActionGroup: showActionGroup,
                             formPrimaryShortcut: isExtensionForm,
                             showActions: screen.hasActions(at: sel))
                     }
@@ -319,7 +320,9 @@ struct RootPaletteView: View {
                             ? Theme.Duration.dialogEnter : Theme.Duration.dialogExit),
                     value: core.isDimmingPaletteForDialog
                 )
-                .clipShape(RoundedRectangle(cornerRadius: metrics.radius.panel, style: .continuous))),
+                .clipShape(
+                    RoundedRectangle(cornerRadius: metrics.radius.palettePanel, style: .continuous)
+                )),
             selection: sel)
     }
 
@@ -630,12 +633,6 @@ struct RootPaletteView: View {
             // Every sub-screen leaves the same way, so the slot reads the same on all of them.
             if vm.mode != .launcher {
                 HeaderBackButton(help: backHelp, action: goBack)
-            } else {
-                Image(systemName: vm.mode.systemImage)
-                    .font(metrics.typography.headerIcon)
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.secondary)
-                    .frame(width: metrics.size.headerIconSlot)
             }
             headerGutter(width: metrics.spacing.md)
             // One structural position: a field inside a branch loses first responder when it flips.
@@ -715,6 +712,11 @@ struct RootPaletteView: View {
         .frame(height: metrics.size.headerHeight)
         .padding(.top, metrics.size.headerPadding)
         .frame(maxWidth: .infinity)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Theme.Colors.separator)
+                .frame(height: Theme.Size.hairline)
+        }
         // Set after the show, so the field it names is focused rather than the search field.
         .onChange(of: vm.pendingArgumentEntryID) { focusPendingArgument() }
     }
@@ -781,7 +783,8 @@ struct RootPaletteView: View {
         let font = metrics.typography.searchFieldNSFont
         let text = vm.query.isEmpty ? searchPrompt : vm.query
         let typed = (text as NSString).size(withAttributes: [.font: font]).width
-        let chrome = metrics.size.headerIconSlot + metrics.spacing.md * 4
+        let leadingSlot = vm.mode == .launcher ? 0 : metrics.size.headerIconSlot
+        let chrome = leadingSlot + metrics.spacing.md * 4
         // +3pt so the caret sits after the last glyph rather than on top of it.
         return min(
             max(typed + metrics.scaled(3), metrics.scaled(18)),
@@ -841,71 +844,78 @@ struct RootPaletteView: View {
             }
     }
 
-    /// The Uninstall screen's primary action is destructive, so its pill isn't white.
     private var pillTint: Color {
         vm.mode == .uninstall ? Theme.Colors.destructive : .primary
     }
 
     private func bottomBar(
-        pillLabel: String, showActionGroup: Bool, formPrimaryShortcut: Bool, showActions: Bool
+        primaryActionLabel: String, showActionGroup: Bool, formPrimaryShortcut: Bool,
+        showActions: Bool
     ) -> some View {
-        // Floating controls, no bar; the edge dissolve ghosts the rows passing beneath.
         HStack(spacing: 0) {
             appMenuButton
             Spacer()
             if showActionGroup {
                 actionGroup(
-                    pillLabel: pillLabel, formPrimaryShortcut: formPrimaryShortcut,
+                    primaryActionLabel: primaryActionLabel,
+                    formPrimaryShortcut: formPrimaryShortcut,
                     showActions: showActions)
             }
         }
         .padding(.horizontal, metrics.spacing.md)
         .frame(height: metrics.size.bottomBarHeight)
         .frame(maxWidth: .infinity)
+        .background(PaletteFooterSurface(transparency: settings.paletteTransparency))
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Theme.Colors.separator)
+                .frame(height: Theme.Size.hairline)
+        }
     }
 
     private var appMenuButton: some View {
-        MenuCircleButton {
+        FooterAppMenuButton {
             if openMenu == .app { closeMenus() } else { open(.app, highlighting: 0) }
         }
     }
 
-    /// The footer control group: primary action and the Actions toggle sharing one glass capsule.
     private func actionGroup(
-        pillLabel: String, formPrimaryShortcut: Bool, showActions: Bool
+        primaryActionLabel: String, formPrimaryShortcut: Bool, showActions: Bool
     ) -> some View {
-        HStack(spacing: 2) {
-            BarButton(action: activateSelection) {
+        HStack(spacing: 0) {
+            BarButton(chrome: .flat, isCompact: true, action: activateSelection) {
                 HStack(spacing: metrics.spacing.sm) {
-                    Text(pillLabel)
+                    Text(primaryActionLabel)
                         .font(metrics.typography.bar)
                         .foregroundStyle(pillTint)
                     if formPrimaryShortcut {
                         HStack(spacing: metrics.spacing.xxs) {
-                            KeyCapChip(text: "⌘", style: .outline)
-                            KeyCapChip(text: "↵", style: .outline)
+                            KeyCapChip(text: "⌘", style: .filled)
+                            KeyCapChip(text: "↵", style: .filled)
                         }
                     } else {
-                        KeyCapChip(text: "↵", style: .outline)
+                        KeyCapChip(text: "↵", style: .filled)
                     }
                 }
             }
             if showActions {
-                BarButton(action: toggleActions) {
+                Rectangle()
+                    .fill(Theme.Colors.separator)
+                    .frame(width: Theme.Size.hairline, height: metrics.size.barButtonHeight)
+                    .padding(.horizontal, metrics.spacing.xs)
+                BarButton(chrome: .flat, isCompact: true, action: toggleActions) {
                     HStack(spacing: metrics.spacing.sm) {
                         Text("Actions")
                             .font(metrics.typography.bar)
                             .foregroundStyle(Theme.Colors.textSecondary)
                         HStack(spacing: metrics.spacing.xxs) {
-                            KeyCapChip(text: "⌘", style: .outline)
-                            KeyCapChip(text: "K", style: .outline)
+                            KeyCapChip(text: "⌘", style: .filled)
+                            KeyCapChip(text: "K", style: .filled)
                         }
                     }
                 }
             }
         }
-        .padding(metrics.spacing.xs)
-        .frosted(in: Capsule())
     }
 
     /// The one path opening the Actions menu, sampling the state its rows depend on.
@@ -1379,26 +1389,25 @@ private struct SearchFieldHiding: ViewModifier {
     }
 }
 
-/// The footer's menu circle; hover lives here, so a sweep never re-renders the body.
-private struct MenuCircleButton: View {
+/// The footer's app-menu button keeps its hover state local to the control.
+private struct FooterAppMenuButton: View {
     let action: () -> Void
     @State private var hovered = false
     @Environment(\.metrics) private var metrics
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 3) {
-                Capsule().frame(width: 14, height: 1.5)
-                Capsule().frame(width: 8, height: 1.5)
-            }
-            .foregroundStyle(Theme.Colors.textSecondary)
-            .frame(width: metrics.size.menuButton, height: metrics.size.menuButton)
-            .background(Circle().fill(hovered ? Theme.Colors.rowHover : Color.clear))
-            .contentShape(.circle)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .scaledToFit()
+                .frame(width: metrics.size.barBrandIcon, height: metrics.size.barBrandIcon)
+                .opacity(hovered ? 0.75 : 0.45)
+                .frame(width: metrics.size.menuButton, height: metrics.size.menuButton)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hovered = $0 }
-        .frosted(in: Circle())
+        .accessibilityLabel("Tinycast menu")
     }
 }
 
