@@ -333,6 +333,7 @@
 		743C70ACA40F61F635DB0B55 /* CalendarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D0A2005448E6F88C3F78489 /* CalendarStore.swift */; };
 		74B73339F7D3DA29E32827A9 /* CameraScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636D96EFB3B7676D0E47E93E /* CameraScreen.swift */; };
 		74BE9E8319C8302EF525E6B2 /* QuicklinkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685FB7FD7E4E5BE6606440D0 /* QuicklinkStore.swift */; };
+		75139ED082B4252F3BB6DFC8 /* ApertureReveal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E145FD790EFB3E61BDBCC2 /* ApertureReveal.swift */; };
 		753FEBB891DBCE13C4C59935 /* AIConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DE1B6753513C787B3FFE423 /* AIConnection.swift */; };
 		758558CAADB5A358C290364C /* UnitCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF447647B325A119F2B3BCD1 /* UnitCategory.swift */; };
 		75AED41394E66D6E9CBDA7EA /* NotesRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F84B7743B803F55C41D5C4A /* NotesRepository.swift */; };
@@ -1131,6 +1132,7 @@
 		85DAEE77ABAC4260C95F9AB5 /* AIProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderFactory.swift; sourceTree = "<group>"; };
 		86545F54669A075FBDA5D1F1 /* CalculatorHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorHistoryScreen.swift; sourceTree = "<group>"; };
 		867B0475618A01A765AC0DC5 /* WindowSwitchOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSwitchOrder.swift; sourceTree = "<group>"; };
+		86E145FD790EFB3E61BDBCC2 /* ApertureReveal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApertureReveal.swift; sourceTree = "<group>"; };
 		8756FBB625DFAE931D8D5D9D /* ColorSpaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorSpaces.swift; sourceTree = "<group>"; };
 		87C6479121B0371B3491FA8A /* AIConnectionEditorPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConnectionEditorPanel.swift; sourceTree = "<group>"; };
 		87F282D4BBC2F147D3A98FFB /* ExtensionCleanup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionCleanup.swift; sourceTree = "<group>"; };
@@ -2503,6 +2505,7 @@
 		8DA48D9E1E6D368AAFF3E0AF /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				86E145FD790EFB3E61BDBCC2 /* ApertureReveal.swift */,
 				7EA2B3D30D3BAD3A802F1F40 /* CameraButton.swift */,
 				A5873BB8728FD8BC5D256A21 /* CameraCoordinator.swift */,
 				E0BE684A650197A714D6858A /* CameraPanel.swift */,
@@ -3464,6 +3467,7 @@
 				3FD96768E81105B8EC348499 /* ActionMenuSearchQuery.swift in Sources */,
 				16F81066F7B59AD44CE09261 /* ActivationPolicy.swift in Sources */,
 				D68E7585496722BEC72E788C /* AliasStore.swift in Sources */,
+				75139ED082B4252F3BB6DFC8 /* ApertureReveal.swift in Sources */,
 				EA89498DA03BDFA3858144BF /* AppActionsMenu.swift in Sources */,
 				5E7ABF41CE97983E05653D69 /* AppAppearance.swift in Sources */,
 				E8CB7624CCA5905AF1A4FAD9 /* AppCore.swift in Sources */,
