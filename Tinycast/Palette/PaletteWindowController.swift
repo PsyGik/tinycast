@@ -199,6 +199,17 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         isPoppedToRoot = true
     }
 
+    /// The same resolution RootPaletteView's Escape uses, so the Escape Key setting still decides.
+    private func escapeFocuslessScreen() {
+        let behavior = core.settings.escapeKeyBehavior
+        let action = PaletteEscapeAction.resolve(
+            menuOpen: false, menuQuery: "", argumentFocused: false, query: "",
+            mode: core.palette.mode, canGoBack: core.palette.canGoBack, behavior: behavior)
+        if action == .goBack, core.palette.pop() { return }
+        core.paletteCoordinator.hidePalette()
+        if behavior == .closeAndPopToRoot { popToRootNow() }
+    }
+
     /// Skip the Pop to Root Search delay, for a close that means to reset as well as hide.
     func popToRootNow() {
         guard !core.extensions.isAuthorizing else { return }
@@ -351,8 +362,14 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         installPasteMonitor()
         // Handled at the panel: a focused preview answers Escape before the palette's own handler.
         panel.onEscape = { [weak self] in
-            guard let self, core.palette.fileSearchQuickLook else { return false }
-            core.palette.fileSearchQuickLook = false
+            guard let self else { return false }
+            if core.palette.fileSearchQuickLook {
+                core.palette.fileSearchQuickLook = false
+                return true
+            }
+            // The camera screen has nothing focusable, so SwiftUI's own Escape handler never fires.
+            guard core.palette.mode == .camera, !core.palette.menuOpen else { return false }
+            escapeFocuslessScreen()
             return true
         }
         // Handled at the panel: the field editor or a missing main menu eats these first.
