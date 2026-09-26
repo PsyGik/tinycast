@@ -88,6 +88,8 @@ struct RootPaletteView: View {
             return ScheduleScreen(
                 store: calendarStore, clock: meetingClock, core: core, vm: vm,
                 openActions: openActions)
+        case .camera:
+            return CameraScreen(coordinator: core.cameraCoordinator, goBack: goBack)
         case .clipboard:
             return ClipboardScreen(
                 store: store, core: core, vm: vm, openActions: openActions,
@@ -287,14 +289,20 @@ struct RootPaletteView: View {
                         screen.body(selection: sel, scroll: scroll)
                     }
                 }
-                .safeAreaInset(edge: .top, spacing: 0) { header }
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    header
+                        .opacity(screen.hidesSearchField ? 0 : 1)
+                        .frame(height: screen.hidesSearchField ? 0 : nil)
+                        .allowsHitTesting(!screen.hidesSearchField)
+                }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if !isCollapsed {
                         bottomBar(
                             primaryActionLabel: screen.primaryActionTitle,
                             showActionGroup: showActionGroup,
                             formPrimaryShortcut: isExtensionForm,
-                            showActions: screen.hasActions(at: sel))
+                            showActions: screen.hasActions(at: sel),
+                            footerContext: screen.footerContext)
                     }
                 }
                 // The panel has no title bar, so this thin top margin is the only place left to grab it.
@@ -425,7 +433,9 @@ struct RootPaletteView: View {
                 if vm.mode != .extensionCommand, extensions.running != nil, !extensions.isAuthorizing {
                     Task { await extensions.stop() }
                 }
+                if vm.mode != .camera { core.cameraCoordinator.stop() }
             }
+            .onChange(of: vm.isVisible) { _, visible in if !visible { core.cameraCoordinator.stop() } }
             // `prepare` may change nothing else, so this still lands the list as freshly opened.
             .onChange(of: vm.resetToken) {
                 if menuOpen { closeMenus() }
@@ -873,10 +883,10 @@ struct RootPaletteView: View {
 
     private func bottomBar(
         primaryActionLabel: String, showActionGroup: Bool, formPrimaryShortcut: Bool,
-        showActions: Bool
+        showActions: Bool, footerContext: PaletteFooterContext?
     ) -> some View {
         HStack(spacing: 0) {
-            appMenuButton
+            appMenuButton(context: footerContext)
             Spacer()
             if showActionGroup {
                 actionGroup(
@@ -891,10 +901,10 @@ struct RootPaletteView: View {
         .background(PaletteBarSurface(dividerEdge: .top))
     }
 
-    private var appMenuButton: some View {
+    private func appMenuButton(context: PaletteFooterContext?) -> some View {
         FooterAppMenuButton {
             if openMenu == .app { closeMenus() } else { open(.app, highlighting: 0) }
-        }
+        } context: { context }
     }
 
     private func actionGroup(
@@ -1455,19 +1465,28 @@ private struct SearchFieldHiding: ViewModifier {
 /// The footer's app-menu button keeps its hover state local to the control.
 private struct FooterAppMenuButton: View {
     let action: () -> Void
+    let context: () -> PaletteFooterContext?
     @State private var hovered = false
     @Environment(\.metrics) private var metrics
 
     var body: some View {
         Button(action: action) {
-            SymbolImage(name: "bolt.fill", size: metrics.size.footerBrandIcon, monochrome: true)
-                .foregroundStyle(hovered ? Theme.Colors.textSecondary : Theme.Colors.textTertiary)
-                .frame(
-                    width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
-                .frame(
-                    width: metrics.size.menuButton, height: metrics.size.menuButton,
-                    alignment: .leading)
-                .contentShape(Rectangle())
+            Group {
+                if let context = context() {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        SymbolImage(name: context.systemImage, size: 20, monochrome: true)
+                        Text(context.title).font(metrics.typography.rowTrailing)
+                    }
+                    .foregroundStyle(hovered ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+                } else {
+                    SymbolImage(name: "bolt.fill", size: metrics.size.footerBrandIcon, monochrome: true)
+                        .foregroundStyle(hovered ? Theme.Colors.textSecondary : Theme.Colors.textTertiary)
+                        .frame(width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
+                        .frame(width: metrics.size.menuButton, height: metrics.size.menuButton,
+                               alignment: .leading)
+                }
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hovered = $0 }

@@ -113,6 +113,7 @@ private extension MenuPanelCorner {
     var actsWithoutRows: Bool { get }
     /// Where an open, a new query or a new filter puts the highlight; past row 0 it is centred.
     var landingSelection: Int { get }
+    var footerContext: PaletteFooterContext? { get }
 
     /// False when the selection can't be acted on, which hides the footer pill and swallows ⌘K.
     func hasPrimaryAction(at selection: Int) -> Bool
@@ -156,6 +157,7 @@ extension PaletteScreen {
     var hidesSearchField: Bool { false }
     var actsWithoutRows: Bool { false }
     var landingSelection: Int { 0 }
+    var footerContext: PaletteFooterContext? { nil }
     func ownsVerticalKeys(at selection: Int) -> Bool { false }
     func tabTarget(from selection: Int, backwards: Bool) -> Int? { nil }
     func tab(at selection: Int, backwards: Bool) -> Bool { false }
@@ -181,6 +183,11 @@ extension PaletteScreen {
     )
         -> PaletteHeaderAccessory?
     { nil }
+}
+
+struct PaletteFooterContext {
+    let title: String
+    let systemImage: String
 }
 
 extension PopoverMenuContent {
