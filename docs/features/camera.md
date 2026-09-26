@@ -19,7 +19,10 @@ navigation, hides the palette search header, and keeps the normal 39pt footer be
   `AVCaptureSession`, so every open builds its own: a reused session with no output of its own — the
   preview's — restarts to a black stage.
 - **Escape, the back button, and the Actions menu return through palette navigation.** They use the
-  existing Escape/back paths, so the configured Escape behavior remains honored. Taking a photo closes
+  existing Escape/back paths, so the configured Escape behavior remains honored. The screen has no
+  focusable view, so SwiftUI's `onKeyPress(.escape)` never fires there; `PaletteWindowController`
+  resolves a bare Escape at the panel's `onEscape` instead, through the same `PaletteEscapeAction`,
+  whenever the camera screen is up with no menu open. Taking a photo closes
   the palette after copying it, and the mode/hide lifecycle releases the camera light.
 - **The preview and the photo are mirrored together.** Mirroring is `isVideoMirrored` on a connection
   — the preview layer's, and the photo output's at capture time — never a `scaleEffect` on the view,
