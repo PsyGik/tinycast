@@ -728,8 +728,10 @@ struct RootPaletteView: View {
         // Identical metrics in both states, so typing can't move the search bar.
         .frame(height: metrics.size.headerHeight)
         .padding(.top, metrics.size.headerPadding)
+        .padding(.bottom, isCollapsed ? metrics.size.headerPadding : 0)
         .frame(maxWidth: .infinity)
-        .background(PaletteBarSurface(dividerEdge: .bottom))
+        // Collapsed, nothing sits below the bar to divide it from or mask.
+        .background { if !isCollapsed { PaletteBarSurface(dividerEdge: .bottom) } }
         // Set after the show, so the field it names is focused rather than the search field.
         .onChange(of: vm.pendingArgumentEntryID) { focusPendingArgument() }
         .onChange(of: argumentFocused) { _, field in vm.noteEditingField(field != nil) }
