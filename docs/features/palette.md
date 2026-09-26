@@ -435,8 +435,8 @@ menu rebuild, then each menu filters its own rows and preserves section boundari
 match keeps the header, when present, and centres **No Results** in one row. The list has no edge
 dissolve beside a search field. Its resting inset travels with the scroll content, so rows can reach
 the panel edge without moving their initial position. Footer menus add 30pt to the standard menu
-width; their hover keeps the shared 10pt menu-row corner. The left app menu uses the dimmed Tinycast
-app icon inside its existing control frame. `MenuPanel.inset` remains `Spacing.md`, matching the
+width; their hover keeps the shared 10pt menu-row corner. The left app menu uses the dimmed, untiled
+`bolt.fill` glyph inside its existing control frame. `MenuPanel.inset` remains `Spacing.md`, matching the
 footer's horizontal padding so its menu anchors stay aligned with the controls.
 
 ### The menu's own window
