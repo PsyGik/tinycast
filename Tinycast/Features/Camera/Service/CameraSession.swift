@@ -10,7 +10,7 @@ final class CameraSession {
         case capture
     }
 
-    /// Settled before the panel opens, so it never swaps a stage out from under the user.
+    /// What `start()` settles on; a caller that shows its stage early renders `nil` until then.
     enum Feed {
         case live(AVCaptureSession)
         case denied
@@ -18,7 +18,7 @@ final class CameraSession {
     }
 
     /// Every camera the Mac offers right now, in the order `switchToNextDevice` cycles them.
-    static var devices: [AVCaptureDevice] {
+    nonisolated static var devices: [AVCaptureDevice] {
         AVCaptureDevice.DiscoverySession(
             deviceTypes: [.builtInWideAngleCamera, .external, .continuityCamera],
             mediaType: .video, position: .unspecified
@@ -29,13 +29,16 @@ final class CameraSession {
     private var capture: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
     private var device: AVCaptureDevice?
+    private var deviceCount = 0
     private var pendingPhoto: PhotoCapture?
+    /// Bumped by `stop()`, so a start still in flight knows it was abandoned.
+    private var generation = 0
 
     init(_ purpose: Purpose = .preview) {
         self.purpose = purpose
     }
 
-    /// Blocking on `startRunning` is the point: the first frame is video, not black.
+    /// Settles once running; a `stop()` that lands mid-start wins, and the late session stops here.
     func start() async -> Feed {
         var access = Permissions.cameraAccess()
         if access == .notDetermined {
@@ -43,26 +46,46 @@ final class CameraSession {
             access = Permissions.cameraAccess()
         }
         guard access == .granted else { return .denied }
-        guard let capture = capture ?? configure() else { return .noCamera }
-        self.capture = capture
+        let token = generation
+        if capture == nil {
+            let seed = CaptureBox(device: device?.isConnected == true ? device : nil)
+            let purpose = purpose
+            let built = await Task.detached {
+                Signposts.interval("CameraSession.configure") { Self.configure(seed, purpose: purpose) }
+            }.value
+            guard let built, let session = built.session else { return .noCamera }
+            // Abandoned while configuring: nothing runs yet, so dropping it is enough.
+            guard token == generation else { return .noCamera }
+            capture = session
+            photoOutput = built.output
+            device = built.device
+            deviceCount = built.deviceCount
+        }
+        guard let capture else { return .noCamera }
         guard !capture.isRunning else { return .live(capture) }
         let box = CaptureBox(session: capture)
-        await Task.detached { box.session.startRunning() }.value
+        await Task.detached {
+            Signposts.interval("CameraSession.startRunning") { box.session?.startRunning() }
+        }.value
+        // `stop()` saw it not yet running and left it; the light must not outlive the caller.
+        guard token == generation else {
+            Self.stopRunning(capture)
+            return .noCamera
+        }
         return .live(capture)
     }
 
     func stop() {
+        generation += 1
         guard let capture else { return }
         // A reused session without an output of its own feeds a new preview layer no frames.
         self.capture = nil
         photoOutput = nil
         guard capture.isRunning else { return }
-        // The camera light must go out with the panel, so this is never left to deallocation.
-        let box = CaptureBox(session: capture)
-        Task.detached { box.session.stopRunning() }
+        Self.stopRunning(capture)
     }
 
-    var hasMultipleDevices: Bool { Self.devices.count > 1 }
+    var hasMultipleDevices: Bool { deviceCount > 1 }
 
     /// Only the input swaps: the session keeps running, so the stage never blanks to black.
     func switchToNextDevice() async {
@@ -74,12 +97,13 @@ final class CameraSession {
         guard let input = try? AVCaptureDeviceInput(device: next) else { return }
         let box = CaptureBox(session: capture, input: input)
         await Task.detached {
-            box.session.beginConfiguration()
-            for existing in box.session.inputs { box.session.removeInput(existing) }
-            if let input = box.input, box.session.canAddInput(input) {
-                box.session.addInput(input)
+            guard let session = box.session else { return }
+            session.beginConfiguration()
+            for existing in session.inputs { session.removeInput(existing) }
+            if let input = box.input, session.canAddInput(input) {
+                session.addInput(input)
             }
-            box.session.commitConfiguration()
+            session.commitConfiguration()
         }.value
         self.device = next
     }
@@ -102,29 +126,38 @@ final class CameraSession {
         }.value
     }
 
-    /// Reopens on the camera last switched to, unless it has been unplugged since.
-    private func configure() -> AVCaptureSession? {
-        let preferred = device?.isConnected == true ? device : AVCaptureDevice.default(for: .video)
-        guard let device = preferred, let input = try? AVCaptureDeviceInput(device: device)
+    /// The light goes out now rather than at deallocation, which could be long after the screen.
+    private static func stopRunning(_ capture: AVCaptureSession) {
+        let box = CaptureBox(session: capture)
+        Task.detached { box.session?.stopRunning() }
+    }
+
+    /// Off main: opening the device and wiring the photo output can stall several frames.
+    nonisolated private static func configure(_ seed: CaptureBox, purpose: Purpose) -> CaptureBox? {
+        guard let device = seed.device ?? AVCaptureDevice.default(for: .video),
+            let input = try? AVCaptureDeviceInput(device: device)
         else { return nil }
         let capture = AVCaptureSession()
         capture.sessionPreset = purpose == .capture ? .photo : .medium
         guard capture.canAddInput(input) else { return nil }
         capture.addInput(input)
-        self.device = device
-        guard purpose == .capture else { return capture }
+        var built = CaptureBox(session: capture, device: device, deviceCount: devices.count)
+        guard purpose == .capture else { return built }
         let output = AVCapturePhotoOutput()
-        guard capture.canAddOutput(output) else { return capture }
+        guard capture.canAddOutput(output) else { return built }
         capture.addOutput(output)
-        photoOutput = output
-        return capture
+        built.output = output
+        return built
     }
 }
 
-/// Confined to this file: those calls are all that touch capture objects off main.
+/// Confined to this file: the one carrier that moves capture objects between main and off main.
 private struct CaptureBox: @unchecked Sendable {
-    let session: AVCaptureSession
+    var session: AVCaptureSession?
     var input: AVCaptureDeviceInput?
+    var output: AVCapturePhotoOutput?
+    var device: AVCaptureDevice?
+    var deviceCount = 0
 }
 
 /// Unchecked because the continuation is written on main and read once on AVFoundation's queue.
