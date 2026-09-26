@@ -80,13 +80,14 @@ enum ExecutableLocator {
             process.standardError = FileHandle.nullDevice
             let stdout = Pipe()
             process.standardOutput = stdout
+            let exit = ProcessExit(of: process)
             do { try process.run() } catch { return nil }
             let watchdog = Task {
                 try await Task.sleep(for: .seconds(5))
                 if process.isRunning { process.terminate() }
             }
             let data = stdout.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
+            exit.wait()
             watchdog.cancel()
             guard process.terminationStatus == 0 else { return nil }
             // Startup and logout files can print on either side of the lookup's answer.

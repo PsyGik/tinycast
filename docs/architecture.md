@@ -203,6 +203,11 @@ House idioms for the sharp edges:
   `hotKeyCarbonEventHandler`).
 - `HealthTicker` (`Platform/HealthTicker.swift`) is the one shared timer for periodic health checks, so
   the event taps do not each own one.
+- A child process is awaited through `ProcessExit` (`Platform/ProcessExit.swift`), created before
+  `run()`, never `Process.waitUntilExit()`. That call polls the calling thread's run loop, and on a GCD
+  worker thread it can miss an exit that has already happened, stranding the thread and its pipes
+  ([#1184](https://github.com/abue-ammar/tinycast/issues/1184)). `ProcessExit` waits on
+  `terminationHandler` instead, and any number of waits may follow the exit.
 
 ## The tree
 
@@ -217,6 +222,7 @@ Tinycast/
   Platform/         system shims: Permissions, LaunchAtLogin, InputSourceSwitcher, ScreenTarget,
                     AppDisplayName,
                     NotificationToken, AppPaths, Signposts, HealthTicker, Memo, ActivationPolicy,
+                    ProcessExit,
                     Images/, Compression/
   Resources/        RaycastRuntime.generated.js, the embedded extension runtime
   Palette/          the palette shell: PalettePanel, PaletteWindowController, RootPaletteView,
