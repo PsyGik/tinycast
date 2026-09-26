@@ -30,18 +30,20 @@ struct CustomWindowSizesSection: View {
     }
 }
 
-/// One size's shortcut, launcher checkbox and actions, shaped like the window-command row.
 private struct CustomWindowSizeRow: View {
     let size: CustomWindowSize
     let onEdit: () -> Void
     let onDelete: () -> Void
 
+    @Environment(AppSettings.self) private var settings
     @Environment(VisibilityStore.self) private var visibility
 
     var body: some View {
         SettingsRow(title: size.name, subtitle: size.summary) {
             Image(systemName: CustomWindowSize.sfSymbol)
         } trailing: {
+            AliasField(entry: entry)
+                .settingsEnabled(isAliasEnabled)
             ShortcutRecorder(action: .customWindowSize(id: size.id))
 
             Button(action: onEdit) {
@@ -67,9 +69,17 @@ private struct CustomWindowSizeRow: View {
         }
     }
 
+    private var entry: AppEntry { AppEntry(size) }
+
+    private var isAliasEnabled: Bool {
+        settings.windowManagementEnabled
+            && settings.windowManagementShowInLauncher
+            && visibility.isItemVisible(entry)
+    }
+
     private var visibilityBinding: Binding<Bool> {
         Binding(
-            get: { visibility.isItemVisible(AppEntry(size)) },
-            set: { visibility.setItemVisible($0, for: AppEntry(size)) })
+            get: { visibility.isItemVisible(entry) },
+            set: { visibility.setItemVisible($0, for: entry) })
     }
 }

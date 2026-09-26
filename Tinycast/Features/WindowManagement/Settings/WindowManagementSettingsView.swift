@@ -98,15 +98,17 @@ struct WindowManagementSettingsView: View {
     }
 }
 
-/// One command's shortcut recorder and visibility checkbox, shaped like the shortcuts row.
 private struct WindowCommandSettingsRow: View {
     let command: WindowCommand
+    @Environment(AppSettings.self) private var settings
     @Environment(VisibilityStore.self) private var visibility
 
     var body: some View {
         SettingsRow(title: command.name) {
             Image(systemName: command.sfSymbol)
         } trailing: {
+            AliasField(entry: entry)
+                .settingsEnabled(isAliasEnabled)
             ShortcutRecorder(action: .windowCommand(id: command.id))
 
             Toggle("", isOn: visibilityBinding)
@@ -119,10 +121,13 @@ private struct WindowCommandSettingsRow: View {
 
     /// `VisibilityStore` keys on the entry, so this builds the same entry `AppIndex` publishes.
     private var entry: AppEntry {
-        AppEntry(
-            id: command.entryID, name: command.name,
-            url: URL(string: "tinycast://window-command/" + command.id.rawValue)!, bundleID: nil,
-            kind: .windowCommand)
+        AppEntry(command)
+    }
+
+    private var isAliasEnabled: Bool {
+        settings.windowManagementEnabled
+            && settings.windowManagementShowInLauncher
+            && visibility.isItemVisible(entry)
     }
 
     private var visibilityBinding: Binding<Bool> {

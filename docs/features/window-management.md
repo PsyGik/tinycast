@@ -315,6 +315,9 @@ quantize to zero and the gesture would do nothing.
   get **no** launcher-category pane of their own — they are managed inside Settings › Window
   Management, the same call already made for snippets.
 
+Window commands, custom sizes and layouts carry aliases edited in their Settings rows; the launcher's
+existing per-entry alias path ranks them like every other entry.
+
 ## Testing
 
 `Tests/window-command-test.swift` (500 assertions) covers the catalog, the AX-space convention lock,
