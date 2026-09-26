@@ -61,7 +61,9 @@ under the search field. Its 45pt search row plus 10pt top inset place that divid
 window top; in the launcher, the placeholder begins 16pt from the left edge. The header and footer
 both draw the `bottomBarSurface` tint over `panelScrim` and
 `GlassEffectView` with zero-radius glass, so scrolled rows never show through either bar and only the
-outer palette clip rounds them. Other modes retain their back chevron.
+outer palette clip rounds them. Collapsed to the compact bar, the header drops both its surface and its
+divider and takes a matching 10pt bottom inset, so the search row sits centred in `compactHeight`.
+Other modes retain their back chevron.
 
 The footer is 39pt tall, with a full-width top hairline. Its dimmed, untiled 18pt SF Symbol `bolt.fill`
 sits 12pt from the left edge as the app-menu control. The primary label is 12pt semibold, followed by
