@@ -249,7 +249,7 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
   with a zero-radius glass view, so only the root palette clip rounds their outside corners; their
   full-width hairlines separate the list from each surface. The list dissolves at the edges.
 - **Header** (`headerHeight 45` plus 10pt top inset): sub-screens show a back chevron; the launcher
-  has no leading icon, then the plain `TextField` (no border/background).
+  shows a magnifying glass, then the plain `TextField` (no border/background).
 - **Compact keyboard entry:** pressing `↓` in the collapsed launcher expands the results and selects the first row without replacing or defocusing the shared search field.
 - **Bottom bar** (`bottomBarHeight 39`): a flat footer with an opaque-against-the-list surface and a
   top hairline. A dimmed, untiled 18pt `bolt.fill` glyph stays on the left as the app-menu control;
