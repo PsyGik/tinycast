@@ -44,7 +44,7 @@ struct UninstallList: View {
                         .onRightClick { onActions(candidate) }
                     }
                 }
-                .padding(.horizontal, metrics.spacing.xs)
+                .padding(.horizontal, metrics.spacing.md)
                 .padding(.top, metrics.spacing.xs)
                 .padding(.bottom, metrics.spacing.md)
                 .hideNativeScrollers()
@@ -115,7 +115,7 @@ private struct UninstallRow: View {
         }
         .opacity(candidate.isLocked ? 0.55 : 1)
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.sm)
+        .padding(.vertical, metrics.spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
                 .fill(fill)

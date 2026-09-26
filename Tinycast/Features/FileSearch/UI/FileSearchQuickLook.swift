@@ -7,9 +7,8 @@ struct FileSearchQuickLook: View {
     let result: FileSearchResult
     let onClose: () -> Void
 
-    /// Concentric: every corner inside the panel is the one outside it less its own inset.
-    private var cardRadius: CGFloat { metrics.radius.panel - metrics.spacing.md }
-    private var surfaceRadius: CGFloat { cardRadius - metrics.spacing.md }
+    private var cardRadius: CGFloat { metrics.radius.palettePanel - metrics.spacing.md }
+    private var surfaceRadius: CGFloat { max(0, cardRadius - metrics.spacing.md) }
 
     var body: some View {
         ZStack {

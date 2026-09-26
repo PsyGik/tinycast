@@ -29,7 +29,8 @@ enum Theme {
 
     enum Radius {
         static let panel: CGFloat = 26
-        static let listRow: CGFloat = 6
+        static let palettePanel: CGFloat = 12
+        static let listRow: CGFloat = 8
         static let row: CGFloat = 10
         /// Emoji tiles are roomier than list rows, so their corners take one larger step.
         static let emojiCell: CGFloat = 12

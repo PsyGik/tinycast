@@ -68,6 +68,12 @@ the content.
 The existing window reader supplies the panel to `PaletteBackground`; appearance and transparency
 changes update its shadow. The center keeps the original shadow and adds no border.
 
+The root clip and transparency edge use `Theme.Radius.palettePanel` (12pt); independent windows keep
+the shared `Theme.Radius.panel` (26pt). The launcher header has no leading icon, with a full-width
+separator under the search field. Other modes retain their back chevron. The footer repeats the
+panel's scrim-over-vibrancy surface at the current transparency, then its subtle `bottomBarSurface`
+tint, so list rows never show through it in Light or Dark.
+
 ## Screens
 
 `PaletteState` (mode / query / selection / `focusToken`) is the bridge between the panel and the app.
@@ -416,8 +422,9 @@ menu rebuild, then each menu filters its own rows and preserves section boundari
 match keeps the header, when present, and centres **No Results** in one row. The list has no edge
 dissolve beside a search field. Its resting inset travels with the scroll content, so rows can reach
 the panel edge without moving their initial position. Footer menus add 30pt to the standard menu
-width; their hover keeps the shared 10pt menu-row corner. `MenuPanel.inset` remains `Spacing.md`,
-matching the footer's horizontal padding so its menu anchors stay aligned with the controls.
+width; their hover keeps the shared 10pt menu-row corner. The left app menu uses the dimmed Tinycast
+app icon inside its existing control frame. `MenuPanel.inset` remains `Spacing.md`, matching the
+footer's horizontal padding so its menu anchors stay aligned with the controls.
 
 ### The menu's own window
 

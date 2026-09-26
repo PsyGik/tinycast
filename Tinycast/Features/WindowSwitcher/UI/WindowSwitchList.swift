@@ -23,7 +23,7 @@ struct WindowSwitchList: View {
                             .onTapGesture { onActivate(entry) }
                     }
                 }
-                .padding(.horizontal, metrics.spacing.xs)
+                .padding(.horizontal, metrics.spacing.md)
                 .padding(.vertical, metrics.spacing.md)
                 .hideNativeScrollers()
                 .scrollOriginAnchor()
@@ -76,7 +76,7 @@ private struct WindowSwitchRow: View {
                 .lineLimit(1)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.sm)
+        .padding(.vertical, metrics.spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
                 .fill(fill)

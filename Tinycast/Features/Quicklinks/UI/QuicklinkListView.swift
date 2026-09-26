@@ -69,7 +69,7 @@ struct QuicklinkList: View {
                         }
                     }
                 }
-                .padding(.horizontal, metrics.spacing.xs)
+                .padding(.horizontal, metrics.spacing.md)
                 .padding(.top, metrics.spacing.xs)
                 .padding(.bottom, metrics.spacing.md)
                 .hideNativeScrollers()
@@ -128,7 +128,7 @@ private struct QuicklinkRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.sm)
+        .padding(.vertical, metrics.spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
                 .fill(fill)

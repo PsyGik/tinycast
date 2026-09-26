@@ -12,9 +12,9 @@ Read this before touching any view body, `Theme` value, or the panel chrome.
 
 Tinycast is a **command palette**: a borderless floating panel whose surface is just the
 OS behind-window blur under a 40% black scrim — there is no gray chrome. Everything on that surface is
-white at a fixed alpha ramp. The header floats over the list as a transparent overlay. The footer is a
-flat bottom bar with a subtle background and a hairline along its top edge. Rows don't clip under the
-bars, they **dissolve**: a scroll-driven gradient mask ghosts them as they pass beneath. Popover menus
+white at a fixed alpha ramp. The header floats over the list as a transparent overlay, with a hairline
+under it. The footer is a flat bottom bar with a panel-matched surface and a hairline along its top
+edge. Rows **dissolve** as they approach the bars; the footer masks anything beneath it. Popover menus
 are **Liquid Glass**.
 
 That paragraph describes **Dark**, which is the design. Light is the same design with the ink
@@ -23,11 +23,12 @@ geometry, type, motion or state changes between them.
 
 Five load-bearing ideas, in priority order:
 
-1. **Surface = scrim over behind-window blur.** No solid backgrounds. Depth comes from the desktop showing through.
+1. **Surface = scrim over behind-window blur.** Depth comes from the desktop showing through.
 2. **One alpha ramp, never grays.** Ink at fixed stops — white over the dark surface, black over the light one.
-3. **A flat footer bar.** The header stays transparent, and the list fills the whole panel.
-4. **Edges dissolve, they don't clip.** A scroll-driven mask ghosts rows beneath the bars; the footer's
-   top hairline marks its boundary.
+3. **A flat footer bar.** The header stays transparent, and the list fills the whole panel. The
+   footer's matching panel surface hides rows behind it while preserving the transparency setting.
+4. **Edges dissolve, they don't clip.** A scroll-driven mask fades rows toward the bars; the footer's
+   top hairline marks its boundary and its surface masks the list.
 5. **Glass on menus.** The main surface and footer controls stay flat; popover menus use glass.
 
 ---
@@ -38,13 +39,18 @@ These are the things that quietly break the look if changed. Preserve them unles
 
 - **Dark is the baseline and its values are frozen.** Every `Theme.Colors` token resolves per appearance, and its **dark branch is the literal the forced-dark build shipped** — restated, never recomputed. Retune a light branch freely; touch a dark one only when the task is to change Dark. `AppCore.applyAppearance()` is the only place an appearance is assigned, from `AppSettings.appearance`; `.system` assigns `nil` so AppKit follows macOS.
 - **New colors go through `Theme.Colors.ramp(dark:light:)`** (an alpha that inverts) or `adaptive(dark:light:)` (two explicit `NSColor`s, for anything that isn't a plain inversion — `panelScrim`, `glassFrost`). Never a bare `Color.white.opacity(…)` in a view: it disappears in Light.
-- **No grays, no opaque fills on the surface.** Reach for `Theme.Colors.*` instead of `.gray`, `NSColor.windowBackground`, etc.
+- **No grays or arbitrary opaque fills on the surface.** Reach for `Theme.Colors.*` instead of `.gray`, `NSColor.windowBackground`, etc. The palette footer repeats the panel surface to mask scrolling rows.
 - **Three things stay fixed in both appearances, on purpose.** The `EdgeDissolve`/`OverflowFade` gradients are **mask luminance, not color** — inverting them breaks the dissolve everywhere. `ExtensionTintColors` and a tinted `IconCache` tile keep white ink, because a saturated tile carries its own contrast. And `IconCache` cannot use a dynamic `NSColor` at all: it rasterizes off-main, so the surface is carried explicitly and is part of the cache key.
 - **An icon is drawn for a surface *and* a system icon style, and both move under you.** macOS restyles the icons `NSWorkspace` hands out when System Settings → Appearance → **Icon & widget style** changes, so `IconStyleMonitor` and Tinycast's own appearance both call `IconCache.invalidateStyled()`. **The monitor may not invalidate on the notification itself.** AppKit posts `NSWorkspaceIconAppearanceConfigurationDidChange` before IconServices has swapped what `NSWorkspace` vends — measured at 25–120ms behind, jittering run to run — and the images it hands back are live objects macOS restyles in place, so flattening one on the signal freezes the *outgoing* style into a bitmap nothing ever invalidates again. `IconStyleMonitor` therefore polls `IconCache.styleFingerprint()` until the pixels actually move, and only then invalidates. Waiting also sidesteps the cost: re-flattening every icon the instant a restyle begins forces a cold IconServices regeneration, measured at 160× the settled draw cost. That drops the cached bitmaps, bumps every cache key so an in-flight decode cannot repopulate a stale one, and moves `IconCache.style.generation`. **Any view that draws an icon must key its fetch on that generation** — wrap the view's own key in `IconRequest`, or call `IconCache.observeStyle()` where the icon is resolved synchronously in a `body`. It is reached through `IconCache` rather than injected precisely because icons are drawn in menus, popovers and every list, where a missed injection would be a silent staleness bug.
-- **The footer has one hairline boundary.** The header remains a transparent `safeAreaInset` overlay;
-  the bottom bar draws a top hairline over its subtle background. Clipboard and file search keep the
-  vertical hairline between a list and its preview pane.
-- **The panel corner is clipped once, at the root.** `RootPaletteView.body` ends with `.background(PaletteBackground(window:)) → .clipShape(RoundedRectangle(26, .continuous))`. `PaletteBackground` puts `panelScrim(transparency:)` over `VisualEffectView()`; the center setting returns the original tint. Keep that order, with the clip last.
+- **Header and footer each have one full-width hairline boundary.** The transparent header draws its
+  separator below the search field; the footer draws its separator above a panel-matched surface that
+  hides scrolling rows. Clipboard and file search keep the vertical hairline between a list and its
+  preview pane.
+- **The palette corner is clipped once, at the root.** `RootPaletteView.body` ends with
+  `.background(PaletteBackground(window:)) → .clipShape(RoundedRectangle(palettePanel, .continuous))`.
+  `PaletteBackground` puts `panelScrim(transparency:)` over `VisualEffectView()`; the center setting
+  returns the original tint. Keep that order, with the clip last. Other windows keep the shared
+  `panel` radius.
 - **Don't use the native scroll edge effect.** Inside a transparent panel it renders a hard-bounded rectangle. Use `edgeDissolve()`, or a gradient `mask` where a surface owns its own fade — `scrollEdgeEffectStyle` draws a *material* where a scroll view meets a safe area, so over a panel that already has `panelScrim` + `VisualEffectView` it composites to nothing. Tried and rejected on `QuickActionResultView`, with and without `safeAreaBar`. This is a rule about the borderless panels; the Settings window is a titled `NSWindow` whose system titlebar draws the band itself (see "Settings").
 - **Test over a light desktop.** Transparency and corner masking bugs only show over bright wallpaper. Dark wallpaper hides them.
 - **No `NSAlert` or system popovers.** Every confirmation, failure report, value prompt and transient readout is Tinycast's own SwiftUI surface (see "Dialogs & HUD"). An Aqua alert on an alpha-over-vibrancy app reads as a different product, and its `runModal` run loop keeps Carbon hotkeys firing underneath.
@@ -93,8 +99,8 @@ this, member by member, including that `.standard` is `Theme` verbatim.
 
 `xxs` is the tight gap between adjacent keycap chips (used everywhere keycaps sit side by side).
 
-Row content insets are `md`; palette lists use an `xs` horizontal inset so their selection strips span
-nearly the full width.
+Row content insets are `md`; palette lists also use an `md` horizontal inset, leaving the selection
+strip 8pt from each panel edge.
 
 Section-header rhythm has two dedicated tokens: `sectionHeaderBottom` (header → first row) and
 `sectionSpacing` (gap above every header **except the list's first**, which reads as the previous
@@ -103,17 +109,19 @@ groups. See "Section headers" below.
 
 ### Radius (`Theme.Radius`)
 
-`panel 26` · `listRow 6` · `row 10` · `card 10` · `dialog 20` · `dialogSymbol 16` · `menuPanel 16` · `menu 6` · `menuRow 10` · `barControl 8` · `thumbnail 6` · `keyCap 6` · `recorderKeyCap 4`
+`panel 26` · `palettePanel 12` · `listRow 8` · `row 10` · `card 10` · `dialog 20` · `dialogSymbol 16` · `menuPanel 16` · `menu 6` · `menuRow 10` · `barControl 8` · `thumbnail 6` · `keyCap 6` · `recorderKeyCap 4`
 
 `barControl` dresses the header pop-ups (type filter, AI model), which state a value and drop a menu
 the way a native pop-up button does — a rectangle, not a pill.
 
-`listRow 6` is the palette row selection and hover corner, and the flat footer buttons use that same
+`palettePanel 12` rounds the palette window; `panel 26` remains for Notes, dialogs and other windows.
+`listRow 8` is the palette row selection and hover corner, and the flat footer buttons use that same
 shape on hover. `row 10` remains available to the other surfaces that already use it.
 
-Notes has no corner of its own: it clips to `panel`, so the two floating surfaces read as siblings.
+Notes keeps its own `panel 26` corner.
 
-`dialog` sits between `menuPanel` and `panel` so a dialog reads as a smaller sibling of the palette, not a second palette.
+Dialogs and other independent windows keep their existing `dialog` and `panel` radii; they do not track
+the palette's smaller `palettePanel` radius.
 
 `menu` is the shared small-control corner (sidebar tiles, About link pills); `menuRow` is the slightly rounder hover highlight behind popover-menu rows.
 
@@ -134,12 +142,11 @@ Inside a menu the rule holds exactly, and `menuRow` exists to keep it holding:
 **Alignment to a control outranks it.** Every palette menu hangs off a button, and its edge lines up
 with that button's — `MenuPanel.inset` is `Spacing.md`, which is `bottomBar`'s own horizontal padding,
 and the header menus use `Spacing.md * 2` to meet the header button in its wider gutter. The buttons
-sit directly under the menus, so a 2pt disagreement there reads as broken padding, while the same 2pt
-against the panel's corner reads as almost nothing. Anchor to the control, then let the corner fall
-where it does: `panel 26` against an 8pt gap would want `menuPanel 18`, and it stays 16.
+sit directly under the menus, so a 2pt disagreement there reads as broken padding. Keep the footer
+menu anchored to its 36pt control; the palette's smaller `palettePanel` corner does not move it.
 
 **It applies only where corners actually meet.** A list row sits mid-panel with the header above and
-the bottom bar below, so it shares no corner with `panel`. Its separate `listRow 6` token keeps palette
+the bottom bar below, so it shares no corner with `palettePanel`. Its separate `listRow 8` token keeps palette
 selection strips modestly rounded without changing `row 10` on other surfaces.
 
 If a pair ever does need closing, **move the gap, not the curve** — but only once you have checked
@@ -190,7 +197,7 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 | `selection`       | white 0.10     | black 0.09     | selected row fill (keyboard/active selection)    |
 | `rowHover`        | white 0.05     | black 0.045    | mouse-hover fill (always fainter than selection) |
 | `menuHover`       | white 0.10     | black 0.09     | popover-menu row hover                           |
-| `separator`       | white 0.10     | black 0.12     | a list↔preview hairline (clipboard, file search) |
+| `separator`       | white 0.10     | black 0.12     | palette header/footer and list↔preview hairlines |
 | `bottomBarSurface`| white 0.035    | black 0.03     | subtle palette footer background                 |
 | `controlSurface`  | white 0.10     | black 0.08     | filled keycaps, glyph tiles                      |
 | `border`          | white 0.20     | black 0.18     | outlined keycap borders                          |
@@ -226,11 +233,16 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
 
 - **`PalettePanel`** is a borderless `NSPanel`: `isOpaque = false`, `backgroundColor = .clear`, `.palette` level (one above `.modalPanel`, so other apps' open panels never cover it), `hasShadow`, `animationBehavior = .none`. The two more transparent Dark detents turn off the native shadow and its black outline, adding a one-point white gradient border with a brighter upper edge. It hosts SwiftUI via `NSHostingView`. `PaletteWindowController` centers it slightly above screen center (`+8%`) and dismisses it on `windowDidResignKey`.
 - **The results layer fills the whole panel.** The header and bottom bar attach via
-  `.safeAreaInset(edge: .top/.bottom)` over the list. The header stays transparent; the footer draws its
-  own flat background and top hairline. The list underlaps them and dissolves at the edges.
-- **Header** (`headerHeight 44`): a back-chevron _or_ mode glyph, then the plain `TextField` (no border/background). Sub-screens (Clipboard, Calculator History) show the back chevron; the launcher shows a magnifying glass. The search icon aligns horizontally with row content.
+  `.safeAreaInset(edge: .top/.bottom)` over the list. The header stays transparent and draws a bottom
+  hairline; the footer draws a panel-matched surface and top hairline so rows cannot show through it.
+  The list dissolves at the edges.
+- **Header** (`headerHeight 44`): sub-screens show a back chevron; the launcher has no leading icon,
+  then the plain `TextField` (no border/background).
 - **Compact keyboard entry:** pressing `↓` in the collapsed launcher expands the results and selects the first row without replacing or defocusing the shared search field.
-- **Bottom bar** (`bottomBarHeight 52`): a flat footer with a subtle background and a top hairline. The app-menu control stays on the left; the right side has the primary action with an outlined `↵` keycap, a vertical separator, and the Actions toggle with `⌘K`.
+- **Bottom bar** (`bottomBarHeight 52`): a flat footer with an opaque-against-the-list surface and a
+  top hairline. The dimmed Tinycast app icon stays on the left as the app-menu control; the right side
+  has the primary action with a filled `↵` keycap, a vertical separator, and the Actions toggle with
+  filled `⌘` and `K` keycaps. Form mode uses filled `⌘↵` keycaps too.
 - **`BarButton`** is the shared bar control: bare label at rest, a hover shape, `barButtonHeight 28`. `.capsule` remains the default for Notes and extension controls, `.rounded` serves header pop-ups, and `.flat` uses the `listRow` radius for the palette footer. Set `isSelected` and it fills with `selection` instead, which beats hover; the Notes formatting bar lights its buttons this way. Set `isCompact` for `sm` padding instead of `md`. Hover state lives inside it, so sweeping one never re-renders the palette body.
 
 ---
@@ -359,14 +371,14 @@ Source: `Launcher/UI/LauncherList.swift`, `Clipboard/UI/ClipboardView.swift`,
 
 All lists share one row grammar so launcher and clipboard look identical:
 
-- `HStack(spacing: lg)`: leading 24pt icon/thumbnail, title (`.body`, `lineLimit(1)`), optional trailing keycaps/kind label, `Spacer`. Insets: `.horizontal md`, `.vertical sm`.
+- `HStack(spacing: lg)`: leading 24pt icon/thumbnail, title (`.body`, `lineLimit(1)`), optional trailing keycaps/kind label, `Spacer`. Row padding: `.horizontal md`, `.vertical lg` (about 44pt total with the icon slot); each palette list has an outer `.horizontal md` inset.
 - **The leading slot is always `Theme.Size.rowIcon`, whatever fills it.** A glyph smaller than an app icon — the uninstall list's 16pt checkbox — is centred _inside_ that 24pt slot rather than sizing the slot to itself. Every list then starts its title at the same x, so switching palette modes doesn't jog the column sideways. The slot doubles as the hit target.
 - Background is a `RoundedRectangle(listRow, .continuous)` filled by `fill`: **selection → hover → clear**, in that precedence. This background and the `fill` computed property stay copy-identical across the launcher, Clipboard, File Search, Menu Search, Window Switcher, Quicklinks, Uninstall, Calculator History, Schedule, Chat History and Snippets rows. The launcher's lead cards don't restate it: `.leadCard(selected:)` (`Features/Launcher/UI/LeadCard.swift`) owns their fill and hover, so a card can't answer a selection differently from its siblings.
 - **Hover state lives on the row**, not the list, so a mouse sweep repaints only the rows entering/leaving (a list-level hover rebuilds every row per move — don't do that).
 - **Hover is armed by pointer movement, not by the pointer's position** (`armedHover`, `Palette/HoverArming.swift`). A palette shown under a resting pointer lights nothing, and keys or a scroll drop the highlight until the pointer moves clear of the slop radius around where it stood — a row must never light up because it *slid under* a still pointer. Two measured facts the rule rests on: SwiftUI fires hover phases for rows arriving under a stationary pointer, but **not** for a lit row that merely shifts, so `PaletteState.hoverDisarmToken` clears what is already lit; and a wheel gesture ends with a mouse-moved event carrying no displacement, so *event type is not evidence the pointer moved*. `Tests/hover-arming-test.swift` pins both halves.
 - **Scroll moves only on keyboard nav/reset**, driven by a `ScrollIntent` (`DesignSystem/Scrolling/ScrollIntent.swift`) — mouse selection targets a visible row and never yanks scroll. `.top` scrolls to the origin anchor that `scrollOriginAnchor()` installs — a zero-height overlay applied to the scrolled content _after_ its padding, so it marks offset 0 without joining the layout and the restored origin is exact (targeting the first row instead leaves the top padding hidden under the header); it is restated when the header's inset settles after mount, which moves the resting offset. A `.follow` that lands on flat index 0 restores the origin instead, so that row's section header comes back into view. One intent state serves every mode — they never coexist.
 - **`.follow` is an invariant, not a command** (`scrollFollowsSelection`, `DesignSystem/Scrolling/`). Each list marks its selected row with `selectionFrame(_:)`, and the modifier keeps that row inside the band between the header and footer, re-checking as the geometry and the row's frame settle, then **stops watching the moment the row is inside**. That self-release is what keeps it safe: once a keystroke has landed nothing is observing, so a wheel scroll — or a scrollbar-thumb drag, which `onScrollPhaseChange` cannot see at all — is never pulled back. Two measured facts it rests on: `frame(in: .scrollView)` reports the *inset-excluded* space, so the band is simply `0…containerSize.height`; and SwiftUI's minimal scroll-to-visible counts the strip behind the bottom bar as visible while its *destination* math respects the insets. Hence the split — Tinycast decides **whether** to scroll (`SelectionReveal`, pure, pinned by `Tests/scroll-reveal-test.swift`) and SwiftUI performs the move with an explicit `.top`/`.bottom` anchor. Scroll far by hand and the lazy stack drops the selected row, so there is no frame to measure at all: the fallback brings it back by id and the invariant, still standing, re-checks the moment it reports — which is why arrowing after a long mouse scroll lands the selection on screen rather than moving it out of sight. A one-shot `scrollTo` here left the highlight stranded under the footer bar whenever the target row's layout was not yet known, with nothing looking again until the next key press. **The id passed to `scrollFollowsSelection` must be the lazy container's own `ForEach` identity** — an `.id()` applied inside a row registers only once that row has been realized, which is exactly when scrolling to it is unnecessary, and the fallback that brings a dropped row back by id then has nothing to aim at.
-- **Keycaps** use `KeyCapChip`: `.outline` (white-0.20 border) for hotkey hints on rows and the footer; `.filled` (white-0.10 fill) remains for other compact controls.
+- **Keycaps** use `KeyCapChip`: `.outline` (white-0.20 border) for hotkey hints on rows; `.filled` (white-0.10 fill) for footer shortcuts and compact controls.
 
 ### Section headers
 

@@ -16,7 +16,8 @@ struct PaletteBackground: View {
             .background(VisualEffectView())
             .overlay {
                 if settings.paletteTransparency != 0 {
-                    let edge = RoundedRectangle(cornerRadius: metrics.radius.panel, style: .continuous)
+                    let edge = RoundedRectangle(
+                        cornerRadius: metrics.radius.palettePanel, style: .continuous)
                     if usesSystemShadow {
                         edge.strokeBorder(
                             Theme.Colors.panelEdgeHighlight(transparency: settings.paletteTransparency),
@@ -40,5 +41,17 @@ struct PaletteBackground: View {
         guard let window, window.hasShadow != usesSystemShadow else { return }
         window.hasShadow = usesSystemShadow
         window.invalidateShadow()
+    }
+}
+
+struct PaletteFooterSurface: View {
+    let transparency: Int
+
+    var body: some View {
+        Theme.Colors.bottomBarSurface
+            .background {
+                Theme.Colors.panelScrim(transparency: transparency)
+                    .background(VisualEffectView())
+            }
     }
 }

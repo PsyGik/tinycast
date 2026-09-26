@@ -332,6 +332,10 @@ alias in as a `.userAlias` at rank time, keying its memos on the store's revisio
 A launcher row shows its entry's alias as plain secondary text after the name, so what the result will
 answer to is visible without opening anything.
 
+Search matches sit under the small `Results` header. App rows keep their subtitle and alias inline
+with the name and the kind label at the trailing edge; the shared row is about 44pt tall, with a 24pt
+icon slot, 8pt selection corner and 8pt list inset.
+
 Editing lives in Settings only — an alias is one-time configuration like a shortcut, not a
 per-invocation action, so the ⌘K menu stays out of it. Visibility is the one exception, and only in
 one direction: an unwanted result is noticed while searching, so ⌘K can hide a row, but putting it

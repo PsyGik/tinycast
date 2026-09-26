@@ -60,7 +60,7 @@ struct ScheduleList: View {
                         }
                     }
                 }
-                .padding(.horizontal, metrics.spacing.xs)
+                .padding(.horizontal, metrics.spacing.md)
                 .padding(.top, metrics.spacing.xs)
                 .padding(.bottom, metrics.spacing.md)
                 .hideNativeScrollers()
@@ -103,7 +103,7 @@ private struct MeetingRow: View {
             MeetingTiming(meeting: meeting, now: now)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.sm)
+        .padding(.vertical, metrics.spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
                 .fill(fill)
