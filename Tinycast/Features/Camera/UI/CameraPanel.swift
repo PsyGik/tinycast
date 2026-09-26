@@ -8,7 +8,16 @@ final class CameraPanel: NSPanel {
         case cancel
     }
 
+    enum ActionsMenuKey {
+        case up
+        case down
+        case primary
+        case cancel
+    }
+
     var onKey: ((Key) -> Void)?
+    var onActions: (() -> Void)?
+    var onActionsMenuKey: ((ActionsMenuKey) -> Bool)?
 
     init(content: NSView) {
         super.init(
@@ -35,7 +44,17 @@ final class CameraPanel: NSPanel {
     }
 
     override func sendEvent(_ event: NSEvent) {
-        guard event.type == .keyDown, let onKey else {
+        guard event.type == .keyDown else {
+            super.sendEvent(event)
+            return
+        }
+        let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
+        if Int(event.keyCode) == kVK_ANSI_K, modifiers == .command, let onActions {
+            onActions()
+            return
+        }
+        if let key = actionsMenuKey(for: event), onActionsMenuKey?(key) == true { return }
+        guard let onKey else {
             super.sendEvent(event)
             return
         }
@@ -46,6 +65,22 @@ final class CameraPanel: NSPanel {
             onKey(.primary)
         default:
             super.sendEvent(event)
+        }
+    }
+
+    private func actionsMenuKey(for event: NSEvent) -> ActionsMenuKey? {
+        let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
+        return switch Int(event.keyCode) {
+        case kVK_UpArrow where modifiers.isEmpty:
+            .up
+        case kVK_DownArrow where modifiers.isEmpty:
+            .down
+        case kVK_Escape:
+            .cancel
+        case kVK_Return, kVK_ANSI_KeypadEnter:
+            .primary
+        default:
+            nil
         }
     }
 

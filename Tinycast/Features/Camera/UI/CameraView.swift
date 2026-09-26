@@ -1,51 +1,50 @@
 import SwiftUI
 
-/// The standalone camera: a live stage, a mirror switch, and a photo straight to the clipboard.
 struct CameraView: View {
     let coordinator: CameraCoordinator
 
     var body: some View {
         VStack(spacing: 0) {
             CameraStage(feed: coordinator.feed, mirrored: coordinator.mirrored)
-                .frame(
-                    width: Theme.Size.cameraStage.width,
-                    height: Theme.Size.cameraStage.height)
-            footer
+                .frame(width: Theme.Size.cameraStage.width, height: Theme.Size.cameraStage.height)
+                .clipShape(
+                    RoundedRectangle(cornerRadius: Theme.Radius.cameraPreview, style: .continuous))
+                .padding(.horizontal, Theme.Size.cameraCommandInset)
+                .padding(.top, Theme.Size.cameraCommandInset)
+            CameraActionBar(
+                isLive: isLive,
+                actionsMenuOpen: coordinator.actionsMenuOpen,
+                onTakePhoto: coordinator.takePhoto,
+                onToggleActions: coordinator.toggleActionsMenu
+            )
+            .frame(height: Theme.Size.cameraCommandBarHeight)
         }
-        .frame(width: Theme.Size.cameraStage.width)
+        .frame(
+            width: Theme.Size.cameraCommandPanelWidth,
+            height: Theme.Size.cameraCommandPanelHeight)
         .background(Theme.Colors.panelScrim)
         .background(VisualEffectView())
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.dialog, style: .continuous))
+        .overlay(alignment: .bottomTrailing) {
+            if coordinator.actionsMenuOpen {
+                ZStack(alignment: .bottomTrailing) {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { coordinator.dismissActionsMenu() }
+                        .accessibilityHidden(true)
+                    CameraActionsMenu(
+                        coordinator: coordinator
+                    )
+                    .padding(.trailing, Theme.Size.cameraCommandInset)
+                    .padding(.bottom, Theme.Size.cameraCommandBarHeight + Theme.Spacing.md)
+                }
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.cameraPanel, style: .continuous))
         .panelEntrance()
     }
 
     private var isLive: Bool {
         if case .live = coordinator.feed { return true }
         return false
-    }
-
-    private var footer: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            if isLive {
-                CameraButton(
-                    title: "Mirror", emphasis: coordinator.mirrored ? .primary : .secondary
-                ) {
-                    coordinator.mirrored.toggle()
-                }
-                if coordinator.canSwitchCamera {
-                    CameraButton(title: "Switch Camera", emphasis: .secondary) {
-                        coordinator.switchCamera()
-                    }
-                }
-            }
-            Spacer(minLength: Theme.Spacing.md)
-            CameraButton(title: "Close", keyCap: "esc", emphasis: .secondary) {
-                coordinator.close()
-            }
-            if isLive {
-                CameraButton(title: "Take Photo", keyCap: "↵") { coordinator.takePhoto() }
-            }
-        }
-        .padding(Theme.Spacing.xl)
     }
 }

@@ -327,6 +327,7 @@
 		7F22BD030E1D2A5DC43BABE9 /* AIBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB02E0EF46285235AD81C181 /* AIBrand.swift */; };
 		7FDE88F4E065FF80DCB92445 /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2B77DA46386E7E459406E4 /* NotesStore.swift */; };
 		7FF6A0A4702E1C1365F2D76A /* LauncherScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97A8C3E88FEBCBBEADF415B /* LauncherScreen.swift */; };
+		803FFB70701EB74D58CE0DE0 /* CameraActionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96DD0C71D0F8FAFC6F509764 /* CameraActionBar.swift */; };
 		8053DAD6C1879B24C5491675 /* BackupClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D70641CACF5FE83A09F2275 /* BackupClipboardItem.swift */; };
 		8090FBE343746D9D43EE2B24 /* PalettePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA9F3FA9925873D25EAF7D03 /* PalettePanel.swift */; };
 		80B87CBA4D7284710465901D /* MeetingRowParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2069789D62057E302322AFDB /* MeetingRowParts.swift */; };
@@ -369,6 +370,7 @@
 		906C261B36E9E0B597198E3D /* UninstallRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E7DAF3FFEE6CAB656B0FA8A /* UninstallRules.swift */; };
 		914402CB38C5D09C611AA8F4 /* AIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106F9FEF3F0C36E0C5686DA7 /* AIRequest.swift */; };
 		916CFA20A66AC96B2610A0D5 /* WindowLayoutRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6951305850D11CA90D16A162 /* WindowLayoutRunner.swift */; };
+		91EC63AAA67FF0F6F2549B4A /* CameraActionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C2121D6B0E754234202B72F /* CameraActionsMenu.swift */; };
 		92EDFE4591BE41718ECE1C82 /* ChatGPTSubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 943495E91C0D09B633746515 /* ChatGPTSubscriptionManager.swift */; };
 		93364B5BCC0933108AADA0B6 /* NoteMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FC1FDF99BFB0FB10FECEDAF /* NoteMarkdown.swift */; };
 		935F7433BB0C0ECDE6FA3BF3 /* ClipboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 548C83C4086CD9FB8E85B222 /* ClipboardScreen.swift */; };
@@ -793,6 +795,7 @@
 		2B629EC3B716FEE881BB0075 /* TinycastApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinycastApp.swift; sourceTree = "<group>"; };
 		2BAC1D756594DA0FC63F9033 /* MCPSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPSettingsStore.swift; sourceTree = "<group>"; };
 		2BECF24B674F9458E4A876DA /* AppCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCore.swift; sourceTree = "<group>"; };
+		2C2121D6B0E754234202B72F /* CameraActionsMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraActionsMenu.swift; sourceTree = "<group>"; };
 		2C5FFE395B9164BDC77B3470 /* SettingsBackupCoverage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupCoverage.swift; sourceTree = "<group>"; };
 		2D303E193CFEFE455778C150 /* CommandsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandsSettingsView.swift; sourceTree = "<group>"; };
 		2D70641CACF5FE83A09F2275 /* BackupClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupClipboardItem.swift; sourceTree = "<group>"; };
@@ -1067,6 +1070,7 @@
 		955FBE410967A64A05A2DA3D /* CalcDateFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcDateFormatters.swift; sourceTree = "<group>"; };
 		95BFA41B0D7F369A8CF1E013 /* HyperKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HyperKey.swift; sourceTree = "<group>"; };
 		95E1C2AD9D1D83F90048FD8A /* AIToolLoopProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIToolLoopProvider.swift; sourceTree = "<group>"; };
+		96DD0C71D0F8FAFC6F509764 /* CameraActionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraActionBar.swift; sourceTree = "<group>"; };
 		976A1F05AD82DB8A04B3C3F9 /* MessageHUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageHUDView.swift; sourceTree = "<group>"; };
 		978DA4527C5B96C98BD33899 /* WindowLayoutArgumentField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLayoutArgumentField.swift; sourceTree = "<group>"; };
 		97986EE62AE844FFCCD27449 /* SupportCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportCoordinator.swift; sourceTree = "<group>"; };
@@ -2312,6 +2316,8 @@
 		8DA48D9E1E6D368AAFF3E0AF /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				96DD0C71D0F8FAFC6F509764 /* CameraActionBar.swift */,
+				2C2121D6B0E754234202B72F /* CameraActionsMenu.swift */,
 				7EA2B3D30D3BAD3A802F1F40 /* CameraButton.swift */,
 				A5873BB8728FD8BC5D256A21 /* CameraCoordinator.swift */,
 				E0BE684A650197A714D6858A /* CameraPanel.swift */,
@@ -3322,6 +3328,8 @@
 				279F586CC34205EBA8ACA892 /* CalloutPlacement.swift in Sources */,
 				80E77985425032856DEECDFD /* CalloutShape.swift in Sources */,
 				B277075C16A5641C8F3E58C6 /* CameraAccess.swift in Sources */,
+				803FFB70701EB74D58CE0DE0 /* CameraActionBar.swift in Sources */,
+				91EC63AAA67FF0F6F2549B4A /* CameraActionsMenu.swift in Sources */,
 				602B40CCE4FF46393F0015E4 /* CameraButton.swift in Sources */,
 				9BE84B47BCF0DA5552AB3591 /* CameraCoordinator.swift in Sources */,
 				7E3D694A8153C0B560A45CB0 /* CameraPanel.swift in Sources */,

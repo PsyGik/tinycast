@@ -23,6 +23,13 @@ controller and footer are all that stay in [calendar.md](calendar.md).
 - **The preview and the photo are mirrored together.** Mirroring is `isVideoMirrored` on a connection
   — the preview layer's, and the photo output's at capture time — never a `scaleEffect` on the view,
   which would hand back a photo that is not what the user framed.
+- **The standalone command keeps its menu in the camera panel.** Its inset preview and action bar
+  belong only to `CameraView`; the `⌘K` menu is an in-window `PopoverMenu`, so focusing it cannot
+  resign the panel and trigger click-away close. `CameraPanel`'s optional menu handlers default to
+  nil, leaving Calendar's join preview keys unchanged. With the menu open, ↑/↓ moves between
+  selectable rows without wrapping, and ↵ or keypad Enter activates the selection. Escape clears a
+  non-empty search first, then closes the menu; ⌘K closes it immediately. With the menu closed, ↵
+  takes a photo and Escape closes the camera.
 - **A photo reaches the clipboard as PNG.** The camera's own encoding is decoded and re-encoded off
   main, because `ClipboardManager` records `.png` and `.tiff` and nothing else.
 - **`AVCaptureSession` is not `Sendable`, and only `CaptureBox` crosses that line.** The blocking
@@ -35,11 +42,13 @@ controller and footer are all that stay in [calendar.md](calendar.md).
 | Piece | Holds |
 | --- | --- |
 | `Service/CameraSession.swift` | access, start/stop, device cycling, the photo, and the box |
-| `UI/CameraCoordinator.swift` | the standalone panel's lifecycle, mirror state, the clipboard write |
-| `UI/CameraView.swift` | the standalone surface: stage over a footer of controls |
+| `UI/CameraCoordinator.swift` | the standalone panel's lifecycle, action-menu state, mirror state, the clipboard write |
+| `UI/CameraView.swift` | the standalone surface: inset stage over blur and scrim, with its action bar |
+| `UI/CameraActionBar.swift` | the standalone flat bar: Camera, Take Photo and Actions controls |
+| `UI/CameraActionsMenu.swift` | the standalone `⌘K` menu, with mirror state and available camera actions |
 | `UI/CameraStage.swift` | the shared stage — the hosted preview layer, or why there is no video |
-| `UI/CameraPanel.swift` | the shared borderless panel: ↵ and Esc, and cursor-screen centring |
-| `UI/CameraButton.swift` | both footers' button: `ModalActionButtonStyle` plus a key-cap tooltip |
+| `UI/CameraPanel.swift` | the shared borderless panel: ↵ and Esc, optional `⌘K`, cursor-screen centring |
+| `UI/CameraButton.swift` | Calendar's join-preview button: `ModalActionButtonStyle` plus a key-cap tooltip |
 
 `Purpose` is the session's one knob. `.preview` is the cheap one Calendar takes — a `.medium` preset
 and no output. `.capture` raises the preset to `.photo` and adds an `AVCapturePhotoOutput`, which is
