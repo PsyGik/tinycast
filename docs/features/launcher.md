@@ -329,8 +329,8 @@ with the Spotlight aliases instead (`term` inside `iterm` must not beat Terminal
 and a subsequence of a short alias would be noise, so it never matches at all. `AppIndex` folds the
 alias in as a `.userAlias` at rank time, keying its memos on the store's revision.
 
-A launcher row shows its entry's alias as a small chip after the name, so what a badge-bearing
-result will answer to is visible without opening anything.
+A launcher row shows its entry's alias as plain secondary text after the name, so what the result will
+answer to is visible without opening anything.
 
 Editing lives in Settings only — an alias is one-time configuration like a shortcut, not a
 per-invocation action, so the ⌘K menu stays out of it. Visibility is the one exception, and only in

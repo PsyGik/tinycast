@@ -30,7 +30,7 @@ struct FileSearchList: View {
                             .onRightClick { onActions(result) }
                     }
                 }
-                .padding(.horizontal, metrics.spacing.md)
+                .padding(.horizontal, metrics.spacing.xs)
                 .padding(.top, metrics.spacing.xs)
                 .padding(.bottom, metrics.spacing.md)
                 .hideNativeScrollers()
@@ -93,7 +93,7 @@ private struct FileSearchRow: View {
         .padding(.horizontal, metrics.spacing.md)
         .padding(.vertical, metrics.spacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: metrics.radius.row, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.radius.listRow, style: .continuous)
                 .fill(fill)
         )
         .armedHover($hovered)

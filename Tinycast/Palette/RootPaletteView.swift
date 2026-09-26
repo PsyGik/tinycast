@@ -279,7 +279,8 @@ struct RootPaletteView: View {
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if !isCollapsed {
                         bottomBar(
-                            pillLabel: screen.primaryActionTitle, showActionGroup: showActionGroup,
+                            primaryActionLabel: screen.primaryActionTitle,
+                            showActionGroup: showActionGroup,
                             formPrimaryShortcut: isExtensionForm,
                             showActions: screen.hasActions(at: sel))
                     }
@@ -841,27 +842,33 @@ struct RootPaletteView: View {
             }
     }
 
-    /// The Uninstall screen's primary action is destructive, so its pill isn't white.
     private var pillTint: Color {
         vm.mode == .uninstall ? Theme.Colors.destructive : .primary
     }
 
     private func bottomBar(
-        pillLabel: String, showActionGroup: Bool, formPrimaryShortcut: Bool, showActions: Bool
+        primaryActionLabel: String, showActionGroup: Bool, formPrimaryShortcut: Bool,
+        showActions: Bool
     ) -> some View {
-        // Floating controls, no bar; the edge dissolve ghosts the rows passing beneath.
         HStack(spacing: 0) {
             appMenuButton
             Spacer()
             if showActionGroup {
                 actionGroup(
-                    pillLabel: pillLabel, formPrimaryShortcut: formPrimaryShortcut,
+                    primaryActionLabel: primaryActionLabel,
+                    formPrimaryShortcut: formPrimaryShortcut,
                     showActions: showActions)
             }
         }
         .padding(.horizontal, metrics.spacing.md)
         .frame(height: metrics.size.bottomBarHeight)
         .frame(maxWidth: .infinity)
+        .background(Theme.Colors.bottomBarSurface)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Theme.Colors.separator)
+                .frame(height: Theme.Size.hairline)
+        }
     }
 
     private var appMenuButton: some View {
@@ -870,14 +877,13 @@ struct RootPaletteView: View {
         }
     }
 
-    /// The footer control group: primary action and the Actions toggle sharing one glass capsule.
     private func actionGroup(
-        pillLabel: String, formPrimaryShortcut: Bool, showActions: Bool
+        primaryActionLabel: String, formPrimaryShortcut: Bool, showActions: Bool
     ) -> some View {
-        HStack(spacing: 2) {
-            BarButton(action: activateSelection) {
+        HStack(spacing: 0) {
+            BarButton(chrome: .flat, isCompact: true, action: activateSelection) {
                 HStack(spacing: metrics.spacing.sm) {
-                    Text(pillLabel)
+                    Text(primaryActionLabel)
                         .font(metrics.typography.bar)
                         .foregroundStyle(pillTint)
                     if formPrimaryShortcut {
@@ -891,7 +897,11 @@ struct RootPaletteView: View {
                 }
             }
             if showActions {
-                BarButton(action: toggleActions) {
+                Rectangle()
+                    .fill(Theme.Colors.separator)
+                    .frame(width: Theme.Size.hairline, height: metrics.size.barButtonHeight)
+                    .padding(.horizontal, metrics.spacing.xs)
+                BarButton(chrome: .flat, isCompact: true, action: toggleActions) {
                     HStack(spacing: metrics.spacing.sm) {
                         Text("Actions")
                             .font(metrics.typography.bar)
@@ -904,8 +914,6 @@ struct RootPaletteView: View {
                 }
             }
         }
-        .padding(metrics.spacing.xs)
-        .frosted(in: Capsule())
     }
 
     /// The one path opening the Actions menu, sampling the state its rows depend on.
@@ -1398,7 +1406,6 @@ private struct MenuCircleButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovered = $0 }
-        .frosted(in: Circle())
     }
 }
 

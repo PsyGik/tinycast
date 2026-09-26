@@ -156,8 +156,8 @@ pops, a root one closes — so `backHelp` says which, rather than promising a st
 a close. It lights to `textPrimary` under the pointer over `Theme.Duration.hover`, and
 `HeaderBackButton` keeps that hover state to itself so the header around it never re-renders.
 
-The launcher advertises the first hop in the header — `AI Chat` beside a `⇥` cap, the footer's own
-pairing of a label with its key. It is drawn only when Tab really would open chat, a condition read
+The launcher advertises the first hop in the header — `AI Chat` beside a `⇥` cap, matching the footer's
+label-and-key pairing. It is drawn only when Tab really would open chat, a condition read
 back out of `PaletteTabAction` rather than restated, so a hint can never promise a destination the
 key does not go to: an argument field to walk takes Tab first, and the hint steps aside for it.
 
@@ -416,7 +416,8 @@ menu rebuild, then each menu filters its own rows and preserves section boundari
 match keeps the header, when present, and centres **No Results** in one row. The list has no edge
 dissolve beside a search field. Its resting inset travels with the scroll content, so rows can reach
 the panel edge without moving their initial position. Footer menus add 30pt to the standard menu
-width; their hover keeps the shared 10pt menu-row corner.
+width; their hover keeps the shared 10pt menu-row corner. `MenuPanel.inset` remains `Spacing.md`,
+matching the footer's horizontal padding so its menu anchors stay aligned with the controls.
 
 ### The menu's own window
 
@@ -562,6 +563,6 @@ app:
 Both require the Accessibility permission (`Permissions.ensureAccessibility()`).
 
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
-name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and
+name + bundle path), so Clipboard and Emoji can name it — the footer action reads "Paste to Notes" and
 the ⌘K paste rows carry the app's icon. Resolved once per summon, never per render, and deliberately
 not cleared by `prepare` (pop-to-root resets the screen, not the target).
