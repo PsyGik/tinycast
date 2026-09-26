@@ -7,6 +7,7 @@ import SwiftUI
 final class CameraCoordinator: NSObject, NSWindowDelegate {
     private(set) var feed: CameraSession.Feed = .noCamera
     private(set) var canSwitchCamera = false
+    private(set) var actionsMenuOpen = false
     /// Remembered for the launch, so reopening the command keeps the framing you were happy with.
     var mirrored = true
 
@@ -25,6 +26,7 @@ final class CameraCoordinator: NSObject, NSWindowDelegate {
         guard !opening, panel == nil else { return }
         opening = true
         defer { opening = false }
+        actionsMenuOpen = false
         feed = await session.start()
         canSwitchCamera = session.hasMultipleDevices
         present()
@@ -32,15 +34,25 @@ final class CameraCoordinator: NSObject, NSWindowDelegate {
 
     func close() {
         guard let closing = panel else { return }
+        actionsMenuOpen = false
         panel = nil
         closing.delegate = nil
         closing.onKey = nil
+        closing.onActions = nil
         // The camera goes with the panel, not before it: tearing it down mid-fade blanks the feed.
         closing.fadeOut(duration: Theme.Duration.exit) { [weak self] in
             // Unless a panel raised inside the fade already owns the camera.
             guard let self, !opening else { return }
             session.stop()
         }
+    }
+
+    func toggleActionsMenu() {
+        actionsMenuOpen.toggle()
+    }
+
+    func dismissActionsMenu() {
+        actionsMenuOpen = false
     }
 
     func switchCamera() {
@@ -50,6 +62,7 @@ final class CameraCoordinator: NSObject, NSWindowDelegate {
     /// The panel goes with the shot: the command is done, and the camera light goes out with it.
     func takePhoto() {
         guard case .live = feed else { return }
+        actionsMenuOpen = false
         let mirrored = mirrored
         Task {
             let png = await session.capturePhoto(mirrored: mirrored)
@@ -73,6 +86,7 @@ final class CameraCoordinator: NSObject, NSWindowDelegate {
             guard let self else { return }
             if key == .primary { takePhoto() } else { close() }
         }
+        panel.onActions = { [weak self] in self?.toggleActionsMenu() }
         self.panel = panel
         panel.centerOnCursorScreen()
         // Non-activating like the palette: key focus without pulling the user out of their app.

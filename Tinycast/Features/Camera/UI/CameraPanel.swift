@@ -9,6 +9,7 @@ final class CameraPanel: NSPanel {
     }
 
     var onKey: ((Key) -> Void)?
+    var onActions: (() -> Void)?
 
     init(content: NSView) {
         super.init(
@@ -35,7 +36,16 @@ final class CameraPanel: NSPanel {
     }
 
     override func sendEvent(_ event: NSEvent) {
-        guard event.type == .keyDown, let onKey else {
+        guard event.type == .keyDown else {
+            super.sendEvent(event)
+            return
+        }
+        let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
+        if Int(event.keyCode) == kVK_ANSI_K, modifiers == .command, let onActions {
+            onActions()
+            return
+        }
+        guard let onKey else {
             super.sendEvent(event)
             return
         }
