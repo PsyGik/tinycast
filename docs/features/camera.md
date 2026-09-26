@@ -13,8 +13,9 @@ navigation, hides the palette search header, and keeps the normal 39pt footer be
 - **The camera settles before the screen opens, and stops on every exit.** `start()` resolves access
   and blocks on `startRunning` first, then hands a settled `Feed` up — so the first frame is live
   video rather than a stage swapped out from under the user, and the TCC prompt never takes key from
-  a panel already up. `stop()` runs from the fade-out's completion, so the camera light never
-  outlives the palette screen. Mode changes and palette hide both stop it. It also drops the
+  a panel already up. The camera light never outlives the palette screen: leaving the mode stops it
+  from the screen's `onDisappear`, and `PaletteWindowController.hide` stops it explicitly while the
+  mode is still `.camera`, because an ordered-out window never fires `onDisappear`. It also drops the
   `AVCaptureSession`, so every open builds its own: a reused session with no output of its own — the
   preview's — restarts to a black stage.
 - **Escape, the back button, and the Actions menu return through palette navigation.** They use the
