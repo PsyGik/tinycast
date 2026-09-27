@@ -167,6 +167,9 @@ enum SettingsSearchCatalog {
             .generalSearch, "Show suggestions",
             keywords: ["frequent", "recent", "recommended", "empty", "root search"]),
         .init(
+            .generalSearch, "Show system stats",
+            keywords: ["cpu", "memory", "ram", "network", "bandwidth", "resources", "footer", "pills"]),
+        .init(
             .generalSearch, "Search sensitivity",
             keywords: ["fuzzy", "strict", "loose", "matching", "typo", "root search"]),
         .init(

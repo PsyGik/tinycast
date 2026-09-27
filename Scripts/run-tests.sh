@@ -324,6 +324,8 @@ run ext-icon-test          Tinycast/Platform/Appearance.swift \
                            Tinycast/Features/Clipboard/Model/ColorSpaces.swift Tinycast/Platform/ProcessExit.swift
 run system-action-test     Tinycast/Features/SystemActions/Model/SystemAction.swift
 run volume-test            Tinycast/Features/SystemActions/Model/VolumeLevel.swift
+run resource-widgets-test  Tinycast/Features/ResourceWidgets/Model/*.swift \
+                           Tinycast/Features/ResourceWidgets/Service/*.swift
 run window-command-test    Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
                            Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \

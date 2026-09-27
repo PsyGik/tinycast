@@ -190,6 +190,9 @@ final class LauncherCoordinator {
             windowSwitchCoordinator.show()
         case .openCamera:
             Task { await core.cameraCoordinator.showInPalette() }
+        case .resourceWidgets:
+            dismissPalette()
+            core.resourceWidgetsCoordinator.show()
         case .define:
             core.dictionaryCoordinator.show()
         case .openInBrowser, .runShellCommand:

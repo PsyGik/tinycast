@@ -130,6 +130,12 @@ final class AppSettings {
         }
     }
 
+    var launcherShowsResourcePills: Bool {
+        didSet {
+            defaults.set(launcherShowsResourcePills, forKey: Key.launcherShowsResourcePills.rawValue)
+        }
+    }
+
     /// How loose a fuzzy root-search hit may be and still show.
     var rootSearchSensitivity: SearchSensitivity {
         didSet {
@@ -630,6 +636,9 @@ final class AppSettings {
         launcherShowsSuggestions =
             defaults.object(forKey: Key.launcherShowsSuggestions.rawValue) == nil
             || defaults.bool(forKey: Key.launcherShowsSuggestions.rawValue)
+        launcherShowsResourcePills =
+            defaults.object(forKey: Key.launcherShowsResourcePills.rawValue) == nil
+            || defaults.bool(forKey: Key.launcherShowsResourcePills.rawValue)
         rootSearchSensitivity =
             defaults.string(forKey: Key.rootSearchSensitivity.rawValue)
             .flatMap(SearchSensitivity.init) ?? .default

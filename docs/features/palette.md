@@ -68,7 +68,9 @@ Other modes retain their back chevron.
 The footer is 39pt tall, with a full-width top hairline. Its left control sits 12pt from the left
 edge: on a command screen it shows that command's 18pt launcher tile and name — `PaletteScreen.footerContext`
 when the screen supplies one, otherwise the built-in command its mode belongs to — and on the launcher, Uninstall and
-extension screens a dimmed, untiled 18pt `bolt.fill`. Either way it opens the app menu. The primary label is 12pt semibold, followed by
+extension screens a dimmed, untiled 18pt `bolt.fill`. Either way it opens the app menu. On the launcher,
+`ResourcePills` (CPU, memory, network) follow it, `md` apart, while **Show system stats** is on; see
+[resource-widgets.md](resource-widgets.md). The primary label is 12pt semibold, followed by
 a 24×22pt filled keycap; the 10pt separator is 13pt from that keycap and from Actions. Actions uses
 an 11pt label-to-keycap gap and two 24×22pt keycaps with a 2.5pt gap; the final cap ends 12pt from
 the right edge. All footer content shares one vertical centre line.
