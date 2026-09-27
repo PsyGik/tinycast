@@ -893,10 +893,10 @@ struct RootPaletteView: View {
         showActions: Bool, footerContext: PaletteFooterContext?
     ) -> some View {
         HStack(spacing: 0) {
-            appMenuButton(context: footerContext)
-            if vm.mode == .launcher, settings.launcherShowsResourcePills {
+            if let footerContext {
+                appMenuButton(context: footerContext)
+            } else if vm.mode == .launcher, settings.launcherShowsResourcePills {
                 ResourcePills()
-                    .padding(.leading, metrics.spacing.md)
             }
             Spacer()
             if showActionGroup {
@@ -940,10 +940,10 @@ struct RootPaletteView: View {
         }
     }
 
-    private func appMenuButton(context: PaletteFooterContext?) -> some View {
-        FooterAppMenuButton {
+    private func appMenuButton(context: PaletteFooterContext) -> some View {
+        FooterAppMenuButton(context: context) {
             if openMenu == .app { closeMenus() } else { open(.app, highlighting: 0) }
-        } context: { context }
+        }
     }
 
     private func actionGroup(
@@ -1503,29 +1503,19 @@ private struct SearchFieldHiding: ViewModifier {
 
 /// The footer's app-menu button keeps its hover state local to the control.
 private struct FooterAppMenuButton: View {
+    let context: PaletteFooterContext
     let action: () -> Void
-    let context: () -> PaletteFooterContext?
     @State private var hovered = false
     @Environment(\.metrics) private var metrics
 
     var body: some View {
         Button(action: action) {
-            Group {
-                if let context = context() {
-                    HStack(spacing: Theme.Spacing.sm) {
-                        EntryIconView(source: .symbol(context.systemImage))
-                            .frame(width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
-                        Text(context.title).font(metrics.typography.rowTrailing)
-                    }
-                    .foregroundStyle(hovered ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
-                } else {
-                    SymbolImage(name: "bolt.fill", size: metrics.size.footerBrandIcon, monochrome: true)
-                        .foregroundStyle(hovered ? Theme.Colors.textSecondary : Theme.Colors.textTertiary)
-                        .frame(width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
-                        .frame(width: metrics.size.menuButton, height: metrics.size.menuButton,
-                               alignment: .leading)
-                }
+            HStack(spacing: Theme.Spacing.sm) {
+                EntryIconView(source: .symbol(context.systemImage))
+                    .frame(width: metrics.size.footerBrandIcon, height: metrics.size.footerBrandIcon)
+                Text(context.title).font(metrics.typography.rowTrailing)
             }
+            .foregroundStyle(hovered ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

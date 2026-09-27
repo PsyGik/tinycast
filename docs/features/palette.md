@@ -67,9 +67,9 @@ Other modes retain their back chevron.
 
 The footer is 39pt tall, with a full-width top hairline. Its left control sits 12pt from the left
 edge: on a command screen it shows that command's 18pt launcher tile and name — `PaletteScreen.footerContext`
-when the screen supplies one, otherwise the built-in command its mode belongs to — and on the launcher, Uninstall and
-extension screens a dimmed, untiled 18pt `bolt.fill`. Either way it opens the app menu. On the launcher,
-`ResourcePills` (CPU, memory, network) follow it, `md` apart, while **Show system stats** is on; see
+when the screen supplies one, otherwise the built-in command its mode belongs to — and opens the app menu.
+The launcher, Uninstall and extension screens have no left control, so no app menu. On the launcher,
+`ResourcePills` (CPU, memory, network) take that 12pt inset while **Show system stats** is on; see
 [resource-widgets.md](resource-widgets.md). The primary label is 12pt semibold, followed by
 a 24×22pt filled keycap; the 10pt separator is 13pt from that keycap and from Actions. Actions uses
 an 11pt label-to-keycap gap and two 24×22pt keycaps with a 2.5pt gap; the final cap ends 12pt from
@@ -460,8 +460,7 @@ menu rebuild, then each menu filters its own rows and preserves section boundari
 match keeps the header, when present, and centres **No Results** in one row. The list has no edge
 dissolve beside a search field. Its resting inset travels with the scroll content, so rows can reach
 the panel edge without moving their initial position. Footer menus add 30pt to the standard menu
-width; their hover keeps the shared 10pt menu-row corner. The left app menu keeps its existing
-control frame whether it shows the command context or the `bolt.fill` glyph. `MenuPanel.inset` remains `Spacing.md`, matching the
+width; their hover keeps the shared 10pt menu-row corner. `MenuPanel.inset` remains `Spacing.md`, matching the
 footer's horizontal padding so its menu anchors stay aligned with the controls.
 
 ### The menu's own window

@@ -256,8 +256,8 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
 - **Compact keyboard entry:** pressing `↓` in the collapsed launcher expands the results and selects the first row without replacing or defocusing the shared search field.
 - **Bottom bar** (`bottomBarHeight 39`): a flat `paletteFooterSurface` band and a top hairline. On the
   left, a command screen shows its command's launcher tile and name (the screen's `footerContext`, or
-  the mode's built-in command); the launcher, Uninstall and extensions keep a dimmed 18pt `bolt.fill` as the
-  app-menu control, and the launcher adds its `ResourcePills` beside it when **Show system stats** is on;
+  the mode's built-in command), which opens the app menu; the launcher, Uninstall and extensions have no
+  left control, and the launcher starts its `ResourcePills` there when **Show system stats** is on;
   the right side has the primary action with a filled `↵` keycap, a vertical separator, and the Actions
   toggle with filled `⌘` and `K` keycaps. Form mode uses filled `⌘↵` keycaps too.
 - **`BarButton`** is the shared bar control: bare label at rest, a hover shape, `barButtonHeight 28`. `.capsule` remains the default for Notes and extension controls, `.rounded` serves header pop-ups, and `.flat` uses the `listRow` radius for the palette footer. Set `isSelected` and it fills with `selection` instead, which beats hover; the Notes formatting bar lights its buttons this way. Set `isCompact` for `sm` padding instead of `md`. Hover state lives inside it, so sweeping one never re-renders the palette body.
