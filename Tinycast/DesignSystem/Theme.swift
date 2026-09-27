@@ -129,6 +129,8 @@ enum Theme {
         static let keyCap: CGFloat = 18
         static let footerKeyCapWidth: CGFloat = 24
         static let footerKeyCapHeight: CGFloat = 22
+        /// A resource pill's glyph, sized to sit inside a footer keycap's height.
+        static let resourcePillGlyph: CGFloat = 11
         /// Settings shortcut-recorder keycap — smaller than the palette's `keyCap` chip.
         static let recorderKeyCap: CGFloat = 16
         /// Fixed so the recorder can't resize as its binding changes.

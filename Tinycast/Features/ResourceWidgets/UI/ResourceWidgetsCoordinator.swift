@@ -8,8 +8,12 @@ final class ResourceWidgetsCoordinator {
     @ObservationIgnored private lazy var panelController = ResourceWidgetsPanelController(
         coordinator: self)
     @ObservationIgnored private var samplingTask: Task<Void, Never>?
-    @ObservationIgnored private var samplingEnabled = false
+    @ObservationIgnored private var panelOpen = false
+    @ObservationIgnored private var paletteShowing = false
     @ObservationIgnored private var samplingGeneration = 0
+
+    /// Only while the panel or the launcher's pills are up: nothing samples in the background.
+    private var samplingEnabled: Bool { panelOpen || paletteShowing }
 
     private(set) var snapshot: ResourceSnapshot?
     private(set) var history = ResourceHistory()
@@ -26,26 +30,41 @@ final class ResourceWidgetsCoordinator {
     var isVisible: Bool { panelController.isVisible }
 
     func show() {
-        samplingEnabled = true
+        panelOpen = true
         panelController.show(metrics: settings.interfaceSize.metrics)
-        startSamplingIfNeeded()
+        updateSampling()
     }
 
     func close() {
-        guard isVisible || samplingTask != nil else { return }
-        samplingEnabled = false
+        guard panelOpen || isVisible else { return }
+        panelOpen = false
+        panelController.close()
+        updateSampling()
+    }
+
+    /// The palette reports its visibility; the pills only read while it is on screen.
+    func setPaletteShowing(_ showing: Bool) {
+        guard paletteShowing != showing else { return }
+        paletteShowing = showing
+        updateSampling()
+    }
+
+    private func updateSampling() {
+        if samplingEnabled { startSamplingIfNeeded() } else { stopSampling() }
+    }
+
+    /// Keeps `snapshot`, so the next start fills its first delta-less sample from it.
+    private func stopSampling() {
+        guard samplingTask != nil else { return }
         samplingGeneration += 1
         samplingTask?.cancel()
         samplingTask = nil
-        snapshot = nil
         history.reset()
-        panelController.close()
     }
 
     private func startSamplingIfNeeded() {
         guard samplingTask == nil else { return }
         history.reset()
-        snapshot = nil
         samplingGeneration += 1
         let generation = samplingGeneration
         let loop = self.loop
@@ -56,7 +75,7 @@ final class ResourceWidgetsCoordinator {
                         self.samplingEnabled,
                         self.samplingGeneration == generation
                     else { return }
-                    self.snapshot = sample
+                    self.snapshot = sample.filling(from: self.snapshot)
                     self.history.append(sample)
                 }
             }

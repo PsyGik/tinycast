@@ -92,6 +92,7 @@ struct InterfaceMetrics: Equatable, Sendable {
         var keyCap: CGFloat { scaledPoints(Theme.Size.keyCap, scale) }
         var footerKeyCapWidth: CGFloat { scaledPoints(Theme.Size.footerKeyCapWidth, scale) }
         var footerKeyCapHeight: CGFloat { scaledPoints(Theme.Size.footerKeyCapHeight, scale) }
+        var resourcePillGlyph: CGFloat { scaledPoints(Theme.Size.resourcePillGlyph, scale) }
         var compactKeyCap: CGFloat { scaledPoints(Theme.Size.compactKeyCap, scale) }
         var heroKeyCap: CGFloat { scaledPoints(Theme.Size.heroKeyCap, scale) }
         var menuButton: CGFloat { scaledPoints(Theme.Size.menuButton, scale) }

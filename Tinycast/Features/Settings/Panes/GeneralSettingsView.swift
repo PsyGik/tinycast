@@ -164,6 +164,10 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalSearch, "Show suggestions")
                     Text("What you open most, while the search field is empty.")
                 }
+                Toggle(isOn: $settings.launcherShowsResourcePills) {
+                    SettingsRowTitle(.generalSearch, "Show system stats")
+                    Text("CPU, memory and network in the launcher footer, read only while it is open.")
+                }
                 Picker(selection: $settings.rootSearchSensitivity) {
                     ForEach(SearchSensitivity.allCases) { sensitivity in
                         Text(sensitivity.title).tag(sensitivity)

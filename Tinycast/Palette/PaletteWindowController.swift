@@ -84,6 +84,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             // Events go stale while the palette is closed, and the countdown only ticks while up.
             core.calendarCoordinator.paletteDidShow()
             core.palette.noteVisible(true)
+            core.resourceWidgetsCoordinator.setPaletteShowing(core.settings.launcherShowsResourcePills)
             core.clipboardStore.setTextSearchActive(true)
             // Only while we are on screen: a system-wide tap has no business outliving the window.
             commandEscapeTap.enable()
@@ -152,6 +153,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         core.inputSourceSwitcher.endSession()
         core.calendarCoordinator.paletteDidHide()
         core.roomCoordinator.paletteDidHide()
+        core.resourceWidgetsCoordinator.setPaletteShowing(false)
         // Ordering out skips onDisappear, and a reopen must not land on a camera with no session.
         if core.palette.mode == .camera {
             core.cameraCoordinator.stop()

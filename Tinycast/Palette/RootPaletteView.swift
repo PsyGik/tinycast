@@ -894,6 +894,10 @@ struct RootPaletteView: View {
     ) -> some View {
         HStack(spacing: 0) {
             appMenuButton(context: footerContext)
+            if vm.mode == .launcher, settings.launcherShowsResourcePills {
+                ResourcePills()
+                    .padding(.leading, metrics.spacing.md)
+            }
             Spacer()
             if showActionGroup {
                 actionGroup(

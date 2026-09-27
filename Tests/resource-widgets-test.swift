@@ -39,10 +39,42 @@ struct ResourceWidgetsTests {
         networkExclusionAndReset()
         historyIsBounded()
         gpuIsExplicitlyUnavailable()
+        readoutFormatting()
+        restartFillsMissingDeltas()
         await samplingLoopStopsWhenCancelled()
 
         print("\(passes)/\(passes + failures) passed")
         if failures > 0 { exit(1) }
+    }
+
+    static func readoutFormatting() {
+        expect(ResourceReadout.percent(0.123) == "12%", "a fraction reads as a rounded percent")
+        expect(ResourceReadout.percent(1.4) == "100%", "a percent never passes 100")
+        expect(ResourceReadout.percent(-0.2) == "0%", "a percent never drops below 0")
+        expect(ResourceReadout.percent(nil) == "–", "no reading yet shows a dash")
+        expect(ResourceReadout.rate(0) == "0 B/s", "an idle link reads in bytes")
+        expect(ResourceReadout.rate(512) == "512 B/s", "under a kilobyte stays in bytes")
+        expect(ResourceReadout.rate(80_000) == "80 KB/s", "tens of units drop the decimal")
+        expect(ResourceReadout.rate(1_234_567) == "1.2 MB/s", "single units keep one decimal")
+        expect(ResourceReadout.rate(999_700) == "1.0 MB/s", "a value that rounds to 1000 moves up a unit")
+        expect(ResourceReadout.rate(nil) == "–", "no rate yet shows a dash")
+        expect(ResourceReadout.rate(.nan) == "–", "a broken rate shows a dash, not NaN")
+        expect(
+            ResourceReadout.gigabytes(8_200_000_000) == "8.2 GB", "memory totals read in decimal gigabytes")
+    }
+
+    static func restartFillsMissingDeltas() {
+        let before = ResourceSnapshot(
+            timestamp: Date(timeIntervalSince1970: 0), cpuUtilization: 0.4,
+            network: ResourceNetworkRates(receiveBytesPerSecond: 10, transmitBytesPerSecond: 5))
+        let first = ResourceSnapshot(timestamp: Date(timeIntervalSince1970: 60))
+        let filled = first.filling(from: before)
+        expect(filled.cpuUtilization == 0.4, "a restart's first sample keeps the last CPU reading")
+        expect(filled.network?.receiveBytesPerSecond == 10, "…and the last network rates")
+        expect(filled.timestamp == first.timestamp, "…but keeps its own timestamp")
+        let fresh = ResourceSnapshot(timestamp: Date(timeIntervalSince1970: 61), cpuUtilization: 0.1)
+        expect(fresh.filling(from: before).cpuUtilization == 0.1, "a real reading always wins")
+        expect(first.filling(from: nil).cpuUtilization == nil, "with nothing earlier, it stays empty")
     }
 
     static func cpuDeltas() {
