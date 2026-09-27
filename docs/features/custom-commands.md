@@ -65,9 +65,9 @@ The command text is deliberately not searchable. Only the user-facing name enter
 
 **Show output** takes a different route entirely — see [Show output](#show-output). Nothing else does.
 
-No Terminal window or pseudo-terminal is created. Waiting on its `ProcessExit` blocks for the whole
-life of the command, so it runs on a private concurrent `DispatchQueue` rather than a cooperative-pool
-thread a long `brew upgrade` would hold for minutes. The streaming path blocks the same queue on `read`.
+No Terminal window or pseudo-terminal is created. The exit wait blocks for the whole life of the
+command, so it runs on a private concurrent `DispatchQueue` rather than a cooperative-pool thread a
+long `brew upgrade` would hold for minutes. The streaming path blocks the same queue on `read`.
 
 ### Load shell environment
 

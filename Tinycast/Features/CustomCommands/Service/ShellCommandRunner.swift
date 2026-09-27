@@ -113,13 +113,11 @@ enum ShellCommandRunner {
             errors?.remove()
         }
 
-        let exit = ProcessExit(of: process)
         do {
-            try process.run()
+            try process.runObservingExit().wait()
         } catch {
             return ShellCommandResult(termination: .launchFailed(error.localizedDescription))
         }
-        exit.wait()
 
         return ShellCommandResult(
             termination: .exited(status: process.terminationStatus),
@@ -293,7 +291,7 @@ enum ShellCommandRunner {
         [loadingShellEnvironment ? "-ilc" : "-lc", command, "tinycast"] + arguments
     }
 
-    /// A temp file, not a `Pipe`: nothing drains a pipe until the exit wait returns.
+    /// A temp file, not a `Pipe`: nothing drains a pipe until the command exits.
     private final class StreamCapture: @unchecked Sendable {
         let url: URL
         let handle: FileHandle

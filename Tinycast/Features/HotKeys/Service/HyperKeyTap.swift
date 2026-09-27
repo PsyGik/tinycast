@@ -69,10 +69,8 @@ private enum CapsLockRemap {
         process.arguments = ["property", "--set", mapping]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
-        let exit = ProcessExit(of: process)
         do {
-            try process.run()
-            exit.wait()
+            try process.runObservingExit().wait()
             if process.terminationStatus != 0 {
                 NSLog("Tinycast: hidutil remap exited %d", process.terminationStatus)
             }

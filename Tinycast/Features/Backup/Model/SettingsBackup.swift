@@ -141,8 +141,7 @@ extension SettingsBackup {
             hyperKeyQuickPress: s.hyperKeyQuickPress.rawValue,
             emojiSkinTone: s.emojiSkinTone.rawValue,
             emojiGridColumns: s.emojiGridColumns.rawValue,
-            showInMenuBar: UserDefaults.standard.object(forKey: SettingsKey.showInMenuBar) as? Bool
-                ?? true,
+            showInMenuBar: s.showInMenuBar,
             popToRootSeconds: s.popToRootTimeout.rawValue,
             escapeKeyBehavior: s.escapeKeyBehavior.rawValue,
             appearance: s.appearance.rawValue,
@@ -306,7 +305,6 @@ extension SettingsBackup {
         }
         if let days = s.clipboardRetentionDays, let retention = ClipboardRetention(rawValue: days) {
             settings.clipboardRetention = retention
-            core.clipboardCoordinator.applyRetention(retention)
             count += 1
         }
         if let apps = s.clipboardDisabledApps {
@@ -342,7 +340,7 @@ extension SettingsBackup {
             count += 1
         }
         if let show = s.showInMenuBar {
-            UserDefaults.standard.set(show, forKey: SettingsKey.showInMenuBar)
+            settings.showInMenuBar = show
             count += 1
         }
         if let secs = s.popToRootSeconds, let timeout = PopToRootTimeout(rawValue: secs) {

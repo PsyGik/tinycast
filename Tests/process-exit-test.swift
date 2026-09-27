@@ -22,8 +22,7 @@ struct ProcessExitTest {
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
-        let exit = ProcessExit(of: process)
-        guard (try? process.run()) != nil else { return nil }
+        guard let exit = try? process.runObservingExit() else { return nil }
         return (process, exit)
     }
 

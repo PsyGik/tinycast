@@ -56,8 +56,9 @@ enum InstalledAIProbe {
                     process.standardInput = stdin ?? FileHandle.nullDevice
                     process.standardOutput = output
                     process.standardError = FileHandle.nullDevice
-                    let exit = ProcessExit(of: process)
-                    do { try process.run() } catch { return Result(status: -1, output: "") }
+                    guard let exit = try? process.runObservingExit() else {
+                        return Result(status: -1, output: "")
+                    }
                     handle.set(process)
                     if let stdin, let input { Self.write(input, to: stdin, closing: true) }
                     let watchdog = Task {
@@ -105,8 +106,7 @@ enum InstalledAIProbe {
             process.standardInput = stdin
             process.standardOutput = output
             process.standardError = FileHandle.nullDevice
-            let exit = ProcessExit(of: process)
-            do { try process.run() } catch { return "" }
+            guard let exit = try? process.runObservingExit() else { return "" }
             Self.write(input, to: stdin, closing: false)
             let watchdog = Task {
                 try? await Task.sleep(for: timeout)

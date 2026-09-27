@@ -1,18 +1,25 @@
 import Foundation
 
-/// A child's exit, via `terminationHandler`: `waitUntilExit()` can miss it on a GCD thread (#1184).
-final class ProcessExit: Sendable {
-    private let exited = DispatchSemaphore(value: 0)
+extension Process {
+    /// Use instead of `waitUntilExit`, whose run loop can miss the exit on a GCD thread and hang.
+    func runObservingExit() throws -> ProcessExit {
+        let exit = ProcessExit()
+        terminationHandler = { _ in exit.signal() }
+        try run()
+        return exit
+    }
+}
 
-    /// Before `run()`: a handler installed after the child has exited never fires.
-    init(of process: Process) {
-        let exited = exited
-        process.terminationHandler = { _ in exited.signal() }
+/// Blocks without a run loop, and every wait after the exit returns at once.
+struct ProcessExit: Sendable {
+    private let semaphore = DispatchSemaphore(value: 0)
+
+    fileprivate func signal() {
+        semaphore.signal()
     }
 
-    /// Blocks until the child has exited; re-signals, so any later or concurrent wait returns too.
     func wait() {
-        exited.wait()
-        exited.signal()
+        semaphore.wait()
+        semaphore.signal()
     }
 }

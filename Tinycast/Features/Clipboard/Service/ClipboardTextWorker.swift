@@ -31,8 +31,7 @@ nonisolated enum ClipboardTextWorker {
         process.standardOutput = output
         process.standardError = FileHandle.nullDevice
         process.qualityOfService = .background
-        let exit = ProcessExit(of: process)
-        do { try process.run() } catch { throw Failure.recognition }
+        guard let exit = try? process.runObservingExit() else { throw Failure.recognition }
         // Cancellation can land between the check above and the launch, which nothing else catches.
         if Task.isCancelled { terminate(process) }
         let deadline = Task.detached(priority: .background) {
@@ -42,7 +41,7 @@ nonisolated enum ClipboardTextWorker {
         let result = await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 queue.async {
-                    continuation.resume(returning: collect(from: process, exit: exit, reading: output))
+                    continuation.resume(returning: collect(from: process, awaiting: exit, reading: output))
                 }
             }
         } onCancel: {
@@ -55,7 +54,7 @@ nonisolated enum ClipboardTextWorker {
 
     /// Blocking throughout, and the only place a helper is reaped: every exit runs the `defer`.
     private static func collect(
-        from process: Process, exit: ProcessExit, reading output: Pipe
+        from process: Process, awaiting exit: ProcessExit, reading output: Pipe
     ) -> Result<String, Failure> {
         let reader = output.fileHandleForReading
         defer {

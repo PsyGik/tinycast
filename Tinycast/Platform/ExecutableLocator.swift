@@ -80,8 +80,7 @@ enum ExecutableLocator {
             process.standardError = FileHandle.nullDevice
             let stdout = Pipe()
             process.standardOutput = stdout
-            let exit = ProcessExit(of: process)
-            do { try process.run() } catch { return nil }
+            guard let exit = try? process.runObservingExit() else { return nil }
             let watchdog = Task {
                 try await Task.sleep(for: .seconds(5))
                 if process.isRunning { process.terminate() }
@@ -91,7 +90,8 @@ enum ExecutableLocator {
             watchdog.cancel()
             guard process.terminationStatus == 0 else { return nil }
             // Startup and logout files can print on either side of the lookup's answer.
-            let path = String(decoding: data, as: UTF8.self)
+            let path =
+                String(decoding: data, as: UTF8.self)
                 .split(whereSeparator: \.isNewline)
                 .last { $0.hasPrefix(answerMarker) }?
                 .dropFirst(answerMarker.count)

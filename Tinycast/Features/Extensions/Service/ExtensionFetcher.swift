@@ -72,9 +72,9 @@ enum ExtensionAsyncProcess {
 
     struct Child: Sendable {
         let task: Process
+        let exit: ProcessExit
         let stdout: Pipe
         let stderr: Pipe
-        let exit: ProcessExit
 
         /// A child filling the 64 KB pipe blocks before it can exit, so the drain comes first.
         func collect(timeout: Double?) -> [String: Any] {
