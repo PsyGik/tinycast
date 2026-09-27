@@ -278,6 +278,9 @@ enum Theme {
         static let cameraPreview = CGSize(width: 420, height: 236)
         /// Wider than a dialog: a Quick Action's result is prose to read, not a sentence to answer.
         static let quickActionPanel: CGFloat = 520
+        static let resourceWidgetsPanel = CGSize(width: 520, height: 380)
+        static let resourceWidgetsCardHeight: CGFloat = 132
+        static let resourceWidgetsSparklineHeight: CGFloat = 28
         /// Matched to the title's cap height; a row-sized glyph beside it reads as an error.
         static let quickActionHeaderIcon: CGFloat = 14
         /// The dissolve ramp below each bar's clear zone, measured against text behind the title.

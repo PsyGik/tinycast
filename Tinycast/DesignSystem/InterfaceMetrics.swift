@@ -134,6 +134,17 @@ struct InterfaceMetrics: Equatable, Sendable {
         var quickActionScrollFade: CGFloat { scaledPoints(Theme.Size.quickActionScrollFade, scale) }
         var quickActionPanelBody: CGFloat { scaledPoints(Theme.Size.quickActionPanelBody, scale) }
         var quickActionPanelMinBody: CGFloat { scaledPoints(Theme.Size.quickActionPanelMinBody, scale) }
+        var resourceWidgetsPanel: CGSize {
+            CGSize(
+                width: scaledPoints(Theme.Size.resourceWidgetsPanel.width, scale),
+                height: scaledPoints(Theme.Size.resourceWidgetsPanel.height, scale))
+        }
+        var resourceWidgetsCardHeight: CGFloat {
+            scaledPoints(Theme.Size.resourceWidgetsCardHeight, scale)
+        }
+        var resourceWidgetsSparklineHeight: CGFloat {
+            scaledPoints(Theme.Size.resourceWidgetsSparklineHeight, scale)
+        }
 
         var dialogCompactWidth: CGFloat { scaledPoints(Theme.Size.dialogCompactWidth, scale) }
         var dialogWidth: CGFloat { scaledPoints(Theme.Size.dialogWidth, scale) }
