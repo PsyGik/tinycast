@@ -93,10 +93,11 @@ If a change touches anything in the right column, the harness on the left is man
 | `calendar-test` | all of `Calendar/Model/` — link detection, the join window, the day buckets |
 | `clipboard-search-test` | Ordinary and OCR result ordering, opt-in lifecycle, cancellation, pins and type filters |
 | `clipboard-text-test` | Apple Vision/PDF extraction, scheduling, retry backoff and recovery |
+| `paste-sequence-test` | `Clipboard/Model/PasteSequence.swift` — the walk's order, its end, and what starts it over |
 | `clipboard-test` | `Clipboard/Model/ClipboardStore.swift`, `ClipboardFilter.swift`, `ClipboardFileKind.swift`, the colour trio |
 | `pasteboard-test` | `Clipboard/Service/ClipboardManager.swift` capture and `Paster.write` — what a Finder copy reads as, and what a file entry writes back |
-| `emoji-test` | `Emoji/Model/EmojiCatalog.swift`, `EmojiGridGeometry.swift`, the generated data |
-| `emoji-search-test` | `Emoji/Service/EmojiIndex.swift`, `FrequentEmojiStore.swift`, `Scripts/gen-emoji.js`'s keyword format |
+| `emoji-test` | `Emoji/Model/EmojiCatalog.swift`, `EmojiGridGeometry.swift`, the generated data and keyword packs |
+| `emoji-search-test` | `Emoji/Service/EmojiIndex.swift`, `FrequentEmojiStore.swift`, `Scripts/gen-emoji.js`'s keyword format, multilingual search |
 | `palette-navigation-test` | `Palette/PaletteState.swift`'s screen motions — `prepare`, `replace`, `push`, `pop` |
 | `palette-selection-test` | `Features/PaletteRowIndex.swift` |
 | `interface-size-test` | `DesignSystem/InterfaceMetrics.swift`, `Features/Settings/InterfaceSize.swift`, `Extensions/Model/ExtensionFormMetrics.swift` |
@@ -119,8 +120,9 @@ If a change touches anything in the right column, the harness on the left is man
 | `notes-editor-test` | the Notes editor, rendered and literal, with real TextKit 2 and AppKit editing objects: styling, reveal, layout fragments, keys, chords, checkboxes and links |
 | `raycast-test` | `Backup/Service/RaycastDecoder.swift`, `Scrypt.swift`, `Platform/Compression/Zlib.swift` |
 | `symbols-test` | `Extensions/Service/SymbolCatalog.swift`, against this machine's CoreGlyphs |
-| `ext-store-test` | `Extensions/Model/` — the registry model and both registry APIs' parsers |
+| `ext-store-test` | `Extensions/Model/` — GitHub source parsing and URLs, the store and Git tree parsers |
 | `ext-refresh-test` | `Extensions/Model/ExtensionRefreshPolicy.swift` — interval parsing, due dates, backoff, subtitle fallback, indicator state |
+| `ext-version-test` | `Extensions/Service/ExtensionVersionStore.swift` — what an update check reports, adopts and forgets |
 | `ext-metadata-test` | `Extensions/Service/ExtensionCommandMetadataStore.swift` — round-trip, failure runs, uninstall |
 | `ext-test` | the extension runtime and native menu-bar lifecycle — boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
 | `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` — artwork sizing and its fallback |
@@ -265,7 +267,8 @@ swiftc -O -swift-version 6 Tinycast/Platform/PasteboardFiles.swift \
 
 `Tests/emoji-search-performance.swift` times uncached queries, typing prefixes and memo hits against
 the loaded catalog, with process RSS and footprint as JSON; `--names` also lists every catalog name
-missing from its own top five results:
+missing from its own top five results, and `--languages fr,ja` loads those keyword packs first (run it
+from the repo root):
 
 ```sh
 swiftc -O -swift-version 6 Tinycast/Features/Emoji/Model/{EmojiCatalog,EmojiData.generated}.swift \
@@ -273,6 +276,7 @@ swiftc -O -swift-version 6 Tinycast/Features/Emoji/Model/{EmojiCatalog,EmojiData
     Tinycast/Features/Launcher/Model/SearchRelevance.swift Tinycast/Platform/{AppPaths,Memo}.swift \
     Tests/emoji-search-performance.swift -o /tmp/emoji-search-performance
 /tmp/emoji-search-performance --names
+/tmp/emoji-search-performance --languages fr,ja
 ```
 
 `Tests/notes-editor-performance.swift` installs a 100,000-character note in a real rendered editor and
@@ -403,9 +407,13 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A tall phone screenshot and a full-width Retina screenshot copy each line once, whole, in order
 - A copy from an excluded app (Settings ▸ Clipboard ▸ Disabled Applications) is **not** recorded
 - Password-manager copies are still not recorded
-- Off (Settings ▸ Clipboard ▸ Enable Clipboard History): nothing new is recorded, the launcher row
-  and its shortcut are gone, the menu-bar row is gone, and Tab rings straight past the screen
+- Off (Settings ▸ Clipboard ▸ Enable Clipboard History): nothing new is recorded, the launcher rows
+  and their shortcuts are gone, the menu-bar row is gone, and Tab rings straight past the screen
 - Off then on again: existing clips come back; Clear history erases them while it is still off
+- Paste Sequentially, bound to a shortcut: copy A, B, C, and three presses paste C, B, A into
+  the field in front; a fourth says **Nothing left to paste**; a new copy or a minute's pause
+  starts over from the newest; the history's order is unchanged afterwards; holding the shortcut
+  or double-pressing it fast never pastes one entry twice
 - A text, link, image and file row each drag into another app; a click still selects, a double
   click still pastes, and a right click still opens ⌘K
 
@@ -639,6 +647,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 ### System actions and window management
 
 - A confirmation-gated action (Restart, Quit All) confirms, showing the subject's own glyph
+- Empty Trash confirms while Finder's "Show warning before emptying the Trash" is on, and runs
+  without a dialog once it is off
 - Volume actions show the volume HUD; everything else shows the message pill
 - Holding a bound hotkey does **not** stack dialogs
 - Window commands move the window you were last in; cycle-on-repeat steps ½ → ⅓ → ⅔

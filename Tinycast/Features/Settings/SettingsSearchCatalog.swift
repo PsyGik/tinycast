@@ -278,7 +278,8 @@ enum SettingsSearchCatalog {
             .aiProviders, "Providers",
             keywords: [
                 "sign in", "connect", "codex", "claude", "grok", "xai", "opencode", "cursor", "agent",
-                "api key", "connection", "base url", "openai", "anthropic", "ollama"
+                "api key", "connection", "base url", "openai", "anthropic", "ollama", "models",
+                "hide models"
             ]),
         .init(.aiDefault, "Default model", keywords: ["llm", "gpt", "claude", "grok"]),
         .init(.aiDefault, "Reasoning effort", keywords: ["thinking", "effort", "deepseek"]),
@@ -415,6 +416,9 @@ enum SettingsSearchCatalog {
             .windowManagementOptions, "Gap between windows",
             keywords: ["padding", "spacing", "margin", "points"]),
         .init(
+            .windowManagementOptions, "Shortcut preset",
+            keywords: ["rectangle", "magnet", "spectacle", "defaults", "import", "shortcuts"]),
+        .init(
             group: .windowManagementOptions, "Window commands",
             keywords: ["shortcut", "left half", "maximize", "center"]),
         .init(
@@ -507,11 +511,8 @@ enum SettingsSearchCatalog {
             .calendarCalendar, "Join meetings from Tinycast",
             keywords: ["zoom", "meet", "teams", "permission"]),
         .init(
-            .calendarSchedule, "Upcoming meetings in launcher",
+            .calendarCalendar, "Upcoming meetings in launcher",
             keywords: ["count", "limit", "events"]),
-        .init(
-            .calendarSchedule, "Include Tomorrow's Events",
-            keywords: ["next day", "range"]),
         .init(
             .calendarJoining, "Show the join card",
             keywords: ["hud", "timing", "early", "reminder"]),
@@ -530,6 +531,9 @@ enum SettingsSearchCatalog {
         .init(
             .calendarMenuBar, "Calendar in Menu Bar",
             keywords: ["status item", "menubar", "date"]),
+        .init(
+            .calendarMenuBar, "Days to Show",
+            keywords: ["tomorrow", "week", "next 7 days", "range", "agenda", "schedule"]),
         .init(
             .calendarMenuBar, "Show Upcoming Events",
             keywords: ["menubar", "next event", "title"]),
@@ -559,10 +563,10 @@ enum SettingsSearchCatalog {
             keywords: ["raycast", "third party", "javascript"]),
         .init(
             .extensionsInstall, "Search extensions",
-            keywords: ["store", "browse", "install", "registry"]),
+            keywords: ["store", "browse", "install"]),
         .init(
-            group: .extensionsInstall, "Registries",
-            keywords: ["github", "source", "store"]),
+            .extensionsInstall, "Install from GitHub",
+            keywords: ["source", "build", "repository", "package manager", "pnpm", "npm", "yarn", "bun"]),
         .init(
             .extensionsInstall, "Import from Raycast",
             keywords: ["migrate", "existing"]),
@@ -571,7 +575,9 @@ enum SettingsSearchCatalog {
             keywords: ["local", "develop", "sideload"]),
         .init(
             group: .extensionsInstalled, "Installed extensions",
-            keywords: ["library", "uninstall", "preferences", "appearance", "alias", "shortcut"]),
+            keywords: [
+                "library", "uninstall", "update", "preferences", "appearance", "alias", "shortcut"
+            ]),
         .init(
             group: .extensionsCompatibility, "Compatibility",
             keywords: ["supported", "unsupported", "raycast api"]),

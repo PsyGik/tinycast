@@ -63,6 +63,7 @@ final class AppCore {
     let chatHistory: ChatHistoryStore
     let aiChats: AIChatSurfacesState
     let aiSettings = AISettingsStore(
+        environmentStore: .keychain,
         isAppleIntelligenceAvailable: { AppleIntelligenceProvider.status().isAvailable })
     let mcpSettings = MCPSettingsStore()
     let mcpOAuth = MCPOAuthManager()
@@ -71,6 +72,7 @@ final class AppCore {
     let customQuickActions = CustomQuickActionStore()
     let chatGPTSubscription = ChatGPTSubscriptionManager()
     let installedAI = InstalledAIManager()
+    @ObservationIgnored private var appliedLaunchRevisions: [InstalledAIKind: Int] = [:]
 
     /// Set when a quicklink editor should open with Settings; the pane consumes it.
     var pendingQuicklinkEdit: QuicklinkEditRequest?
@@ -119,6 +121,8 @@ final class AppCore {
             store: customWindowSizes, settings: settings, appIndex: appIndex, hotKeys: hotKeys,
             favorites: favorites, visibility: visibility, ranking: launcherRanking,
             aliases: aliases, core: self)
+    @ObservationIgnored private(set) lazy var windowShortcutPresetCoordinator =
+        WindowShortcutPresetCoordinator(hotKeys: hotKeys, core: self)
     @ObservationIgnored private(set) lazy var windowLayoutCoordinator = WindowLayoutCoordinator(
         store: windowLayouts, settings: settings, appIndex: appIndex, hotKeys: hotKeys,
         favorites: favorites, visibility: visibility, ranking: launcherRanking, aliases: aliases,
@@ -273,6 +277,8 @@ final class AppCore {
             menuSearchCoordinator.applyEnabled()
             fileSearchCoordinator.applyPolicy()
             notesCoordinator.applyEnabled()
+            installedAI.launchSettings = { [aiSettings] in aiSettings.launch(for: $0) }
+            chatGPTSubscription.launchSettings = { [aiSettings] in aiSettings.launch(for: .codex) }
             aiChatCoordinator.applyEnabled()
             mcpCoordinator.applyEnabled()
             customQuickActions.onChange = { [weak self] _ in
@@ -319,7 +325,7 @@ final class AppCore {
             updateCoordinator.applyEnabled()
             calendarCoordinator.applyEnabled()
             Task { await appIndex.refresh() }
-            Task { await emojiIndex.load() }
+            Task { await emojiIndex.load(languages: Locale.preferredLanguages) }
             currencyRates.start()
             updateChecker.onUpdateAvailable = { [weak self] release in
                 self?.updateCoordinator.presentIfAvailable(release) ?? true
@@ -359,6 +365,9 @@ final class AppCore {
             hotKeys.onRunAppleShortcut = { [weak self] id in
                 self?.appleShortcutCoordinator.run(id: id)
             }
+            hotKeys.onExpandSnippet = { [weak self] id in
+                self?.snippetCoordinator.expandSnippetFromHotKey(id: id)
+            }
             hotKeys.onRunExtensionCommand = { [weak self] entryID in
                 self?.extensionCoordinator.runExtensionCommand(entryID: entryID)
             }
@@ -397,6 +406,7 @@ final class AppCore {
                 guard let self else { return }
                 self.snippetCoordinator.applySnippetsLauncherPresence()
                 self.snippetListener.update(snapshot.records)
+                self.hotKeys.removeSnippetBindings(keeping: snapshot.fileIDs)
             }
             // Off out of the box, so an unused feature costs no load, watcher or tap.
             if settings.snippetsEnabled {
@@ -470,6 +480,8 @@ final class AppCore {
             return customWindowSizes.size(id: id)?.name
         case .appleShortcut(let id):
             return appleShortcutCoordinator.name(of: id)
+        case .snippet(let id):
+            return snippetsStore.record(id: id)?.snippet.name
         case .extensionCommand(let entryID):
             return appIndex.apps.first { $0.kind == .extensionCommand && $0.id == entryID }?.name
         case .togglePalette, .command, .systemAction, .windowCommand:
@@ -523,6 +535,24 @@ final class AppCore {
         mcpOAuth.stop()
         mcp.stop()
         installedAI.stop()
+    }
+
+    /// Only the tool whose own path or variables changed is checked again; the rest keep running.
+    private func applyInstalledLaunches() {
+        let revisions = aiSettings.launchRevisions
+        let enabled =
+            settings.aiEnabled || settings.quickActionsEnabled
+            ? aiSettings.enabledInstalledProviders : []
+        for kind in InstalledAIKind.allCases where appliedLaunchRevisions[kind] != revisions[kind] {
+            guard enabled.contains(kind) else { continue }
+            if kind == .codex {
+                chatGPTSubscription.stop()
+                chatGPTSubscription.refresh()
+            } else {
+                installedAI.refresh(kind: kind)
+            }
+        }
+        appliedLaunchRevisions = revisions
     }
 
     @discardableResult
@@ -621,7 +651,7 @@ final class AppCore {
                 _ = $0.calendarLauncherLimit
             }, reproject: { $0.calendarCoordinator.publishEntries() })
         track(
-            { _ = $0.calendarIncludesTomorrow },
+            { _ = $0.calendarSpan },
             reproject: { $0.calendarCoordinator.applySpan() })
         track(
             {
@@ -649,6 +679,7 @@ final class AppCore {
             { _ = $0.clipboardRetention },
             reproject: { $0.clipboardCoordinator.applyRetention($0.settings.clipboardRetention) })
         track(aiSettings, { _ = $0.retention }, reproject: { $0.aiChatCoordinator.applyRetention() })
+        track(aiSettings, { _ = $0.launchRevisions }, reproject: { $0.applyInstalledLaunches() })
         track(
             { _ = $0.extensionsShowInLauncher },
             reproject: { $0.extensionCoordinator.applyExtensionsLauncherPresence() })

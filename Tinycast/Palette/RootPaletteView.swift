@@ -90,6 +90,8 @@ struct RootPaletteView: View {
                 openActions: openActions)
         case .camera:
             return CameraScreen(coordinator: core.cameraCoordinator, goBack: goBack)
+        case .meetingDetails:
+            return MeetingDetailsScreen(store: calendarStore, core: core)
         case .clipboard:
             return ClipboardScreen(
                 store: store, core: core, vm: vm, openActions: openActions,
@@ -309,9 +311,6 @@ struct RootPaletteView: View {
                 }
                 // The panel has no title bar, so this thin top margin is the only place left to grab it.
                 .overlay(alignment: .top) { topDragStrip }
-                .modifier(
-                    ExtensionToastOverlay(extensions: extensions, showing: vm.mode == .extensionCommand)
-                )
                 // Never conditionally mounted: unmounting strands SwiftUI's hover target and eats clicks.
                 .overlay {
                     Color.black.opacity(0.001)
@@ -355,6 +354,11 @@ struct RootPaletteView: View {
         content
             .onChange(of: vm.emojiCategoryFilter) { land() }
             .onChange(of: core.pinnedEmoji.revision) { emojiGridChanged() }
+            .onChange(of: (screen as? EmojiScreen)?.frequentlyUsed) { old, new in
+                guard let old, let new else { return }
+                (screen as? EmojiScreen)?.frequentlyUsedChanged(from: old, to: new)
+                emojiGridChanged()
+            }
             .onChange(of: vm.emojiGridColumnsOverride) { emojiGridChanged() }
             .onChange(of: settings.emojiGridColumns) { emojiGridChanged() }
             // ⌘0 / ⌘+ / ⌘- arrive as a token, like ⌘. does. See `PaletteState.emojiGridZoomToken`.
@@ -430,6 +434,7 @@ struct RootPaletteView: View {
                 }
                 if vm.mode != .menuSearch { menuSearch.reset() }
                 if vm.mode != .switchWindows { windowSwitch.reset() }
+                if vm.mode != .meetingDetails { calendarStore.clearDetails() }
                 if vm.mode != .rooms, vm.mode != .roomWindows { core.roomCoordinator.screensDidClose() }
                 // Leaving the screen any other way than Escape still ends the command's session.
                 if vm.mode != .extensionCommand, extensions.running != nil, !extensions.isAuthorizing {
@@ -668,7 +673,8 @@ struct RootPaletteView: View {
                     .frame(width: metrics.size.headerIconSlot)
                     .windowDraggable(settings.paletteDraggable, onBegan: beginDrag, onEnded: endDrag)
             }
-            headerGutter(width: metrics.spacing.md)
+            // slot + xl equals a row's icon + lg, so the query starts where the row titles do.
+            headerGutter(width: metrics.spacing.xl)
             // One structural position: a field inside a branch loses first responder when it flips.
             headerField
             if let accessory = headerAccessory {
@@ -823,7 +829,7 @@ struct RootPaletteView: View {
         let font = metrics.typography.searchFieldNSFont
         let text = vm.query.isEmpty ? searchPrompt : vm.query
         let typed = (text as NSString).size(withAttributes: [.font: font]).width
-        let chrome = metrics.size.headerIconSlot + metrics.spacing.md * 4
+        let chrome = metrics.size.headerIconSlot + metrics.spacing.md * 3 + metrics.spacing.xl
         let room = metrics.size.panelWidth - accessory.width - chrome
         // +3pt so the caret sits after the last glyph rather than on top of it.
         return min(
@@ -893,11 +899,14 @@ struct RootPaletteView: View {
         showActions: Bool, footerContext: PaletteFooterContext?
     ) -> some View {
         HStack(spacing: 0) {
-            if let footerContext {
-                appMenuButton(context: footerContext)
-            } else if vm.mode == .launcher, settings.launcherShowsResourcePills {
-                ResourcePills()
+            Group {
+                if let footerContext {
+                    appMenuButton(context: footerContext)
+                } else if vm.mode == .launcher, settings.launcherShowsResourcePills {
+                    ResourcePills()
+                }
             }
+            .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
             Spacer()
             if showActionGroup {
                 actionGroup(
@@ -931,7 +940,7 @@ struct RootPaletteView: View {
         case .switchWindows: .switchWindows
         case .rooms: .switchRoom
         case .roomWindows: .createRoom
-        case .schedule: .mySchedule
+        case .schedule, .meetingDetails: .mySchedule
         case .camera: .openCamera
         case .quicklinks: .searchQuicklinks
         case .snippets: .searchSnippets
@@ -1030,6 +1039,7 @@ struct RootPaletteView: View {
         case .clipboardFilter: toggleClipboardFilter()
         case .fileSearchFilter: toggleFileSearchFilter()
         case .emojiCategory: toggleEmojiCategory()
+        case .aiModel: toggleAIModel()
         case .ignored: return false
         }
         return true
