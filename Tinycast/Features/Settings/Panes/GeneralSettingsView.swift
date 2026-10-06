@@ -210,6 +210,28 @@ struct GeneralSettingsView: View {
             }
 
             Section {
+                Toggle(isOn: $settings.launcherShowsCategories) {
+                    SettingsRowTitle(.generalCategories, "Show categories")
+                    Text("Pills under the search field that narrow the launcher to one kind.")
+                }
+                Toggle(isOn: $settings.launcherPinsCategories) {
+                    SettingsRowTitle(.generalCategories, "Keep categories visible while scrolling")
+                }
+                .settingsEnabled(settings.launcherShowsCategories)
+                ForEach(AppEntry.Kind.sectionOrder, id: \.self) { kind in
+                    Toggle(
+                        isOn: Binding(
+                            get: { settings.showsCategory(kind) },
+                            set: { settings.setCategory(kind, shown: $0) })
+                    ) {
+                        Label(kind.descriptor.sectionTitle, systemImage: kind.descriptor.categorySymbol)
+                    }
+                }
+            } header: {
+                SettingsSectionHeader(.generalCategories)
+            }
+
+            Section {
                 Toggle(isOn: $settings.appUsageEnabled) {
                     SettingsRowTitle(.generalAppUsage, "Use macOS app usage")
                     Text("Reads what Spotlight records about the apps you open, from anywhere.")

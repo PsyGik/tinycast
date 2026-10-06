@@ -87,6 +87,10 @@ final class LauncherRankingStore {
         func usage(for itemKey: String) -> LauncherUsage {
             LauncherRankingStore.usage(of: visits[itemKey], at: now)
         }
+
+        func lastOpened(for itemKey: String) -> Date? {
+            visits[itemKey]?.openedAt
+        }
     }
 
     func hasRanking(for itemKey: String) -> Bool {

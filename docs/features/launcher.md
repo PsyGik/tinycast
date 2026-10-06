@@ -482,6 +482,35 @@ user opens through Tinycast always outranks it, and a better alignment always do
 Chrome the user opens daily above Calculator, which the scorer cannot tell apart. All five settings
 travel in backups and as `search.appUsage*` / `search.frequentlyUsed*` in settings.json.
 
+### Categories
+
+With **Show categories** on (Settings › General › Categories, on by default) and compact mode off, a
+row of pills sits above the results while the field is empty: **All**, then each kind the index holds
+a visible entry of, in `AppEntry.Kind.sectionOrder` — the same order the sections publish in, so the
+pills and the sections never disagree. Each kind's SF Symbol and whether its category opens on Recently
+Used are `KindDescriptor` fields, so a new kind cannot ship without either. The pills are part of the
+list's scroll content, the first non-selectable row, so the header and the edge dissolve keep their
+geometry; **Keep categories visible while scrolling** moves them above the scroll view instead. Each
+kind can be unticked in the same section (`launcherHiddenCategories`, raw values); unticking the last
+one turns **Show categories** off, and turning it back on with all of them unticked ticks them all
+again, so the switch never claims a state it cannot show. All three settings are backed up and live
+under `search.` in settings.json; an unknown kind name is dropped on import.
+
+The choice is `PaletteState.launcherCategory`, a raw value because the palette harnesses compile
+`PaletteState` without `AppEntry`. It resets on every summon, like the clipboard's and file search's
+filters, and a choice whose pill has gone reads as All. ← and → step the pills while the field is
+empty — `LauncherScreen.move` claims the horizontal axis only then, so with text typed they stay
+with the caret — and a click on a pill does the same.
+
+Inside a category `AppIndex.categoryResults` answers alone: no card, web-address row or fallback.
+An empty field leads with **Recently Used** — up to five entries opened in the last 30 days, newest
+first (`LauncherCategoryRecents`) — then the rest by the usual tiebreak. *Last opened* is the
+ranking store's `openedAt`, or for an app with **Use macOS app usage** on, the later of that and
+Spotlight's last use. Meetings skip it: their order is the agenda's. A typed query ranks within the
+category alone, with the full comparator, under a plain Results header, and the placeholder reads
+`Search Snippets…` while the footer names the category where the system stats would sit. With All
+chosen, typing hides the pills and searches everything as before.
+
 ### Suggestions
 
 `LauncherSuggestions.select` chooses at most five from every visible entry that is not a favorite, a

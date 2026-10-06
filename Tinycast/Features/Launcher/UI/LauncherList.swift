@@ -10,6 +10,7 @@ struct LauncherList: View {
     let meetingCount: Int
     let frequentCount: Int
     let suggestionCount: Int
+    var recentCount = 0
     let showSections: Bool
     /// Changes only when the list should scroll, so mouse selection never yanks it.
     let scroll: ScrollIntent
@@ -23,7 +24,17 @@ struct LauncherList: View {
     let onDropped: () -> Void
     /// The `Use "…" with` section, always last; nil when nothing is typed.
     var fallbacks: FallbackSection?
+    /// The category pills above the rows; nil while they are switched off or out of place.
+    var categories: CategoryBar?
     @Environment(RunningAppsMonitor.self) private var runningApps
+
+    /// The pills and where a pick goes; `pinned` keeps them above the scroll, out of its content.
+    struct CategoryBar {
+        let kinds: [AppEntry.Kind]
+        let selected: AppEntry.Kind?
+        let pinned: Bool
+        let onSelect: (AppEntry.Kind?) -> Void
+    }
 
     /// What the fallback section draws and where its rows go, addressed by position.
     struct FallbackSection {
@@ -58,6 +69,8 @@ struct LauncherList: View {
     }
 
     private enum Row: Identifiable {
+        /// Never selectable: the pills answer the arrow keys through the screen, not the list.
+        case categories
         case header(String)
         /// Its own case, because only this header carries a gear.
         case fallbackHeader(String)
@@ -67,6 +80,7 @@ struct LauncherList: View {
         case fallback(AppEntry, index: Int)
         var id: String {
             switch self {
+            case .categories: return "category-chips"
             case .header(let title): return "header-" + title
             case .fallbackHeader: return "fallback-header"
             case .card(let card): return card.rowID
@@ -89,8 +103,8 @@ struct LauncherList: View {
     }
 
     private var rows: [Row] {
-        var cardRows: [Row] = []
-        if let card { cardRows = [.header(card.sectionTitle), .card(card)] }
+        var cardRows: [Row] = categories.map { $0.pinned ? [] : [.categories] } ?? []
+        if let card { cardRows += [.header(card.sectionTitle), .card(card)] }
         guard showSections else {
             guard !results.isEmpty else { return cardRows + fallbackRows }
             return cardRows + [.header("Results")] + results.map { .app($0, slot: nil) }
@@ -102,7 +116,9 @@ struct LauncherList: View {
         let frequent = results.dropFirst(favoriteCount + meetingCount).prefix(frequentCount)
         let suggestions = results.dropFirst(favoriteCount + meetingCount + frequentCount)
             .prefix(suggestionCount)
-        let rest = results.dropFirst(favoriteCount + meetingCount + frequentCount + suggestionCount)
+        let pinnedCount = favoriteCount + meetingCount + frequentCount + suggestionCount
+        let recent = results.dropFirst(pinnedCount).prefix(recentCount)
+        let rest = results.dropFirst(pinnedCount + recentCount)
         var grouped: [AppEntry.Kind: [AppEntry]] = [:]
         for app in rest { grouped[app.kind, default: []].append(app) }
         if !favorites.isEmpty {
@@ -124,12 +140,12 @@ struct LauncherList: View {
             rows.append(.header("Suggestions"))
             rows.append(contentsOf: suggestions.map { .app($0, slot: nil) })
         }
+        if !recent.isEmpty {
+            rows.append(.header("Recently Used"))
+            rows.append(contentsOf: recent.map { .app($0, slot: nil) })
+        }
         // Publication order, so rows match the flat index.
-        let kinds: [AppEntry.Kind] = [
-            .meeting, .application, .systemSettings, .extensionCommand, .quicklink, .appleShortcut,
-            .snippet, .systemAction, .windowLayout, .windowRoom, .windowCommand, .customCommand,
-            .quickAction, .command
-        ]
+        let kinds = AppEntry.Kind.sectionOrder
         for kind in kinds {
             guard let group = grouped[kind], !group.isEmpty else { continue }
             rows.append(.header(kind.descriptor.sectionTitle))
@@ -144,23 +160,48 @@ struct LauncherList: View {
     }
 
     var body: some View {
+        VStack(spacing: 0) {
+            if let categories, categories.pinned || isEmpty {
+                categoryBar(categories)
+                    .padding(.horizontal, metrics.spacing.md)
+                    .padding(.top, metrics.spacing.xs)
+            }
+            list
+        }
+    }
+
+    private var isEmpty: Bool { results.isEmpty && card == nil && fallbacks == nil }
+
+    private func categoryBar(_ bar: CategoryBar) -> some View {
+        LauncherCategoryChips(kinds: bar.kinds, selected: bar.selected, onSelect: bar.onSelect)
+    }
+
+    private var emptyText: String {
+        categories?.selected.map { "No results in \($0.descriptor.sectionTitle)" } ?? "No apps found"
+    }
+
+    private var list: some View {
         let rows = rows
+        // The pills sit above the first section rather than in its place, so its header keeps its gap.
+        let firstContentID = rows.first { if case .categories = $0 { false } else { true } }?.id
         return Group {
-            if results.isEmpty && card == nil && fallbacks == nil {
-                EmptyResults(text: "No apps found")
+            if isEmpty {
+                EmptyResults(text: emptyText)
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(rows) { row in
                                 switch row {
+                                case .categories:
+                                    if let categories { categoryBar(categories) }
                                 case .header(let title):
                                     SectionHeader(
-                                        title: title, isFirst: row.id == rows.first?.id,
+                                        title: title, isFirst: row.id == firstContentID,
                                         style: .palette)
                                 case .fallbackHeader(let title):
                                     SectionHeader(
-                                        title: title, isFirst: row.id == rows.first?.id,
+                                        title: title, isFirst: row.id == firstContentID,
                                         configure: fallbacks?.onConfigure,
                                         configureHelp: "Configure Fallbacks…", style: .palette)
                                 case .card(let card):

@@ -52,6 +52,12 @@ enum SettingsFileSchema {
                 return CurrencyData.all.contains { $0.code == code } ? .some(code) : nil
             }
         case .launcherShowsSuggestions: return bind(settings, \.launcherShowsSuggestions)
+        case .launcherShowsCategories: return bind(settings, \.launcherShowsCategories)
+        case .launcherHiddenCategories:
+            return bind(settings, \.launcherHiddenCategories) { names in
+                names.filter { AppEntry.Kind(rawValue: $0) != nil }
+            }
+        case .launcherPinsCategories: return bind(settings, \.launcherPinsCategories)
         case .appUsageEnabled: return bind(settings, \.appUsageEnabled)
         case .appUsageOrder: return bind(settings, \.appUsageOrder)
         case .appUsageWindow: return bind(settings, \.appUsageWindow)

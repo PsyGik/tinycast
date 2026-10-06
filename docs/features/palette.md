@@ -166,7 +166,10 @@ query, so Escape hands focus back to the search field first — the query that f
 still there to be cleared by the next press. A bare backspace in an empty field takes the same step
 **but never closes**: on a root screen summoned by its own hotkey it falls to the root search, which
 is the step Escape would have taken had that screen been reached by typing its name. ⌘⎋ skips the
-whole stack for that same root search from any depth.
+whole stack for that same root search from any depth. In the launcher a chosen category is one more
+rung between the query and the palette: with the field empty, Escape and a bare backspace drop it
+back to All (`PaletteEscapeAction.clearCategory`) before anything closes, whatever the configured
+Escape behavior.
 
 `EscapeKeyBehavior` (General settings) can trade the walk back for the old behavior: under
 `closeAndPopToRoot` an empty field closes the window and resets it immediately, whatever Pop to Root

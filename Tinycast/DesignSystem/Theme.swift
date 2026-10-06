@@ -40,6 +40,7 @@ enum Theme {
         static let palettePanel: CGFloat = 14
         static let listRow: CGFloat = 8
         static let paletteListRow: CGFloat = 6
+        static let categoryChip: CGFloat = 7
         static let row: CGFloat = 10
         /// Emoji tiles are roomier than list rows, so their corners take one larger step.
         static let emojiCell: CGFloat = 12
@@ -121,6 +122,8 @@ enum Theme {
         static let barButtonHeight: CGFloat = 28
         static let rowIcon: CGFloat = 24
         static let resultRowIcon: CGFloat = 26
+        /// The launcher's category pills, a step shorter than a bar button so the row stays light.
+        static let categoryChipHeight: CGFloat = 26
         /// Colour-codes a secondary label, as Calendar.app marks an event's calendar.
         static let colorDot: CGFloat = 8
         /// The calendar-colour bar between a meeting row's icon and its title.
@@ -522,6 +525,9 @@ enum Theme {
         static let roomCardDot = ramp(dark: 0.25, light: 0.25)
         /// The pill behind the header of the section a Settings search jumped to.
         static let searchFlash = Color.accentColor.opacity(0.35)
+        /// The chosen category pill: the system accent, so it reads as a selection, not a button.
+        static let categoryChipSelectedFill = Color.accentColor.opacity(0.18)
+        static let categoryChipSelectedStroke = Color.accentColor.opacity(0.65)
         /// The two squares of a checkerboard, behind a colour with alpha to show.
         static let checkerLight = Color(nsColor: .srgbInk(1, alpha: 0.22))
         static let checkerDark = Color(nsColor: .srgbInk(0, alpha: 0.22))
