@@ -54,34 +54,39 @@ struct FileBrowserScreen: PaletteScreen {
             enter(result)
             return 0
         }
-        guard vm.query.isEmpty, session.canGoUp else { return nil }
+        guard session.filter.isEmpty, session.canGoUp else { return nil }
         session.goUp()
+        vm.rewriteQuery(session.pathText)
         return selection
     }
 
+    /// The field follows: it always reads the folder's path, so typing filters it straight away.
     private func enter(_ folder: FileSearchResult) {
-        vm.query = ""
         session.open(folder.url)
+        vm.rewriteQuery(session.pathText)
     }
 
     /// ⇥ completes like a shell: the folder's shared prefix first, then the highlighted row itself.
     func tab(at selection: Int, backwards: Bool) -> Bool {
         if backwards {
-            if session.canGoUp { session.goUp() }
+            if session.canGoUp {
+                session.goUp()
+                vm.rewriteQuery(session.pathText)
+            }
             return true
         }
-        let typed = vm.query
+        let typed = session.filter
         if !typed.isEmpty, let prefix = FileBrowserCompletion.sharedPrefix(
             of: session.listing.entries.map(\.name), extending: typed), prefix.count > typed.count
         {
-            vm.query = prefix
+            vm.rewriteQuery(session.pathText + prefix)
             return true
         }
         guard let result = result(at: selection) else { return true }
         if result.isDirectory {
             enter(result)
         } else if typed != result.name {
-            vm.query = result.name
+            vm.rewriteQuery(session.pathText + result.name)
         }
         return true
     }
@@ -164,7 +169,7 @@ struct FileBrowserScreen: PaletteScreen {
 
     private var emptyText: String {
         if session.isSearching { return "" }
-        if !vm.query.isEmpty { return "Nothing under \(session.displayPath) matches" }
+        if !session.filter.isEmpty { return "Nothing under \(session.displayPath) matches" }
         let excluded = session.listing.excludedCount
         return excluded > 0 ? "Only excluded folders here — ⌘K to show them" : "This folder is empty"
     }

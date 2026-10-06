@@ -113,6 +113,19 @@ struct FileBrowserTest {
         check("a name is rebuilt into its full path", tree.path(at: 2) == "/Users/test/Development/Swift/tinycast/README.md")
         check("depth counts the folders below the root", tree.depth(at: 2) == 2 && tree.depth(at: 0) == 0)
         check("an exact name beats a deeper copy of it", found("readme.md").first == "readme.md")
+        tree.append(name: "CONTRIBUTING.md", parent: -1, isDirectory: false)
+        tree.append(name: "content", parent: tinycast, isDirectory: true)
+        check(
+            "within one kind of hit the nearer item wins, however short the deeper name",
+            found("con").first == "CONTRIBUTING.md")
+        check(
+            "a stronger kind of hit still wins from deeper down",
+            found("content").first == "content")
+        check(
+            "the field reads a folder as its path and a slash, the root as itself",
+            FileBrowserPath.typed(home.appending(path: "Development"), home: home) == "~/Development/"
+                && FileBrowserPath.typed(home, home: home) == "~/"
+                && FileBrowserPath.typed(URL(fileURLWithPath: "/"), home: home) == "/")
         check("initials find a camel-cased name", found("appidx").first == "AppIndex.swift")
         tree.append(name: "tc_fg_with_a_much_longer_tail.md", parent: -1, isDirectory: false)
         tree.append(name: "tc_fg.md", parent: -1, isDirectory: false)

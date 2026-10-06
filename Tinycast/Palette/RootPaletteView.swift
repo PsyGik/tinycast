@@ -394,15 +394,14 @@ struct RootPaletteView: View {
                     core.fileSearchCoordinator.browse(fromLauncher: vm.query)
                     return
                 }
-                // A `/` walks the path and leaves only what follows it in the field.
+                // The field is the path: deleting all of it leaves, as typing `~` came in.
                 if vm.mode == .browseFiles {
-                    // Typing takes Space back for the field, as Finder's type-select does.
-                    if !vm.query.isEmpty { vm.browseSpaceLooks = false }
-                    let filter = core.fileBrowser.type(vm.query)
-                    if filter != vm.query {
-                        vm.query = filter
+                    if vm.query.isEmpty {
+                        vm.prepare(mode: .launcher)
                         return
                     }
+                    // Typing takes Space back for the field, as Finder's type-select does.
+                    if !core.fileBrowser.type(vm.query).isEmpty { vm.browseSpaceLooks = false }
                 }
                 land()
                 if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
@@ -461,6 +460,16 @@ struct RootPaletteView: View {
                     Task { await extensions.stop() }
                 }
                 if vm.mode != .camera { core.cameraCoordinator.stop() }
+            }
+            // A preview view may have held the keyboard; closing Quick Look hands it back to the field.
+            .onChange(of: vm.fileSearchQuickLook) { _, open in
+                guard !open, !screen.hidesSearchField else { return }
+                searchFocused = false
+                Task { @MainActor in
+                    searchFocused = true
+                    // Refocusing selects the whole field; a turn later the caret goes after the path.
+                    Task { @MainActor in (hostWindow as? PalettePanel)?.moveFieldEditorCaretToEnd() }
+                }
             }
             .onChange(of: vm.isVisible) { _, visible in if !visible { core.cameraCoordinator.stop() } }
             // `prepare` may change nothing else, so this still lands the list as freshly opened.
@@ -585,7 +594,8 @@ struct RootPaletteView: View {
                     argumentFocused: argumentFocused != nil, query: vm.query, mode: vm.mode,
                     canGoBack: vm.canGoBack,
                     behavior: settings.escapeKeyBehavior,
-                    categoryChosen: vm.launcherCategory != nil)
+                    categoryChosen: vm.launcherCategory != nil,
+                    browseFilter: core.fileBrowser.filter)
                 {
                 case .clearMenuQuery, .closeMenu:
                     escapeMenu()
@@ -598,6 +608,8 @@ struct RootPaletteView: View {
                     vm.selection = 0
                 case .returnToLauncher:
                     vm.prepare(mode: .launcher)
+                case .clearBrowseFilter:
+                    vm.rewriteQuery(core.fileBrowser.pathText)
                 case .exitExtensionScreen:
                     core.extensionCoordinator.exitExtensionScreen()
                 case .goBack:

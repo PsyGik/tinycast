@@ -285,27 +285,41 @@ Typing `~` or `/` into the launcher does the same at that path (`FileBrowserPath
 the launcher so Escape walks back to it; **Browse from the launcher** in Settings › File Search ›
 Browsing turns that off, and the whole feature follows `fileSearchEnabled`.
 
-The field is a filter of the folder on screen. `FileBrowserPath.walk` reads a typed path: `~` and `/`
+**The field is the path.** It always reads the folder on screen as typed — `~/Development/` —
+followed by whatever the user types, so a keystroke filters straight away and a path typed in one go
+(`~/Development/Swift/tinycast/`) walks as it is typed. `FileBrowserPath.walk` reads it: `~` and `/`
 restart from home or the root, `..` goes up, each segment followed by `/` that names a folder walks
-into it, and what is left filters — `~/Dev/ti` lands in `~/Dev` filtering by `ti`, and a segment that
-is no folder stops the walk and stays in the filter. A walk leaves only the filter in the field.
+into it, and what is left after the last `/` is the filter (`FileBrowserSession.filter`); a segment
+that is no folder stops the walk and stays in the filter. Every navigation writes the field back
+through `PaletteState.rewriteQuery` (`FileBrowserPath.typed` — `~/`, `~/Development/`, `/`), which
+leaves the caret after the path. Deleting the whole field leaves the browser for the launcher, the
+way typing `~` came in.
 
-→ opens the selected folder and ↵ does too; a file opens as a search result does. ← goes up while the
-field is empty (with text it moves the caret), and a bare backspace goes up until home, then leaves
-the browser — from `/` or a folder outside home it leaves at the root. Going up lands the highlight on
-the folder just left. ⌘↵ shows in Finder, ⌘Y is Quick Look, and ⌘K adds Copy Path, Copy Name and the
-two view toggles. Renaming, moving and trashing are Finder's: Show in Finder is the way there.
+→ opens the selected folder and ↵ does too; a file opens as a search result does. ← goes up while
+nothing follows the path (with a filter it moves the caret). A bare backspace with nothing after the
+path takes the whole last folder off — `~/Development/Swift/` becomes `~/Development/` — except at
+home and the root, where the field editor deletes the slash itself, so `~/` → `~` → empty → launcher.
+Going up lands the highlight on the folder just left. ⌘↵ shows in Finder, ⌘Y is Quick Look, and ⌘K
+adds Copy Path, Copy Name and the two view toggles. Renaming, moving and trashing are Finder's: Show
+in Finder is the way there. A summon re-reads the folder on screen (`FileBrowserSession.reload`), so a
+file added while the palette was hidden shows up.
 
-⇥ completes like a shell: first to the longest prefix every name in the folder starting with the
-typed text shares (`dev` → `Develop`, `FileBrowserCompletion`), then to the highlighted row — a folder
-is walked into, a file's name fills the field. ⇧⇥ goes up. **Space looks, as in Finder**, while
-**Space opens Quick Look** (`fileBrowserSpaceQuickLook`, on) is on: with the field empty, or once
-the highlight has been moved by an arrow or a click, a bare Space toggles Quick Look — caught in
-`PalettePanel.sendEvent` before the field editor can type it. Typing any other character hands Space
-back to the field (`PaletteState.browseSpaceLooks`), so `annual report` still types its space. Escape
-clears typed text, then returns to the root search whatever the configured Escape behavior
-(`PaletteEscapeAction.returnToLauncher`): the browser is a place reached from the launcher, so leaving
-it never closes the palette.
+⇥ completes like a shell: first the filter to the longest prefix every name in the folder starting
+with it shares (`dev` → `Develop`, `FileBrowserCompletion`), then to the highlighted row — a folder is
+walked into, a file's name fills the filter. ⇧⇥ goes up. **Space looks, as in Finder**, while **Space
+opens Quick Look** (`fileBrowserSpaceQuickLook`, on) is on: with nothing after the path, or once the
+highlight has been moved by an arrow or a click, a bare Space toggles Quick Look — caught in
+`PalettePanel.sendEvent` before the field editor can type it. Typing a filter hands Space back to the
+field (`PaletteState.browseSpaceLooks`), so `annual report` still types its space. Escape clears the
+filter back to the path (`clearBrowseFilter`), then returns to the root search whatever the configured
+Escape behavior (`returnToLauncher`): the browser is a place reached from the launcher, so leaving it
+never closes the palette.
+
+Quick Look and the preview pane never take the keyboard: `QuickLookSurface` marks its `QLPreviewView`
+`KeyboardFocusRefusing`, as the PDF and player surfaces already were, so a click or a scroll inside a
+preview leaves the caret in the field. Closing Quick Look also re-focuses the field and, a turn later,
+puts the caret after the path — re-focusing selects the whole field, and the next keystroke would
+otherwise replace the path.
 
 ### Searching below a folder
 
@@ -314,8 +328,10 @@ items rank at once, by `FileNameScore`; after an 80 ms pause the subtree answers
 `FileNameScore` is the launcher's fuzzy tiers — exact, prefix, word start, substring, letters in order
 — with one change for names: among letters-in-order hits, the tightness bonus counts four times and
 the name's length is subtracted, so between equally tight hits the shorter name wins, while letters
-landing on word starts still read as initials (`tcfg` → `the_list_that_cut_forecast_go…`). Ties go to
-the shallower item, then to the name.
+landing on word starts still read as initials (`tcfg` → `the_list_that_cut_forecast_go…`). The kind
+of hit comes first (`FileNameScore.band`), then depth, then the score: within one kind the folder's
+own items lead, so `con` lists `CONTRIBUTING.md` before a deeper `website/content`, while a stronger
+kind — an exact name — still wins from any depth. The name breaks what is left.
 
 `FileTreeIndexer` reads the subtree on the first keystroke, breadth first, skipping hidden items
 unless shown, packages' insides and the excluded folders; it never enters Desktop, Documents,

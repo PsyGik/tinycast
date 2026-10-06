@@ -52,6 +52,12 @@ enum FileBrowserPath {
         directory.path == "/" ? directory : directory.deletingLastPathComponent().standardizedFileURL
     }
 
+    /// What the field reads for a folder: its path and a slash, so the next keystroke filters it.
+    static func typed(_ directory: URL, home: URL) -> String {
+        let shown = display(directory, home: home)
+        return shown == "/" ? shown : shown + "/"
+    }
+
     /// The folders between `base` and an item below it, `Swift/tinycast`; nil for a direct child.
     static func between(_ base: URL?, and item: URL) -> String? {
         guard let base else { return nil }
