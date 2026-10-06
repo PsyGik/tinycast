@@ -22,7 +22,11 @@ struct CalculatorHistoryScreen: PaletteScreen {
     }
 
     private var format: CalcNumberFormat { core.calcNumberFormat }
-    private var calc: CalcResult? { CalcMemo.evaluate(vm.query, rates: currencyRates.rates, format: format) }
+    private var calc: CalcResult? {
+        CalcMemo.evaluate(
+            vm.query, rates: currencyRates.rates, currency: core.settings.calcDefaultCurrency,
+            format: format)
+    }
     /// History is stored canonical, so a localized query is searched in the same spelling.
     private var entries: [CalcHistoryEntry] { history.search(format.canonical(vm.query) ?? vm.query) }
 

@@ -22,6 +22,25 @@ enum FileSearchQuery {
         return (matches + types + excludes).joined(separator: " && ")
     }
 
+    /// Word-prefix matches on what a file says rather than what it is called, one group per term.
+    static func contentExpression(
+        for query: String, excluding exclusions: [String] = [], filter: FileSearchFilter = .all
+    ) -> String? {
+        let terms = terms(in: query)
+        guard !terms.isEmpty else { return nil }
+        let matches = terms.map { term in
+            let clauses = contentAttributes.map { "\($0) == \"\(escape(term))*\"cdw" }
+            return "(" + clauses.joined(separator: " || ") + ")"
+        }
+        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
+        let types = filter.spotlightClause.map { [$0] } ?? []
+        return (matches + types + excludes).joined(separator: " && ")
+    }
+
+    private static let contentAttributes = [
+        "kMDItemTextContent", "kMDItemTitle", "kMDItemKeywords", "kMDItemDescription",
+    ]
+
     /// Both, because macOS stamps `kMDItemLastUsedDate` on few opens now, and Spotlight sorts on one.
     enum RecentStamp: String, CaseIterable, Sendable {
         case changed = "kMDItemFSContentChangeDate"
@@ -46,7 +65,8 @@ enum FileSearchQuery {
     }
 
     static func rank(
-        _ results: [FileSearchResult], for query: String, ignoring ignore: FileSearchIgnoreList
+        _ results: [FileSearchResult], for query: String, ignoring ignore: FileSearchIgnoreList,
+        limit: Int = resultLimit
     ) -> [FileSearchResult] {
         let terms = terms(in: query)
         guard !terms.isEmpty else { return [] }
@@ -74,7 +94,7 @@ enum FileSearchQuery {
                 return left.0.id.localizedCaseInsensitiveCompare(right.0.id) == .orderedAscending
             }
         }
-        .prefix(resultLimit)
+        .prefix(limit)
         .map(\.0)
     }
 

@@ -225,6 +225,17 @@ final class AppSettings {
         didSet { defaults.set(calcNumberStyle.rawValue, forKey: Key.calcNumberStyle.rawValue) }
     }
 
+    /// Nil converts into the system region's currency.
+    var calcDefaultCurrency: String? {
+        didSet {
+            guard let calcDefaultCurrency else {
+                defaults.removeObject(forKey: Key.calcDefaultCurrency.rawValue)
+                return
+            }
+            defaults.set(calcDefaultCurrency, forKey: Key.calcDefaultCurrency.rawValue)
+        }
+    }
+
     /// Scales the palette and its floating siblings only. Read through `InterfaceSize.metrics`.
     var interfaceSize: InterfaceSize {
         didSet {
@@ -316,6 +327,18 @@ final class AppSettings {
     var fileSearchIgnorePatterns: [String] {
         didSet {
             defaults.set(fileSearchIgnorePatterns, forKey: Key.fileSearchIgnorePatterns.rawValue)
+        }
+    }
+
+    var fileSearchIncludesContent: Bool {
+        didSet {
+            defaults.set(fileSearchIncludesContent, forKey: Key.fileSearchIncludesContent.rawValue)
+        }
+    }
+
+    var fileSearchResultLimit: FileSearchResultLimit {
+        didSet {
+            defaults.set(fileSearchResultLimit.rawValue, forKey: Key.fileSearchResultLimit.rawValue)
         }
     }
 
@@ -672,6 +695,7 @@ final class AppSettings {
         calcNumberStyle =
             defaults.string(forKey: Key.calcNumberStyle.rawValue).flatMap(CalcNumberStyle.init)
             ?? .system
+        calcDefaultCurrency = defaults.string(forKey: Key.calcDefaultCurrency.rawValue)
         interfaceSize =
             defaults.string(forKey: Key.interfaceSize.rawValue).flatMap(InterfaceSize.init)
             ?? .standard
@@ -709,6 +733,10 @@ final class AppSettings {
             ?? FileSearchScope.defaultScopes
         fileSearchIgnorePatterns =
             defaults.stringArray(forKey: Key.fileSearchIgnorePatterns.rawValue) ?? []
+        fileSearchIncludesContent = defaults.bool(forKey: Key.fileSearchIncludesContent.rawValue)
+        fileSearchResultLimit =
+            FileSearchResultLimit(rawValue: defaults.integer(forKey: Key.fileSearchResultLimit.rawValue))
+            ?? .standard
         notesEnabled = defaults.bool(forKey: Key.notesEnabled.rawValue)
         dictationEnabled = defaults.bool(forKey: Key.dictationEnabled.rawValue)
         dictationMode =

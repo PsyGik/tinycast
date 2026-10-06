@@ -47,6 +47,15 @@ struct FileSearchScreen: PaletteScreen {
         case .copyPath: return run(.copyPath, at: selection)
         case .pasteFile: return run(.pasteFile, at: selection)
         case .quickLook: return toggleQuickLook(at: selection)
+        case .showInfo, .saveAsQuicklink:
+            guard let result = result(at: selection) else { return false }
+            let coordinator = core.fileSearchCoordinator
+            if shortcut == .showInfo {
+                coordinator.showInfo(result)
+            } else {
+                coordinator.saveAsQuicklink(result)
+            }
+            return true
         // No ⌃⇧X here: there is no "all" to trash, only the row under the selection.
         case .delete: return trash(at: selection)
         default: return false
@@ -156,11 +165,17 @@ enum FileSearchActionsMenu {
                 PopoverMenuItem(
                     title: "Show in Finder", systemImage: "folder", shortcut: "⌘↵"
                 ) { coordinator.showInFinder(result) },
+                PopoverMenuItem(
+                    title: "Show Info in Finder", systemImage: "info.circle", shortcut: "⇧⌘I"
+                ) { coordinator.showInfo(result) },
                 PopoverMenuItem(title: "Quick Look", systemImage: "eye", shortcut: "⌘Y") {
                     vm.fileSearchQuickLook = true
                 },
                 PopoverMenuItem(title: "Share…", systemImage: "square.and.arrow.up") {
                     coordinator.share(result)
+                },
+                PopoverMenuItem(title: "Save as Quicklink", systemImage: "link", shortcut: "⌘S") {
+                    coordinator.saveAsQuicklink(result)
                 },
                 PopoverMenuItem(
                     title: "Copy File", systemImage: "doc.on.clipboard", startsSection: true,

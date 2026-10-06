@@ -39,6 +39,23 @@ struct FileSearchTests {
             "terms split on whitespace")
         expect(FileSearchQuery.expression(for: " \n ") == nil, "empty input creates no query")
         expect(
+            FileSearchQuery.contentExpression(for: " ") == nil, "empty input creates no content query")
+        let content = FileSearchQuery.contentExpression(
+            for: "annual report", excluding: ["*.log"], filter: .images)
+        let annual =
+            "(kMDItemTextContent == \"annual*\"cdw || kMDItemTitle == \"annual*\"cdw"
+            + " || kMDItemKeywords == \"annual*\"cdw || kMDItemDescription == \"annual*\"cdw)"
+        expect(
+            content?.hasPrefix(annual + " && (kMDItemTextContent == \"report*\"cdw") == true,
+            "every term must open a word in the text, title, keywords or description")
+        expect(
+            content?.hasSuffix(
+                FileSearchFilter.images.spotlightClause! + " && kMDItemFSName != \"*.log\"cd") == true,
+            "the content query keeps the filter and the ignore exclusions")
+        expect(
+            FileSearchQuery.contentExpression(for: "a*b")?.contains("\"a\\*b*\"cdw") == true,
+            "a typed wildcard stays literal in the content query")
+        expect(
             FileSearchQuery.expression(for: "annual report")
                 == "kMDItemFSName == \"*annual*\"cd && kMDItemFSName == \"*report*\"cd",
             "every term must occur in the filename")
@@ -230,6 +247,15 @@ struct FileSearchTests {
             ignorePatterns: ["*.log"], homeDirectory: home)
         expect(policy.includesHome, "a configured home root is held apart for expansion")
         expect(
+            !policy.includesContent && policy.resultLimit == 200 && policy.candidateLimit == 1_000,
+            "a policy defaults to names only, 200 rows and 1,000 Spotlight candidates")
+        let wide = FileSearchPolicy(
+            scopes: ["~"], ignorePatterns: [], homeDirectory: home, includesContent: true,
+            resultLimit: FileSearchResultLimit.oneThousand.rawValue)
+        expect(
+            wide.candidateLimit == 2_000,
+            "Spotlight is asked for twice the result limit, so ranking has room to drop")
+        expect(
             policy.directRoots.map(\.path) == ["/Users/test/Developer", "/Volumes/Work"],
             "every other root passes through verbatim, deduplicated in order")
         expect(
@@ -294,6 +320,17 @@ struct FileSearchTests {
         expect(
             FileSearchQuery.rank(capped, for: "report", ignoring: shipped).count == 200,
             "ranking publishes no more than the display cap")
+        expect(
+            FileSearchQuery.rank(capped, for: "report", ignoring: shipped, limit: 100).count == 100,
+            "a configured result limit replaces the default cap")
+
+        let mixed = FileSearchQuery.rank(
+            [result("Archive/minutes.txt"), result("Archive/budget.txt")], for: "budget",
+            ignoring: shipped
+        ).map(\.name)
+        expect(
+            mixed == ["budget.txt", "minutes.txt"],
+            "a content match whose name does not match is kept, ranked under the name match")
 
         expect(
             FileSearchQuery.rank(

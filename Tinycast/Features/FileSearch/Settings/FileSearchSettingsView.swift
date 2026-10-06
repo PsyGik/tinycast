@@ -17,6 +17,22 @@ struct FileSearchSettingsView: View {
 
             FeatureCommandsSection(owner: .fileSearch, anchor: .fileSearchCommands)
                 .settingsEnabled(settings.fileSearchEnabled)
+            Section {
+                Toggle(isOn: $settings.fileSearchIncludesContent) {
+                    SettingsRowTitle(.fileSearchResults, "Search file contents")
+                    Text("Also match text, titles and tags, listed after filename matches.")
+                }
+                Picker(selection: $settings.fileSearchResultLimit) {
+                    ForEach(FileSearchResultLimit.allCases) { limit in
+                        Text(limit.title).tag(limit)
+                    }
+                } label: {
+                    SettingsRowTitle(.fileSearchResults, "Maximum results")
+                }
+            } header: {
+                SettingsSectionHeader(.fileSearchResults)
+            }
+            .settingsEnabled(settings.fileSearchEnabled)
             FileSearchScopesSection()
                 .settingsEnabled(settings.fileSearchEnabled)
             FileSearchIgnoreSection()

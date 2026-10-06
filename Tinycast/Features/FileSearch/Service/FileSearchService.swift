@@ -22,11 +22,15 @@ enum FileSearchService {
                 !selection.directories.isEmpty,
                 let expression = FileSearchQuery.expression(
                     for: rawQuery, excluding: policy.ignore.spotlightNameExclusions, filter: filter)
-            else { return FileSearchQuery.rank(results, for: rawQuery, ignoring: policy.ignore) }
+            else {
+                return FileSearchQuery.rank(
+                    results, for: rawQuery, ignoring: policy.ignore, limit: policy.resultLimit)
+            }
 
             var seen = Set(results.map(\.id))
             // Excluded before the stat: an ignored tree then costs a string test, not a file read.
-            for path in try spotlightPaths(expression: expression, scopes: selection.directories)
+            for path in try spotlightPaths(
+                expression: expression, scopes: selection.directories, limit: policy.candidateLimit)
             where !FileSearchQuery.isExcludedPath(path, ignoring: policy.ignore)
                 && seen.insert(path).inserted
             {
@@ -35,7 +39,37 @@ enum FileSearchService {
                 }
                 results.append(result)
             }
-            return FileSearchQuery.rank(results, for: rawQuery, ignoring: policy.ignore)
+            return FileSearchQuery.rank(
+                results, for: rawQuery, ignoring: policy.ignore, limit: policy.resultLimit)
+        }
+    }
+
+    /// The second pass: files whose text, title or keywords match, ranked under the name matches.
+    nonisolated static func contentSearch(
+        query rawQuery: String, policy: FileSearchPolicy, filter: FileSearchFilter,
+        merging names: [FileSearchResult]
+    ) throws -> [FileSearchResult] {
+        try Signposts.interval("FileSearchService.contentSearch") {
+            let selection = resolveScopes(policy)
+            guard
+                !selection.directories.isEmpty,
+                let expression = FileSearchQuery.contentExpression(
+                    for: rawQuery, excluding: policy.ignore.spotlightNameExclusions, filter: filter)
+            else { return names }
+            var results = names
+            var seen = Set(names.map(\.id))
+            for path in try spotlightPaths(
+                expression: expression, scopes: selection.directories, limit: policy.candidateLimit)
+            where !FileSearchQuery.isExcludedPath(path, ignoring: policy.ignore)
+                && seen.insert(path).inserted
+            {
+                guard let result = resolve(path, homeDirectory: policy.homeDirectory) else {
+                    continue
+                }
+                results.append(result)
+            }
+            return FileSearchQuery.rank(
+                results, for: rawQuery, ignoring: policy.ignore, limit: policy.resultLimit)
         }
     }
 
@@ -83,9 +117,10 @@ enum FileSearchService {
 
     /// The path is the one attribute `MDQuery` hands back for free; every other one costs a fetch.
     private nonisolated static func spotlightPaths(
-        expression: String, scopes: [URL]
+        expression: String, scopes: [URL], limit: Int
     ) throws -> [String] {
-        try execute(expression: expression, scopes: scopes, sortedBy: nil) { query, count in
+        try execute(expression: expression, scopes: scopes, sortedBy: nil, limit: limit) {
+            query, count in
             (0..<count).compactMap { path(in: query, at: $0) }
         }
     }
@@ -94,7 +129,10 @@ enum FileSearchService {
     private nonisolated static func spotlightPaths(
         expression: String, scopes: [URL], sortedBy stamp: CFString, dating: Int
     ) throws -> [(path: String, date: Date)] {
-        try execute(expression: expression, scopes: scopes, sortedBy: stamp) { query, count in
+        try execute(
+            expression: expression, scopes: scopes, sortedBy: stamp,
+            limit: FileSearchQuery.candidateLimit
+        ) { query, count in
             (0..<min(dating, count)).compactMap { index in
                 guard let path = path(in: query, at: index),
                     let raw = MDQueryGetResultAtIndex(query, index)
@@ -107,14 +145,14 @@ enum FileSearchService {
     }
 
     private nonisolated static func execute<Value>(
-        expression: String, scopes: [URL], sortedBy stamp: CFString?,
+        expression: String, scopes: [URL], sortedBy stamp: CFString?, limit: Int,
         reading read: (MDQuery, CFIndex) -> Value
     ) throws -> Value {
         // The sort attribute has to be named at creation; set afterwards, `MDQuery` ignores it.
         guard let query = MDQueryCreate(nil, expression as CFString, nil, stamp.map { [$0] as CFArray })
         else { throw Failure.couldNotCreateQuery }
         MDQuerySetSearchScope(query, scopes as CFArray, 0)
-        MDQuerySetMaxCount(query, FileSearchQuery.candidateLimit)
+        MDQuerySetMaxCount(query, limit)
         if let stamp {
             MDQuerySetSortOptionFlagsForAttribute(
                 query, stamp, kMDQueryReverseSortOrderFlag.rawValue)

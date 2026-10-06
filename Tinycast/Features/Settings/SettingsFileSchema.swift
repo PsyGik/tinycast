@@ -46,6 +46,11 @@ enum SettingsFileSchema {
         case .hyperKeyIncludesShift: return bind(settings, \.hyperKeyIncludesShift)
         case .hyperKeyQuickPress: return bind(settings, \.hyperKeyQuickPress)
         case .calcNumberStyle: return bind(settings, \.calcNumberStyle)
+        case .calcDefaultCurrency:
+            return bind(settings, \.calcDefaultCurrency) { code in
+                guard let code else { return .some(nil) }
+                return CurrencyData.all.contains { $0.code == code } ? .some(code) : nil
+            }
         case .launcherShowsSuggestions: return bind(settings, \.launcherShowsSuggestions)
         case .launcherShowsResourcePills: return bind(settings, \.launcherShowsResourcePills)
         case .rootSearchSensitivity: return bind(settings, \.rootSearchSensitivity)
@@ -81,6 +86,8 @@ enum SettingsFileSchema {
         case .fileSearchEnabled: return bind(settings, \.fileSearchEnabled)
         case .fileSearchScopes: return bind(settings, \.fileSearchScopes)
         case .fileSearchIgnorePatterns: return bind(settings, \.fileSearchIgnorePatterns)
+        case .fileSearchIncludesContent: return bind(settings, \.fileSearchIncludesContent)
+        case .fileSearchResultLimit: return bind(settings, \.fileSearchResultLimit)
         case .fileSearchCommands: return launcher.commandsBinding(for: key, owner: .fileSearch)
         case .notesEnabled: return bind(settings, \.notesEnabled)
         case .notesRendersMarkdown: return bind(settings, \.notesRendersMarkdown)
@@ -163,6 +170,7 @@ extension HyperKeyPhysicalKey: SettingsFileRawValue {}
 extension HyperKeyQuickPress: SettingsFileRawValue {}
 extension CalcNumberStyle: SettingsFileRawValue {}
 extension SearchSensitivity: SettingsFileRawValue {}
+extension FileSearchResultLimit: SettingsFileRawValue {}
 extension QuicklinkSelectionFallback: SettingsFileRawValue {}
 extension WindowCycle: SettingsFileRawValue {}
 extension ClipboardDefaultAction: SettingsFileRawValue {}

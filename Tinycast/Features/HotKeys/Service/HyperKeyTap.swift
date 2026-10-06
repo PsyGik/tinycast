@@ -143,7 +143,7 @@ final class HyperKeyTap: HealthCheckable {
         applyKey(settings.hyperKey)
         observeKey()
 
-        // Fast user switching: drop half-held state and stop rewriting until we are back.
+        // Fast user switching & wake: drop half-held state and re-assert the remap when back.
         let center = NSWorkspace.shared.notificationCenter
         sessionTokens = [
             NotificationToken(
@@ -156,6 +156,20 @@ final class HyperKeyTap: HealthCheckable {
             NotificationToken(
                 center.addObserver(
                     forName: NSWorkspace.sessionDidBecomeActiveNotification, object: nil,
+                    queue: .main
+                ) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.sessionDidBecomeActive() }
+                }, center: center),
+            NotificationToken(
+                center.addObserver(
+                    forName: NSWorkspace.didWakeNotification, object: nil,
+                    queue: .main
+                ) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.sessionDidBecomeActive() }
+                }, center: center),
+            NotificationToken(
+                center.addObserver(
+                    forName: NSWorkspace.screensDidWakeNotification, object: nil,
                     queue: .main
                 ) { [weak self] _ in
                     MainActor.assumeIsolated { self?.sessionDidBecomeActive() }
@@ -223,9 +237,20 @@ final class HyperKeyTap: HealthCheckable {
         if keyCode == tapCode {
             return decideHyperKeyEvent(type: type, flagsRaw: flagsRaw, isAutorepeat: isAutorepeat)
         }
-        // Before the remap takes hold the key is still Caps Lock, so ride the modifier path.
-        if key == .capsLock, keyCode == kVK_CapsLock, type == .flagsChanged {
-            return decideModifierTransition(flagsRaw: flagsRaw, swapKeyCode: true)
+        // Before the remap takes hold the key is still Caps Lock; track lock flag rather than toggle.
+        if key == .capsLock, keyCode == kVK_CapsLock {
+            CapsLockRemap.setEnabled(true)
+            if type == .flagsChanged {
+                let isDown = flagsRaw & CGEventFlags.maskAlphaShift.rawValue != 0
+                if isDown {
+                    if !hyperActive { beginHold() }
+                    return .rewrite(flags: hyperized(flagsRaw), keyCode: Int64(kVK_Control))
+                } else {
+                    if hyperActive { endHold() }
+                    setCapsLockState(false)
+                    return .rewrite(flags: flagsRaw & ~strippedFlagsRaw, keyCode: Int64(kVK_Control))
+                }
+            }
         }
         guard hyperActive else { return .pass }
         // Any other key or modifier going down while Hyper is held makes this a combo, not a tap.
@@ -306,6 +331,21 @@ final class HyperKeyTap: HealthCheckable {
         otherKeyPressed = false
     }
 
+    private var isPhysicalKeyDown: Bool {
+        guard key != .none else { return false }
+        if let tapCode = key.tapKeyCode,
+            CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(tapCode))
+        {
+            return true
+        }
+        if let physCode = key.keyCode, physCode != key.tapKeyCode,
+            CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(physCode))
+        {
+            return true
+        }
+        return false
+    }
+
     // MARK: - Configuration
 
     private func applyKey(_ newKey: HyperKeyPhysicalKey) {
@@ -318,6 +358,7 @@ final class HyperKeyTap: HealthCheckable {
             setCapsLockState(false)
             CapsLockRemap.setEnabled(true)
         } else if wasCapsLock {
+            setCapsLockState(false)
             CapsLockRemap.setEnabled(false)
         }
         syncTapPresence()
@@ -325,7 +366,10 @@ final class HyperKeyTap: HealthCheckable {
 
     /// The HID remap outlives the process, so hand the key back before exiting.
     func prepareForTermination() {
-        if key == .capsLock { CapsLockRemap.clearBlocking() }
+        if key == .capsLock {
+            setCapsLockState(false)
+            CapsLockRemap.clearBlocking()
+        }
     }
 
     // MARK: - Tap lifecycle
@@ -383,12 +427,23 @@ final class HyperKeyTap: HealthCheckable {
     /// Called when the system disables the tap; any half-tracked hold is stale by then.
     fileprivate func reenable() {
         cancelHold()
+        if key == .capsLock {
+            setCapsLockState(false)
+            CapsLockRemap.setEnabled(true)
+        }
         if let tapPort { CGEvent.tapEnable(tap: tapPort, enable: true) }
     }
 
     /// One-second watchdog while a key is configured. See docs/features/hotkeys.md#lifecycle.
     func healthCheck() {
         guard key != .none else { return }
+        if hyperActive && !isPhysicalKeyDown {
+            cancelHold()
+            if key == .capsLock {
+                setCapsLockState(false)
+                CapsLockRemap.setEnabled(true)
+            }
+        }
         if tapPort == nil {
             installTapIfNeeded()
         } else if !Permissions.isAccessibilityTrusted() {
@@ -397,15 +452,20 @@ final class HyperKeyTap: HealthCheckable {
         } else if let tapPort, !CGEvent.tapIsEnabled(tap: tapPort) {
             CGEvent.tapEnable(tap: tapPort, enable: true)
         }
-
     }
 
     private func sessionDidResign() {
         cancelHold()
+        if key == .capsLock { setCapsLockState(false) }
         if let tapPort { CGEvent.tapEnable(tap: tapPort, enable: false) }
     }
 
     private func sessionDidBecomeActive() {
+        cancelHold()
+        if key == .capsLock {
+            setCapsLockState(false)
+            CapsLockRemap.setEnabled(true)
+        }
         if let tapPort {
             CGEvent.tapEnable(tap: tapPort, enable: true)
         } else {

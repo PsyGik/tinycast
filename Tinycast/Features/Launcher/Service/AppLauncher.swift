@@ -16,6 +16,12 @@ enum AppLauncher {
     @MainActor
     static func showInFinder(_ url: URL) {
         NSWorkspace.shared.activateFileViewerSelecting([url])
+        // Selecting alone can leave Finder behind the app the palette was summoned over.
+        guard let finder = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.finder")
+        else { return }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.openApplication(at: finder, configuration: configuration)
     }
 
     /// No AppKit route for Get Info, so this drives Finder over Apple events — seconds when cold.

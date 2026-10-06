@@ -7,8 +7,9 @@ feature is enabled in Settings.
 
 ## Invariants
 
-- **Every Spotlight query is capped at 1,000 candidates before execution, and 200 rows after filtering.**
-  `MDQuerySetMaxCount` is the reason the
+- **Every Spotlight query is capped before execution, and the rows after filtering.** The row cap
+  is the **Maximum results** setting (100 to 1,000, default 200); the candidate cap is twice that, never
+  under 1,000, so the default stays 1,000 and 200. `MDQuerySetMaxCount` is the reason the
   feature uses `MDQuery`; `NSMetadataQuery` has no source-result cap and can break the 100 MB budget on
   a broad filename.
 - **Everything under `Model/` stays Foundation-only and pure**, `FileSearchIgnoreList`'s `import Darwin`
@@ -22,7 +23,7 @@ feature is enabled in Settings.
   files Spotlight is asked for; it never adds a second pass over the ones it returned.
 - **The filter belongs to the query, not to the rows.** `FileSearchSession` keys its de-dup and its
   supersession check on the query and the filter together, so narrowing re-runs the same words rather
-  than thinning a result set that was already capped at 200.
+  than thinning a result set that was already capped.
 - **Hidden paths and application-bundle contents are structural, not patterns.** They are what keeps
   the feature permission-free, so no user setting can re-admit them. Everything else that is dropped
   comes from the ignore list.
@@ -64,9 +65,19 @@ Spotlight calls and coalesces changes to the newest pending query, so slower typ
 overlapping queries. The session owns *when* a search runs and nothing else — the expressions are the
 service's, built where the policy that shapes them already is. The service resolves the configured roots,
 then keeps every `MDQuery` reference inside one nonisolated synchronous function. Spotlight returns at
-most 1,000 candidates. `FileSearchQuery` removes hidden path components and app-bundle contents, applies
-the ignore list, then applies `FuzzyMatch` and publishes at most 200. Localized filename then path order
-makes ties deterministic.
+most `FileSearchPolicy.candidateLimit` candidates. `FileSearchQuery` removes hidden path components and
+app-bundle contents, applies the ignore list, then applies `FuzzyMatch` and publishes at most the
+policy's `resultLimit`. Localized filename then path order makes ties deterministic.
+
+**Searching file contents is a second pass, off by default.** With **Search file contents** on, the
+session publishes the filename matches first, then — unless a newer keystroke is already waiting, the
+query is blank, or the names already fill the limit — runs `FileSearchService.contentSearch`, whose
+`FileSearchQuery.contentExpression` asks for a word starting with each term in `kMDItemTextContent`,
+`kMDItemTitle`, `kMDItemKeywords` or `kMDItemDescription` (`"term*"cdw`), under the same filter and
+ignore exclusions. Its new paths are merged with the published names and ranked again: a content hit
+whose name does not match scores nothing, so it lands after every filename match rather than among
+them. The merge publishes only while the request and revision are unchanged, so a superseded query's
+content matches never appear, and a content pass that fails leaves the filename rows standing.
 
 **`kMDItemPath` is the only attribute read from a result.** `MDQuery` hands the path back from its own
 cache; every other attribute is a metadata fetch costing about half a millisecond, which over a thousand
@@ -223,8 +234,10 @@ not outlive the window.
 | --- | --- | --- |
 | Open File / Open Folder | ↵ | `NSWorkspace`'s asynchronous configuration API; hides the palette without restoring focus, and reports a failure through the dialog controller |
 | Show in Finder | ⌘↵ | reveals and dismisses |
+| Show Info in Finder | ⇧⌘I | `AppLauncher.showInfoInFinder`, the same Apple-events route Uninstall uses; hides the palette, and a refused Automation grant reports through a notice |
 | Quick Look | ⌘Y | the in-panel overlay above |
 | Share… | — | `NSSharingServicePicker`, anchored to the palette's trailing edge so the row it was opened from stays visible beside it. Escape or a click elsewhere dismisses it, and the palette is never hidden, so the flow returns to the same row. There is no chord: the destinations are the system's, and it is the only place a system popover is right |
+| Save as Quicklink | ⌘S | hides the palette and opens Settings ▸ Quicklinks with the editor prefilled — the file's name and its `file://` URL — so the user names and saves it there |
 | Copy File | ⇧⌘C | the file itself on the pasteboard through `PasteboardFiles.write`, which declares `.fileURL` and the path as `.string` |
 | Copy Name | ⌥⌘C | through `Paster`, palette stays open |
 | Copy Path | ⌃⌘C | the standardized path, palette stays open |
@@ -256,7 +269,9 @@ cleared whenever the palette hides.
 ## Invocation
 
 Settings ▸ File Search owns the `fileSearchEnabled` switch, which is off when its preference is absent,
-along with the scope list, the ignore patterns and the Search Files command row. All of them are
+along with the scope list, the ignore patterns, the Search Files command row, and a Results section with
+**Search file contents** (`fileSearchIncludesContent`, off) and **Maximum results**
+(`fileSearchResultLimit`, 200). All of them are
 ordinary settings carried by Tinycast settings backups; importing them grants no permission or
 background access.
 
