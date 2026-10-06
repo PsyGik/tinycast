@@ -38,6 +38,14 @@ final class HotKeyCenter {
     private var nextCarbonID: UInt32 = 0
     private var eventHandler: EventHandlerRef?
     private let signature: OSType = 0x5459_4354  // FourCC "TYCT"
+    /// Persisted, so a launch after a crash can hand back what the crashed process switched off.
+    private var disabledSwitcherKeys: Set<SystemSwitcherHotKeys.HotKey> {
+        didSet {
+            UserDefaults.standard.set(
+                disabledSwitcherKeys.map(\.rawValue).sorted(), forKey: Self.disabledSwitcherKey)
+        }
+    }
+    private static let disabledSwitcherKey = "systemSwitcherHotKeysDisabled"
 
     /// While true every hotkey is soft-unregistered, so a recorder can capture combos.
     var isPaused = false {
@@ -46,7 +54,14 @@ final class HotKeyCenter {
             for key in entries.keys {
                 if isPaused { deactivate(key) } else { activate(key) }
             }
+            syncSystemSwitcher()
         }
+    }
+
+    init() {
+        let stored = UserDefaults.standard.array(forKey: Self.disabledSwitcherKey) as? [Int32] ?? []
+        disabledSwitcherKeys = Set(stored.compactMap(SystemSwitcherHotKeys.HotKey.init(rawValue:)))
+        restoreSystemSwitcher()
     }
 
     /// Registers `shortcut` under `id`, dropping any previous one so no combo leaks.
@@ -61,12 +76,44 @@ final class HotKeyCenter {
             carbonID: nextCarbonID, ref: nil)
         idToKey[nextCarbonID] = id
         if !isPaused { activate(id) }
+        syncSystemSwitcher()
     }
 
     func unregister(id: String) {
         guard let entry = entries.removeValue(forKey: id) else { return }
         if let ref = entry.ref { UnregisterEventHotKey(ref) }
         idToKey.removeValue(forKey: entry.carbonID)
+        syncSystemSwitcher()
+    }
+
+    /// Hands ⌘⇥ and ⌘⇧⇥ back to the Dock; called at quit, since the switch outlives the process.
+    func restoreSystemSwitcher() {
+        for hotKey in disabledSwitcherKeys { SystemSwitcherHotKeys.setEnabled(hotKey, true) }
+        disabledSwitcherKeys = []
+    }
+
+    /// The Dock's switcher is off exactly while a live binding claims its chord, or a recorder runs.
+    private func syncSystemSwitcher() {
+        let claimed: Set<SystemSwitcherHotKeys.HotKey> =
+            isPaused
+            ? Set(SystemSwitcherHotKeys.HotKey.allCases)
+            : Set(entries.values.compactMap { $0.ref == nil ? nil : Self.switcherKey(for: $0.shortcut) })
+        guard claimed != disabledSwitcherKeys else { return }
+        for hotKey in SystemSwitcherHotKeys.HotKey.allCases {
+            let claim = claimed.contains(hotKey)
+            guard claim != disabledSwitcherKeys.contains(hotKey) else { continue }
+            SystemSwitcherHotKeys.setEnabled(hotKey, !claim)
+        }
+        disabledSwitcherKeys = claimed
+    }
+
+    private static func switcherKey(for shortcut: KeyShortcut) -> SystemSwitcherHotKeys.HotKey? {
+        guard shortcut.carbonKeyCode == kVK_Tab else { return nil }
+        switch shortcut.carbonModifiers {
+        case cmdKey: return .commandTab
+        case cmdKey | shiftKey: return .commandShiftTab
+        default: return nil
+        }
     }
 
     private func activate(_ id: String) {

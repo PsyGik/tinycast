@@ -82,6 +82,11 @@ final class HotKeyManager {
     private let boundSnippetKey = "boundSnippetIDs"
     private let boundExtensionCommandKey = "boundExtensionCommandEntryIDs"
 
+    /// A ⌘⇥ binding switched the Dock's off, and that switch outlives the process.
+    func prepareForTermination() {
+        center.restoreSystemSwitcher()
+    }
+
     func start(
         customCommandIDs: Set<UUID>, quicklinkIDs: Set<UUID>, windowLayoutIDs: Set<UUID>,
         windowRoomIDs: Set<UUID>, customWindowSizeIDs: Set<UUID>, quickActionIDs: Set<UUID>

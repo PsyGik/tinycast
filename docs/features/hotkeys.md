@@ -262,6 +262,20 @@ remap. Every one of those paths, a revived tap included, also forces the Caps Lo
 off, so the key can never latch as both Hyper and Caps Lock. The HID remap outlives the process, so
 `applicationWillTerminate` hands the key back to the system before exiting.
 
+### ⌘⇥ belongs to the Dock until a binding claims it
+
+The Dock matches ⌘⇥ and ⌘⇧⇥ in the WindowServer's symbolic-hotkey layer, ahead of every app's Carbon
+hotkey, so a combo registered on either never fires and a recorder never sees the keystroke. The only
+route past it is SkyLight's private `CGSSetSymbolicHotKeyEnabled` (ids 1 and 2), which
+`Platform/SystemSwitcherHotKeys.swift` resolves with `dlsym` at call time — a macOS without it leaves
+the chord silent rather than failing to launch. `HotKeyCenter.syncSystemSwitcher` keeps the Dock's
+switcher off exactly while a live Carbon registration holds that chord, and while a recorder is
+capturing, so ⌘⇥ can be recorded at all; every register, unregister and pause re-runs it. The switch
+**outlives the process**, so what is off is persisted under `systemSwitcherHotKeysDisabled`:
+`HotKeyManager.prepareForTermination` hands it back at quit, and `HotKeyCenter.init` hands back
+whatever a crashed or force-quit process left off before re-claiming what is still bound. Between a
+crash and the next launch, ⌘⇥ does nothing.
+
 ## Recorder
 
 The settings recorder (`Features/HotKeys/UI/ShortcutRecorder.swift`) is deliberately **not** a focusable

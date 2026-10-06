@@ -89,7 +89,8 @@ closing the palette; the first step lands on the window behind the current one. 
 the chord's modifiers still held arms one `flagsChanged` local monitor, and letting go switches to
 the selection, as ⌘Tab does. A single press never arms it, so pressing once and typing still
 searches; Escape hides the palette, and the next modifier change finds it gone and switches
-nothing.
+nothing. Binding the switcher to ⌘⇥ itself takes that chord from the Dock while it is bound; see
+[hotkeys.md](hotkeys.md#-belongs-to-the-dock-until-a-binding-claims-it).
 
 ## Raising
 
