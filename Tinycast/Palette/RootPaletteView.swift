@@ -450,6 +450,12 @@ struct RootPaletteView: View {
             }
             // ⌘. arrives as a token rather than a key press. See `PaletteState.pinChordToken`.
             .onChange(of: vm.pinChordToken) { performShortcut(.pin) }
+            .onChange(of: vm.queryRewriteToken) {
+                if menuOpen { closeMenus() }
+                searchFocused = true
+                // Next turn, past the refocus that selects all, so typing extends the answer.
+                Task { @MainActor in (hostWindow as? PalettePanel)?.moveFieldEditorCaretToEnd() }
+            }
             // ⌘1…⌘0 arrives as a slot index from AppKit keyCode matching.
             .onChange(of: vm.favoriteSlotToken) {
                 if let index = vm.favoriteSlotIndex { performShortcut(.favoriteSlot(index)) }
@@ -907,12 +913,13 @@ struct RootPaletteView: View {
                 }
             }
             .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
-            Spacer()
             if showActionGroup {
                 actionGroup(
                     primaryActionLabel: primaryActionLabel,
                     formPrimaryShortcut: formPrimaryShortcut,
-                    showActions: showActions)
+                    showActions: showActions
+                )
+                .fixedSize()
             }
         }
         .padding(.horizontal, metrics.spacing.xl)
@@ -1184,6 +1191,11 @@ struct RootPaletteView: View {
             let screen = screen
             let selection = selection(in: screen)
             if modifiers.contains([.command, .control]), screen.tertiary(at: selection) { return true }
+            if modifiers.contains([.command, .shift]),
+                screen.perform(.copyCalculation, at: selection)
+            {
+                return true
+            }
             if modifiers.contains(.command) { return screen.secondary(at: selection) }
             if modifiers.contains(.option) {
                 return screen.pasteKeepingWindowOpen(at: selection)

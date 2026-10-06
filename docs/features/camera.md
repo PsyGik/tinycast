@@ -33,6 +33,11 @@ the video in once the capture session is running.
   resolves a bare Escape at the panel's `onEscape` instead, through the same `PaletteEscapeAction`,
   whenever the camera screen is up with no menu open. Taking a photo closes
   the palette after copying it, and the mode/hide lifecycle releases the camera light.
+- **System UI is not a click away.** Calendar's `CameraPanel` owns its click-away and reports it as the
+  same `.cancel` as Esc. Losing key counts, unless the window under the pointer sits at the
+  Dock's level or above — the menu bar, what it drops down, the Dock — so reframing from Control
+  Center keeps the feed live. No further `resignKey` follows that, so a mouse-down monitor waits for
+  the next click outside the panel and system UI, and stops once the panel is key again.
 - **The preview and the photo are mirrored together.** Mirroring is `isVideoMirrored` on a connection
   — the preview layer's, and the photo output's at capture time — never a `scaleEffect` on the view,
   which would hand back a photo that is not what the user framed.
@@ -55,7 +60,7 @@ the video in once the capture session is running.
 | `UI/CameraScreen.swift` | full-bleed palette preview, back button, and Actions rows |
 | `UI/CameraStage.swift` | the shared stage — the hosted preview layer, or why there is no video |
 | `UI/ApertureReveal.swift` | the palette screen's lens iris over the stage while the camera warms up |
-| `UI/CameraPanel.swift` | Calendar's shared borderless preview panel: ↵ and Esc, cursor-screen centring |
+| `UI/CameraPanel.swift` | Calendar's borderless preview panel: ↵, Esc, click-away, cursor-screen centring |
 | `UI/CameraButton.swift` | Calendar's join-preview button: `ModalActionButtonStyle` plus a key-cap tooltip |
 
 `Purpose` is the session's one knob. `.preview` is the cheap one Calendar takes — a `.medium` preset

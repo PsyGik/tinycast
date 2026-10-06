@@ -139,6 +139,30 @@ run app-name-test          Tinycast/Platform/AppDisplayName.swift \
                            Tinycast/Platform/BundleLocalization.swift \
                            $L/SearchRelevance.swift
 run favorites-test         $L/FavoriteSlots.swift
+run launcher-file-test     $L/LauncherFileFormat.swift \
+                           Tinycast/Features/Settings/Model/SettingsFileJSON.swift
+run launcher-settings-file-test \
+                           $L/LauncherFileFormat.swift $L/CommandID.swift $L/CommandCatalog.swift \
+                           Tinycast/Features/Launcher/Service/LauncherSettingsFile.swift \
+                           Tinycast/Features/Launcher/Service/AliasStore.swift \
+                           Tinycast/Features/Launcher/Service/VisibilityStore.swift \
+                           Tinycast/Features/Settings/SettingsTab.swift \
+                           Tinycast/Features/Settings/Model/*.swift \
+                           Tinycast/Features/HotKeys/Service/HotKeySettingsFile.swift \
+                           Tinycast/Features/HotKeys/Service/KeyShortcut.swift \
+                           Tinycast/Features/HotKeys/Model/HotKeyAction.swift \
+                           Tinycast/Features/HotKeys/Model/HotKeyBinding.swift \
+                           Tinycast/Features/HotKeys/Model/HotKeySpelling.swift \
+                           Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
+                           Tinycast/Features/HotKeys/Model/ModifierKey.swift \
+                           Tinycast/Features/HotKeys/Model/HyperKey.swift \
+                           Tinycast/Platform/ASCIIKeyboardLayout.swift \
+                           Tinycast/Features/QuickActions/Model/BuiltInQuickAction.swift \
+                           Tinycast/Features/Quicklinks/Model/Quicklink.swift \
+                           Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           Tinycast/Features/SystemActions/Model/SystemAction.swift \
+                           Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
+                           Tinycast/Features/Snippets/Model/Snippet.swift
 run apple-shortcut-test    Tinycast/Features/AppleShortcuts/Model/*.swift
 run calc-test              Tinycast/Features/Calculator/Model/*.swift
 run index calc-performance Tinycast/Features/Calculator/Model/*.swift
@@ -277,9 +301,40 @@ run fallback-test          Tinycast/Features/Launcher/Model/Fallback.swift \
                            Tinycast/Features/Snippets/Model/Snippet.swift
 run dictionary-test        Tinycast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Tinycast/Features/Dictionary/Model/DictionaryMarkup.swift
+run dictation-test         Tinycast/Features/Dictation/Model/DictationModel.swift Tinycast/Features/Dictation/Model/DictationIdleRelease.swift Tinycast/Features/Dictation/Model/DictationTextFormatter.swift
+run dictation-field-test   Tinycast/Features/Dictation/Model/DictationModel.swift \
+                           Tinycast/Features/Dictation/Model/DictationMode.swift \
+                           Tinycast/Features/Dictation/Model/DictationDestination.swift \
+                           Tinycast/Features/Dictation/Model/DictationTextFormatter.swift \
+                           Tinycast/Features/Dictation/Service/DictationCoordinator.swift \
+                           Tinycast/Features/Dictation/Service/DictationInsertionContext.swift \
+                           Tinycast/Features/AI/UI/ChatComposerTextView.swift \
+                           Tinycast/Features/TextInjection/Service/*.swift \
+                           Tinycast/Features/Snippets/Model/*.swift \
+                           Tinycast/Platform/AccessibilityText.swift \
+                           Tinycast/Platform/PasteboardFiles.swift \
+                           Tinycast/Platform/Appearance.swift Tinycast/DesignSystem/Theme.swift
+run dictation-volume-test  Tinycast/Features/Dictation/Model/DictationVolumeSnapshot.swift \
+                           Tinycast/Features/Dictation/Service/DictationAudioDucker.swift \
+                           Tinycast/Platform/AppPaths.swift
+run index -O dictation-performance Tinycast/Platform/ProcessExit.swift \
+                           Tinycast/Features/Dictation/Model/DictationModel.swift \
+                           Tinycast/Features/Dictation/Service/DictationWire.swift
+run dictation-inference-test Tinycast/Features/Dictation/Model/DictationAudioChunks.swift \
+    Tinycast/Features/Dictation/Service/DictationSpectrum.swift \
+    Tinycast/Features/Dictation/Helper/DictationTensor.swift Tinycast/Features/Dictation/Helper/DictationTokenizer.swift \
+    Tinycast/Features/Dictation/Helper/DictationMel.swift
+run dictation-worker-test  Tinycast/Features/Dictation/Model/DictationModel.swift \
+                           Tinycast/Features/Dictation/Model/DictationIdleRelease.swift \
+                           Tinycast/Features/Dictation/Service/DictationWire.swift \
+                           Tinycast/Features/Dictation/Service/DictationWorker.swift \
+                           Tinycast/Features/Dictation/Service/DictationModelStore.swift \
+                           Tinycast/Features/Dictation/Service/DictationModelDownloader.swift \
+                           Tinycast/Platform/ProcessExit.swift Tinycast/Platform/AppPaths.swift
 run hotkey-test            Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
+                           Tinycast/Features/HotKeys/Model/ModifierKey.swift \
+                           Tinycast/Features/HotKeys/Model/ModifierKeyDetector.swift \
                            Tinycast/Features/HotKeys/Model/DoubleTapDetector.swift \
-                           Tinycast/Features/HotKeys/Model/GlobeTapDetector.swift \
                            Tinycast/Features/HotKeys/Model/HotKeyBinding.swift \
                            Tinycast/Features/HotKeys/Model/HotKeySpelling.swift \
                            Tinycast/Features/HotKeys/Model/HyperKey.swift \
@@ -329,6 +384,8 @@ run ext-icon-test          Tinycast/Platform/Appearance.swift \
                            Tinycast/Features/Clipboard/Model/ColorValue.swift \
                            Tinycast/Features/Clipboard/Model/ColorSpaces.swift
 run system-action-test     Tinycast/Features/SystemActions/Model/SystemAction.swift
+run microphone-mute-test   Tinycast/Features/SystemActions/Service/SystemActionFailure.swift \
+                           Tinycast/Features/SystemActions/Service/SystemActionRunner+Microphone.swift
 run volume-test            Tinycast/Features/SystemActions/Model/VolumeLevel.swift
 run resource-widgets-test  Tinycast/Features/ResourceWidgets/Model/*.swift \
                            Tinycast/Features/ResourceWidgets/Service/*.swift
@@ -339,6 +396,7 @@ run window-command-test    Tinycast/Features/WindowManagement/Model/WindowComman
 run window-preset-test     Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/WindowManagement/Model/WindowShortcutPreset.swift \
                            Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
+                           Tinycast/Features/HotKeys/Model/ModifierKey.swift \
                            Tinycast/Features/HotKeys/Model/HotKeyBinding.swift \
                            Tinycast/Features/HotKeys/Model/HyperKey.swift \
                            Tinycast/Platform/ASCIIKeyboardLayout.swift \
@@ -471,7 +529,14 @@ run -O index notes-editor-performance \
 run slow -O raycast-test   Tinycast/Features/Backup/Model/RaycastImportError.swift \
                            Tinycast/Features/Backup/Service/RaycastDecoder.swift \
                            Tinycast/Features/Backup/Service/Scrypt.swift \
-                           Tinycast/Platform/Compression/Zlib.swift
+                           Tinycast/Platform/Compression/Zlib.swift \
+                           Tinycast/Features/Clipboard/Model/RaycastClipboardImport.swift \
+                           Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
+                           Tinycast/Features/Clipboard/Model/ClipboardFilter.swift \
+                           Tinycast/Features/Clipboard/Model/ClipboardFileKind.swift \
+                           Tinycast/Features/Clipboard/Model/ColorValue.swift \
+                           Tinycast/Features/Clipboard/Model/ColorFormat.swift \
+                           Tinycast/Features/Clipboard/Model/ColorSpaces.swift
 run settings-backup-test   Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
 run settings-file-test     Tinycast/Features/Settings/Model/*.swift \
@@ -571,6 +636,9 @@ run settings-history-test  Tinycast/Features/Settings/SettingsTab.swift \
                            $L/SearchRelevance.swift
 run updates-test           Tinycast/Features/Updates/Model/*.swift \
                            Tinycast/Features/Updates/Service/BundleSignature.swift
+run update-check-test      Tinycast/Features/Updates/Model/*.swift \
+                           Tinycast/Features/Updates/Service/UpdateCheckStore.swift \
+                           Tinycast/Platform/AppPaths.swift
 run support-test           Tinycast/Features/Support/Model/*.swift
 run ai-provider-test       Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/AI/Model/*.swift \
@@ -712,7 +780,7 @@ if [ "$ran" -eq 0 ]; then
 fi
 
 # `sort -s` is stable, so the slow harnesses lead and everything else keeps its declaration order.
-JOBS="${TINYCAST_TEST_JOBS:-$(sysctl -n hw.ncpu)}"
+JOBS="${TINYCAST_TEST_JOBS:-4}"
 export TINYCAST_TEST_TIMEOUT="${TINYCAST_TEST_TIMEOUT:-300}"
 started=$SECONDS
 

@@ -1,7 +1,7 @@
 # App launcher & root search
 
 `AppIndex.scan()` runs off-main, enumerates the user's search scopes, and dedups by bundle ID (the
-earliest scope wins).
+earliest scope wins; within one folder, the newest `CFBundleShortVersionString` does).
 
 ## Invariants
 
@@ -62,6 +62,12 @@ immediate subfolder, are indexed. That catches vendor-folder installs like
 its `Contents/Applications` and `Contents/Developer/Applications` folders, where Xcode ships
 Instruments, Icon Composer and Simulator, and a subfolder nested deeper than one level still needs
 its own scope.
+
+Within one folder, bundles are listed newest `CFBundleShortVersionString` first, compared as numbers
+so `26.6` outranks `9.4`. A tie or an unreadable version falls back to Finder's name order. Because
+the scan keeps a bundle ID's first copy, two Xcodes in `/Applications` resolve to the newest, every
+scan, and the embedded apps follow their parent. Scope order still comes first: listing an older
+copy as its own earlier scope pins it (#1288).
 
 The defaults cover `/Applications` and `/System/Applications` plus their `Utilities` folders,
 `/System/Library/CoreServices/Applications`, the cryptex apps under
@@ -186,7 +192,9 @@ all 65 of them read English on every Mac, whatever language it is set to.
 A tag carrying a script is read under two more codes, because no one folder name covers it: a
 `zh-Hans-CN` Mac also reads `zh-Hans`, the folder most third-party apps ship, then `zh_CN`, the key
 Apple's own loctables use. A script-only `zh-Hans` maximizes to reach the same region. A tag without a
-script, every English one included, produces exactly the codes it always did.
+script otherwise keeps its exact, underscore and bare-language forms. Bokmål (`nb`) additionally
+reads `no` after `nb`, because Apple's Norwegian loctables use that key; an explicit `nb.lproj` still
+wins. Other languages, including Nynorsk (`nn`), gain no alias.
 
 The user's own language wins the **display name**, so a row reads the way Finder reads it. The rest,
 English included, ride along as alternate titles, matched as typed and never transliterated.
@@ -203,8 +211,10 @@ every file name as an alternate title. Reading the `en_GB` those bundles *do* ca
 repair: it relabels `Print Center` as `Print Centre`. Below the development region the walk carries on,
 so every language under it stays indexed as an alternate title. The region is canonicalized before it is
 matched, because `CFBundleDevelopmentRegion` still ships its pre-BCP-47 spelling — Safari's and
-Terminal's read `English`. `AppDisplayName.inInfo` reads the `-macos` variant of each key before the
-bare one, the way `CFBundle` does: Image Playground's loctable spells the bare `CFBundleDisplayName`
+Terminal's read `English`. Norwegian development regions resolve as Bokmål, and both `nb` and `no`
+translations are checked before falling back to the untranslated name. `AppDisplayName.inInfo` reads
+the `-macos` variant of each key before the bare one, the way `CFBundle` does: Image Playground's
+loctable spells the bare `CFBundleDisplayName`
 `Playground` and only the suffixed key `Image Playground`. A non-English user finds their app by the
 name they see *and* by the English name the vendor advertises.
 
@@ -435,9 +445,10 @@ per-item reset in its Actions menu, and users can clear all learned ranking in G
 ## The empty list
 
 Favorites, then Meetings, then Suggestions, then one section per kind. Meetings sit above
-Suggestions because a meeting is worth opening only until it ends. Each kind section is sorted by
-the tiebreak, so what the user opens comes first and never-used entries still read alphabetically
-below it. The sort runs within each contiguous kind run of the publication order,
+Suggestions because a meeting is worth opening only until it ends. They keep the agenda's start
+order, including in the `Meetings` category listing, regardless of title or past usage. Each remaining
+kind section is sorted by the tiebreak, so what the user opens comes first and never-used entries still
+read alphabetically below it. The sort runs within each contiguous kind run of the publication order,
 so the sectioned view stays 1:1 with the flat selection.
 
 ### Suggestions
@@ -494,7 +505,7 @@ the box is changed. Every dialog is Tinycast's own: confirmations, failure repor
 Volume slider all render through `DialogController` rather than an `NSAlert`
 (see [ui.md](../ui.md#dialogs--hud)). Each confirmation carries the action's own icon — Restart shows
 `arrow.clockwise`, Empty Trash `trash.slash` — so the dialog is recognizably about the row that
-opened it. Volume and mute actions also show Tinycast's transient volume HUD, since macOS only draws
+opened it. Output volume and mute actions also show Tinycast's transient volume HUD, since macOS only draws
 its own for real media keys. Volume Up/Down walk a 5% grid (`VolumeLevel.stepped`, covered by
 `Tests/volume-test.swift`): an off-grid level snaps to the next line rather than past it, so from 37%
 up lands on 40% and down on 35%, and repeated presses stay on round numbers.
@@ -507,8 +518,16 @@ Custom Commands and Snippets confirm through) rather than finishing silently:
 something actually changed, `.neutral` when there was nothing to do, shown as the glyph trailing the
 message rather than a per-action icon, since the message already names the state. Actions that are
 their own confirmation, such as Show Desktop, Hide Others,
-Quit All and the power actions, return nothing. Volume and mute are the one case that stays on the
+Quit All and the power actions, return nothing. Output volume and mute stay on the
 palette's own box HUD, since that one has an actual level and number to show, not just a message.
+
+**Toggle Microphone Mute** reads the current default macOS input device on each activation and
+toggles its native CoreAudio input mute control without changing input gain or output audio.
+It is available in Settings › System Actions with the same global hotkey recorder as output mute.
+CoreAudio work runs off-main, and the message pill reports `Microphone Muted` or
+`Microphone Unmuted` only once the device confirms the requested state. Repeated activations are
+ignored while a change is pending. An absent input device, unavailable or externally controlled mute,
+or an unconfirmed write reports a failure rather than claiming the microphone was muted.
 
 **Nothing-to-do is an outcome, not a failure.** Empty Trash asks Finder for `count items of trash`
 first and reports `Trash Is Already Empty`, because Finder raises an error when told to empty an empty

@@ -5,6 +5,7 @@ import SwiftUI
 enum Theme {
     enum Spacing {
         static let xxs: CGFloat = 2
+        static let dictationWaveGap: CGFloat = 3
         static let xs: CGFloat = 4
         static let sm: CGFloat = 6
         static let md: CGFloat = 8
@@ -228,8 +229,12 @@ enum Theme {
         static let aiChatDetailMinimum: CGFloat = 440
         /// The transcript and composer column; past this a line of prose stops being readable.
         static let aiChatReadingWidth: CGFloat = 760
-        /// The composer grows with its text up to this, then scrolls inside itself.
-        static let aiChatComposerMaxHeight: CGFloat = 180
+        static let aiChatComposerMaxLines: CGFloat = 15
+        static let aiChatComposerHeightFraction: CGFloat = 0.30
+        /// Every control on the composer's row, Send included, so the row reads as one line.
+        static let aiChatComposerControl: CGFloat = 28
+        /// One slot for every glyph on that row, so a plus and a brand mark weigh the same.
+        static let aiChatComposerGlyph: CGFloat = 16
         static let chatContextGauge: CGFloat = 14
         /// A source chip's title before it middle-truncates, so three chips share a row.
         static let chatSourceTitle: CGFloat = 200
@@ -301,6 +306,8 @@ enum Theme {
         /// Transient volume HUD shown after any volume or mute command.
         static let hudWidth: CGFloat = 200
         static let hudHeight: CGFloat = 100
+        static let dictationPanel = CGSize(width: 144, height: 44)
+        static let dictationWaveBar: CGFloat = 2
         /// Read-only volume bar geometry used by the HUD.
         static let volumeTrackHeight: CGFloat = 6
         /// Fixed slot for the level readout, sized to the widest string it ever holds.
@@ -420,6 +427,10 @@ enum Theme {
         static let menuSymbolSize: CGFloat = 14
         static let menuSymbolWeight = Font.Weight.medium
         static let noteTitle = Font.headline
+        /// The composer row's glyphs; Send's arrow is bolder, and Stop's square smaller to match it.
+        static let composerSymbol = Font.system(size: 13, weight: .medium)
+        static let composerSend = Font.system(size: 13, weight: .bold)
+        static let composerStop = Font.system(size: 10, weight: .bold)
     }
 
     enum Colors {
@@ -527,6 +538,9 @@ enum Theme {
         static let success = Color.green
         /// Caution tint, short of destructive: a chat context nearly full.
         static let warning = Color.orange
+        /// Send's disc and its arrow: the strongest mark on the composer, inverted against the page.
+        static let composerSend = ramp(dark: 0.92, light: 0.92)
+        static let composerSendInk = adaptive(dark: .srgbInk(0, alpha: 0.85), light: .srgbInk(1, alpha: 1))
         /// The window's own page, for a card that must hide the transcript it floats over.
         static let windowSurface = Color(nsColor: .windowBackgroundColor)
         /// Where a dropped file will land: the chat window's dashed outline.
