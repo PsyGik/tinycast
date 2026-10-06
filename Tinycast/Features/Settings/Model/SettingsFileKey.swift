@@ -20,6 +20,7 @@ enum SettingsFileKey: String, CaseIterable, Sendable {
     case hyperKeyIncludesShift = "hyperKey.includesShift"
     case hyperKeyQuickPress = "hyperKey.quickPress"
     case calcNumberStyle = "calculator.numberStyle"
+    case calcDefaultCurrency = "calculator.defaultCurrency"
     case launcherShowsSuggestions = "search.showsSuggestions"
     case launcherShowsResourcePills = "search.showsSystemStats"
     case rootSearchSensitivity = "search.sensitivity"

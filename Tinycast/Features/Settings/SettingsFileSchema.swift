@@ -46,6 +46,11 @@ enum SettingsFileSchema {
         case .hyperKeyIncludesShift: return bind(settings, \.hyperKeyIncludesShift)
         case .hyperKeyQuickPress: return bind(settings, \.hyperKeyQuickPress)
         case .calcNumberStyle: return bind(settings, \.calcNumberStyle)
+        case .calcDefaultCurrency:
+            return bind(settings, \.calcDefaultCurrency) { code in
+                guard let code else { return .some(nil) }
+                return CurrencyData.all.contains { $0.code == code } ? .some(code) : nil
+            }
         case .launcherShowsSuggestions: return bind(settings, \.launcherShowsSuggestions)
         case .launcherShowsResourcePills: return bind(settings, \.launcherShowsResourcePills)
         case .rootSearchSensitivity: return bind(settings, \.rootSearchSensitivity)

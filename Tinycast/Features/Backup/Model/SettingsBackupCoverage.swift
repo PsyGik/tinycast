@@ -19,6 +19,7 @@ enum SettingsBackupCoverage {
         "escapeKeyBehavior": .escapeKeyBehavior,
         "appearance": .appearance,
         "calcNumberStyle": .calcNumberStyle,
+        "calcDefaultCurrency": .calcDefaultCurrency,
         "interfaceSize": .interfaceSize,
         "compactMode": .compactMode,
         "showFavoritesInCompactMode": .showFavoritesInCompactMode,

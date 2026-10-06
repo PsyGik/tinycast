@@ -167,6 +167,9 @@ enum SettingsSearchCatalog {
             .generalCalculator, "Number format",
             keywords: ["decimal", "comma", "separator", "locale", "region", "thousands"]),
         .init(
+            .generalCalculator, "Default currency",
+            keywords: ["currency", "money", "exchange", "convert", "home", "region"]),
+        .init(
             .generalSearch, "Show suggestions",
             keywords: ["frequent", "recent", "recommended", "empty", "root search"]),
         .init(

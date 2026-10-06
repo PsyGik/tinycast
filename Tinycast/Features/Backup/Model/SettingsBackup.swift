@@ -36,6 +36,7 @@ struct SettingsBackup: Codable {
         var escapeKeyBehavior: String?
         var appearance: String?
         var calcNumberStyle: String?
+        var calcDefaultCurrency: String?
         var interfaceSize: String?
         var compactMode: Bool?
         var showFavoritesInCompactMode: Bool?
@@ -148,6 +149,7 @@ extension SettingsBackup {
             escapeKeyBehavior: s.escapeKeyBehavior.rawValue,
             appearance: s.appearance.rawValue,
             calcNumberStyle: s.calcNumberStyle.rawValue,
+            calcDefaultCurrency: s.calcDefaultCurrency,
             interfaceSize: s.interfaceSize.rawValue,
             compactMode: s.compactMode,
             showFavoritesInCompactMode: s.showFavoritesInCompactMode,
@@ -367,6 +369,10 @@ extension SettingsBackup {
         }
         if let raw = s.calcNumberStyle, let style = CalcNumberStyle(rawValue: raw) {
             settings.calcNumberStyle = style
+            count += 1
+        }
+        if let code = s.calcDefaultCurrency, CurrencyData.all.contains(where: { $0.code == code }) {
+            settings.calcDefaultCurrency = code
             count += 1
         }
         if let flag = s.compactMode {

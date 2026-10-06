@@ -165,6 +165,16 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalCalculator, "Number format")
                     Text("With a decimal comma, ; separates arguments.")
                 }
+                Picker(selection: $settings.calcDefaultCurrency) {
+                    Text("System region (\(RegionCurrency.code ?? "none"))").tag(nil as String?)
+                    Divider()
+                    ForEach(CurrencyData.all, id: \.code) { currency in
+                        Text("\(currency.code) – \(currency.name)").tag(Optional(currency.code))
+                    }
+                } label: {
+                    SettingsRowTitle(.generalCalculator, "Default currency")
+                    Text("What an amount with no target converts into.")
+                }
             } header: {
                 SettingsSectionHeader(.generalCalculator)
             }

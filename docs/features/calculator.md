@@ -11,7 +11,8 @@ in (see Currency below).
 - **`Model/` (including `CalcDateTime`) stays Foundation-only *and pure*** — no AppKit or SwiftUI, no
   clock read, no network, **no `Locale`**. `calc-test` compiles the real engine sources. Every
   externally-sourced input is injected: the clock via `now`/`calendar`, the FX table via `rates`,
-  the Mac's own currency via `region`, which `RegionCurrency` reads and `CalcMemo` passes down, and
+  the home currency via `region`, which `CalcMemo` passes down from the **Default currency**
+  setting or, when that is unset, from `RegionCurrency`, and
   the number format via `format`, which `RegionNumberFormatMonitor` reads from Language & Region.
 - **The engine only ever reads and writes canonical English numbers.** `CalcNumberFormat.canonical`
   rewrites a query before anything else sees it, and `CalcNumberFormat.localized` rewrites an answer
@@ -543,7 +544,10 @@ conversion an operand (`(20 sgd to usd) * 30`), matching a trailing suffix on a 
 An amount with no target answers in the region currency: on a machine set to Bangladesh, `1 usd`
 reads `122.84 BDT`, badged `US Dollar → Bangladeshi Taka`, and `1 btc` follows the same rule. The
 region comes from `RegionCurrency`, one `Locale.current.currency` read — a preference, so nothing
-ever asks for location, and a `Model/` file never performs it.
+ever asks for location, and a `Model/` file never performs it. **General › Calculator › Default
+currency** (`calcDefaultCurrency`, nil by default) overrides that read for a Mac whose region is not
+the currency its user thinks in; it is backed up, mirrored as `calculator.defaultCurrency`, and an
+unknown code is rejected on import.
 
 Where the region names the currency already written, the amount pairs with the **dollar** instead —
 the **euro** where the dollar is the one that was typed. Converting is the only reason to write a
