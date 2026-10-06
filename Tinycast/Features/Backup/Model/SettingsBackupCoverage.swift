@@ -43,6 +43,7 @@ enum SettingsBackupCoverage {
         "fileSearchIncludesContent": .fileSearchIncludesContent,
         "fileBrowserFromLauncher": .fileBrowserFromLauncher,
         "fileBrowserShowsHidden": .fileBrowserShowsHidden,
+        "fileBrowserSpaceQuickLook": .fileBrowserSpaceQuickLook,
         "fileSearchResultLimit": .fileSearchResultLimit,
         "notesEnabled": .notesEnabled,
         "notesRendersMarkdown": .notesRendersMarkdown,

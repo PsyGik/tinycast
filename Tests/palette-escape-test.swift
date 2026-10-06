@@ -76,6 +76,18 @@ struct PaletteEscapeTests {
             .clearCategory,
             "the category clears first whatever the configured Escape behavior")
         expect(
+            resolve(query: "read", mode: .browseFiles),
+            .clearQuery,
+            "a typed search in Browse Files clears before the browser is left")
+        expect(
+            resolve(mode: .browseFiles),
+            .returnToLauncher,
+            "an empty Browse Files field returns to the root search, never closing the palette")
+        expect(
+            resolve(mode: .browseFiles, behavior: .closeAndPopToRoot),
+            .returnToLauncher,
+            "Browse Files returns to the launcher whatever the configured Escape behavior")
+        expect(
             resolve(mode: .clipboard, categoryChosen: true),
             .hidePalette,
             "a category only belongs to the launcher; another screen ignores it")

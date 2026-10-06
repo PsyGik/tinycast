@@ -158,6 +158,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         core.calendarCoordinator.paletteDidHide()
         core.roomCoordinator.paletteDidHide()
         core.resourceWidgetsCoordinator.setPaletteShowing(false)
+        core.fileBrowser.releaseSearch()
         // Ordering out skips onDisappear, and a reopen must not land on a camera with no session.
         if core.palette.mode == .camera {
             core.cameraCoordinator.stop()
@@ -425,6 +426,20 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             if core.palette.pop() { return true }
             guard core.palette.mode != .launcher else { return false }
             core.palette.prepare(mode: .launcher)
+            return true
+        }
+        // Finder's Space: with the field empty, or once the highlight has moved, it looks rather than types.
+        panel.onBareSpace = { [weak self] in
+            guard let core = self?.core, core.palette.mode == .browseFiles, !core.palette.isComposing
+            else { return false }
+            if core.palette.fileSearchQuickLook {
+                core.palette.fileSearchQuickLook = false
+                return true
+            }
+            guard core.settings.fileBrowserSpaceQuickLook, !core.fileBrowser.rows.isEmpty,
+                core.palette.query.isEmpty || core.palette.browseSpaceLooks
+            else { return false }
+            core.palette.fileSearchQuickLook = true
             return true
         }
         installPasteMonitor()

@@ -44,6 +44,27 @@ enum FileSearchService {
         }
     }
 
+    /// Browse Files' answer for a subtree too wide to read: name matches under one folder.
+    nonisolated static func subtree(
+        _ query: String, in folder: URL, ignore: FileSearchIgnoreList, homeDirectory: URL
+    ) throws -> [FileSearchResult] {
+        try Signposts.interval("FileSearchService.subtree") {
+            guard
+                let expression = FileSearchQuery.subsequenceExpression(
+                    for: query, excluding: ignore.spotlightNameExclusions)
+            else { return [] }
+            return try spotlightPaths(
+                expression: expression, scopes: [folder], limit: FileSearchQuery.candidateLimit
+            )
+            .lazy
+            .filter { path in
+                !FileSearchQuery.isExcludedPath(path, ignoring: ignore)
+                    && !path.split(separator: "/").contains { FileBrowserListing.alwaysExcluded.contains(String($0)) }
+            }
+            .compactMap { resolve($0, homeDirectory: homeDirectory) }
+        }
+    }
+
     /// The second pass: files whose text, title or keywords match, ranked under the name matches.
     nonisolated static func contentSearch(
         query rawQuery: String, policy: FileSearchPolicy, filter: FileSearchFilter,
@@ -119,8 +140,7 @@ enum FileSearchService {
     private nonisolated static func spotlightPaths(
         expression: String, scopes: [URL], limit: Int
     ) throws -> [String] {
-        try execute(expression: expression, scopes: scopes, sortedBy: nil, limit: limit) {
-            query, count in
+        try execute(expression: expression, scopes: scopes, sortedBy: nil, limit: limit) { query, count in
             (0..<count).compactMap { path(in: query, at: $0) }
         }
     }

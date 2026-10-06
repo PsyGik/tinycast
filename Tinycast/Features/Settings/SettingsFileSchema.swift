@@ -100,6 +100,7 @@ enum SettingsFileSchema {
         case .fileSearchIncludesContent: return bind(settings, \.fileSearchIncludesContent)
         case .fileBrowserFromLauncher: return bind(settings, \.fileBrowserFromLauncher)
         case .fileBrowserShowsHidden: return bind(settings, \.fileBrowserShowsHidden)
+        case .fileBrowserSpaceQuickLook: return bind(settings, \.fileBrowserSpaceQuickLook)
         case .fileSearchResultLimit: return bind(settings, \.fileSearchResultLimit)
         case .fileSearchCommands: return launcher.commandsBinding(for: key, owner: .fileSearch)
         case .notesEnabled: return bind(settings, \.notesEnabled)

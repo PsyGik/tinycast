@@ -84,7 +84,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `fuzz-test` | `Launcher/Model/LauncherMatch.swift`, `LauncherOrder.swift`, `LauncherSuggestions.swift`, `EntryNaming.swift`, `ScriptRomanization.swift`, `SearchRelevance.swift`, `LauncherRankingStore.swift` — **a new ranking complaint is a new case in its `denseIndex`** |
 | `file-search-test` | `FileSearch/Model/`, plus the shared `FuzzyMatch` scorer |
 | `file-search-session-test` | serialized query execution, debounce coalescing and cancellation |
-| `file-browser-test` | `FileSearch/Model/FileBrowserPath.swift` and `FileBrowserListing.swift` — path walking, folder order, hidden and excluded items, the row cap |
+| `file-browser-test` | `FileSearch/Model/FileBrowserPath.swift`, `FileBrowserListing.swift`, `FileTreeIndex.swift`, `FileBrowserCompletion.swift` and `Service/FileTreeIndexer.swift`'s rules — path walking, folder order, exclusions, the row cap, subtree ranking, tab completion |
 | `menu-search-test` | `MenuSearch/Model/` decisions, `MenuSearch/Service/` session filtering, the shared `FuzzyMatch` scorer |
 | `action-menu-search-test` | Action-menu query normalization and shared fuzzy matching |
 | `ranking-test` | `Launcher/Model/LauncherRankingStore.swift` |

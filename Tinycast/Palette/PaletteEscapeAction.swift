@@ -8,6 +8,8 @@ enum PaletteEscapeAction: Equatable {
     case clearQuery
     /// The launcher's chosen category, dropped back to All before the palette closes.
     case clearCategory
+    /// Browse Files is a place reached from the launcher, so leaving it lands there, never closed.
+    case returnToLauncher
     case exitExtensionScreen
     case goBack
     case hidePalette
@@ -21,6 +23,7 @@ enum PaletteEscapeAction: Equatable {
         if argumentFocused { return .leaveArgumentField }
         if !query.isEmpty { return .clearQuery }
         if categoryChosen, mode == .launcher { return .clearCategory }
+        if mode == .browseFiles { return .returnToLauncher }
         guard behavior == .navigateBackOrClose else { return .hidePalette }
         // An extension pops its own navigation stack before the command is left.
         if mode == .extensionCommand { return .exitExtensionScreen }

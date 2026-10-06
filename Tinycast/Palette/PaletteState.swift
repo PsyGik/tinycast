@@ -24,6 +24,8 @@ final class PaletteState {
     var fileSearchFilter: FileSearchFilter = .all
     /// The launcher's chosen category as an `AppEntry.Kind` raw value: the palette harnesses lack the type.
     var launcherCategory: String?
+    /// Browse Files: once the highlight is moved, Space looks at the row instead of typing a space.
+    var browseSpaceLooks = false
     /// The emoji picker's visible category, reset with the rest of a freshly opened screen.
     var emojiCategoryFilter: EmojiCategoryFilter = .all
     /// Nil means the configured default; zoom only overrides it for this picker session.
@@ -154,6 +156,7 @@ final class PaletteState {
         clipboardFilter = .all
         fileSearchFilter = .all
         launcherCategory = nil
+        browseSpaceLooks = false
         emojiCategoryFilter = .all
         emojiGridColumnsOverride = nil
         fileSearchQuickLook = false
