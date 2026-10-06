@@ -32,6 +32,7 @@ struct LauncherScreen: PaletteScreen {
     /// How many follow the favorites as Meetings; zero unless the field is empty.
     private let meetingCount: Int
     /// How many follow the meetings as Suggestions; zero unless the field is empty.
+    private let frequentCount: Int
     private let suggestionCount: Int
     /// The `Use "…" with` section, below every result; empty unless something is typed.
     private let fallbacks: [(fallback: Fallback, entry: AppEntry)]
@@ -92,6 +93,7 @@ struct LauncherScreen: PaletteScreen {
         self.pinsFavorites = pinsFavorites
         self.favoriteCount = pinsFavorites ? ordered.favoriteCount : 0
         self.meetingCount = pinsFavorites ? ordered.meetingCount : 0
+        self.frequentCount = pinsFavorites ? ordered.frequentCount : 0
         self.suggestionCount = pinsFavorites ? ordered.suggestionCount : 0
         if let calc {
             self.rows = [.calc(calc)] + entries
@@ -441,6 +443,7 @@ struct LauncherScreen: PaletteScreen {
             selectedRowID: row(at: selection)?.id,
             favoriteCount: favoriteCount,
             meetingCount: meetingCount,
+            frequentCount: frequentCount,
             suggestionCount: suggestionCount,
             showSections: showSections,
             scroll: scroll,

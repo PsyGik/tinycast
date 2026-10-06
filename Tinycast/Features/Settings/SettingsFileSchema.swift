@@ -52,6 +52,11 @@ enum SettingsFileSchema {
                 return CurrencyData.all.contains { $0.code == code } ? .some(code) : nil
             }
         case .launcherShowsSuggestions: return bind(settings, \.launcherShowsSuggestions)
+        case .appUsageEnabled: return bind(settings, \.appUsageEnabled)
+        case .appUsageOrder: return bind(settings, \.appUsageOrder)
+        case .appUsageWindow: return bind(settings, \.appUsageWindow)
+        case .appUsageSectionSize: return bind(settings, \.appUsageSectionSize)
+        case .appUsageRanksSearch: return bind(settings, \.appUsageRanksSearch)
         case .launcherShowsResourcePills: return bind(settings, \.launcherShowsResourcePills)
         case .rootSearchSensitivity: return bind(settings, \.rootSearchSensitivity)
         case .applicationsEnabled: return launcher.kindBinding(for: key, kind: .application)
@@ -171,6 +176,9 @@ extension HyperKeyQuickPress: SettingsFileRawValue {}
 extension CalcNumberStyle: SettingsFileRawValue {}
 extension SearchSensitivity: SettingsFileRawValue {}
 extension FileSearchResultLimit: SettingsFileRawValue {}
+extension AppUsageOrder: SettingsFileRawValue {}
+extension AppUsageWindow: SettingsFileRawValue {}
+extension AppUsageSectionSize: SettingsFileRawValue {}
 extension QuicklinkSelectionFallback: SettingsFileRawValue {}
 extension WindowCycle: SettingsFileRawValue {}
 extension ClipboardDefaultAction: SettingsFileRawValue {}

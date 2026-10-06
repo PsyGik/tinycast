@@ -8,6 +8,7 @@ struct LauncherList: View {
     let selectedRowID: String?
     let favoriteCount: Int
     let meetingCount: Int
+    let frequentCount: Int
     let suggestionCount: Int
     let showSections: Bool
     /// Changes only when the list should scroll, so mouse selection never yanks it.
@@ -98,8 +99,10 @@ struct LauncherList: View {
         var rows: [Row] = cardRows
         let favorites = results.prefix(favoriteCount)
         let meetings = results.dropFirst(favoriteCount).prefix(meetingCount)
-        let suggestions = results.dropFirst(favoriteCount + meetingCount).prefix(suggestionCount)
-        let rest = results.dropFirst(favoriteCount + meetingCount + suggestionCount)
+        let frequent = results.dropFirst(favoriteCount + meetingCount).prefix(frequentCount)
+        let suggestions = results.dropFirst(favoriteCount + meetingCount + frequentCount)
+            .prefix(suggestionCount)
+        let rest = results.dropFirst(favoriteCount + meetingCount + frequentCount + suggestionCount)
         var grouped: [AppEntry.Kind: [AppEntry]] = [:]
         for app in rest { grouped[app.kind, default: []].append(app) }
         if !favorites.isEmpty {
@@ -112,6 +115,10 @@ struct LauncherList: View {
         if !meetings.isEmpty {
             rows.append(.header(AppEntry.Kind.meeting.descriptor.sectionTitle))
             rows.append(contentsOf: meetings.map { .app($0, slot: nil) })
+        }
+        if !frequent.isEmpty {
+            rows.append(.header("Frequently Used"))
+            rows.append(contentsOf: frequent.map { .app($0, slot: nil) })
         }
         if !suggestions.isEmpty {
             rows.append(.header("Suggestions"))

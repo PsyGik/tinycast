@@ -28,6 +28,8 @@ enum LauncherOrder {
         var title: String
         /// Queries this entry wins until the user opens a rival more.
         var boostedTerms: Set<String> = []
+        /// Days macOS saw the app used, consulted only where Tinycast's own frecency ties.
+        var systemUse: Double = 0
     }
 
     static func ranked<Item>(
@@ -252,7 +254,9 @@ enum LauncherOrder {
     }
 
     private static func frecency(_ a: Candidate, _ b: Candidate) -> Int {
-        descending(a.signals.usage.frecency, b.signals.usage.frecency)
+        first(
+            descending(a.signals.usage.frecency, b.signals.usage.frecency),
+            descending(a.signals.systemUse, b.signals.systemUse)) ?? 0
     }
 
     /// Numeric and case-blind: `Item 2` before `Item 10`.

@@ -122,6 +122,29 @@ final class AppSettings {
         }
     }
 
+    /// Off by default: reading Spotlight's record of every app opened is an opt-in.
+    var appUsageEnabled: Bool {
+        didSet { defaults.set(appUsageEnabled, forKey: Key.appUsageEnabled.rawValue) }
+    }
+
+    var appUsageOrder: AppUsageOrder {
+        didSet { defaults.set(appUsageOrder.rawValue, forKey: Key.appUsageOrder.rawValue) }
+    }
+
+    var appUsageWindow: AppUsageWindow {
+        didSet { defaults.set(appUsageWindow.rawValue, forKey: Key.appUsageWindow.rawValue) }
+    }
+
+    var appUsageSectionSize: AppUsageSectionSize {
+        didSet {
+            defaults.set(appUsageSectionSize.rawValue, forKey: Key.appUsageSectionSize.rawValue)
+        }
+    }
+
+    var appUsageRanksSearch: Bool {
+        didSet { defaults.set(appUsageRanksSearch, forKey: Key.appUsageRanksSearch.rawValue) }
+    }
+
     var launcherShowsResourcePills: Bool {
         didSet {
             defaults.set(launcherShowsResourcePills, forKey: Key.launcherShowsResourcePills.rawValue)
@@ -710,6 +733,20 @@ final class AppSettings {
         launcherShowsSuggestions =
             defaults.object(forKey: Key.launcherShowsSuggestions.rawValue) == nil
             || defaults.bool(forKey: Key.launcherShowsSuggestions.rawValue)
+        appUsageEnabled = defaults.bool(forKey: Key.appUsageEnabled.rawValue)
+        appUsageOrder =
+            defaults.string(forKey: Key.appUsageOrder.rawValue).flatMap(AppUsageOrder.init)
+            ?? .frequency
+        appUsageWindow =
+            AppUsageWindow(rawValue: defaults.integer(forKey: Key.appUsageWindow.rawValue)) ?? .month
+        appUsageSectionSize =
+            defaults.object(forKey: Key.appUsageSectionSize.rawValue) == nil
+            ? .five
+            : AppUsageSectionSize(rawValue: defaults.integer(forKey: Key.appUsageSectionSize.rawValue))
+                ?? .five
+        appUsageRanksSearch =
+            defaults.object(forKey: Key.appUsageRanksSearch.rawValue) == nil
+            || defaults.bool(forKey: Key.appUsageRanksSearch.rawValue)
         launcherShowsResourcePills =
             defaults.object(forKey: Key.launcherShowsResourcePills.rawValue) == nil
             || defaults.bool(forKey: Key.launcherShowsResourcePills.rawValue)
