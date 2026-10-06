@@ -38,6 +38,9 @@ earliest scope wins; within one folder, the newest `CFBundleShortVersionString` 
   subtitle, an exact alternate title and a keyword hit are three different rules.
 - **`Model/SearchScopes.swift` and `Model/LauncherRankingStore.swift` are pure too** — the ranking store
   takes its clock via `now` and its path via `fileURL`, for `scopes-test` and `ranking-test`.
+- **macOS app usage is read, never recorded.** `AppUsageStore` holds Spotlight's own record in memory
+  while **Use macOS app usage** is on, and forgets it when it goes off; Tinycast writes no usage
+  history of its own for it. `Model/AppUsage.swift` takes its clock as `now`, for `app-usage-test`.
 
 ## Palette row layout
 
@@ -148,7 +151,7 @@ The first rule that separates two entries decides:
 7. A past search term that starts with the query.
 8. A past search term of three or more characters that the query runs at most three past.
 9. The best score over the title, alternate titles and subtitle.
-10. Frecency.
+10. Frecency, then — with app usage ranking on — the days macOS saw the app used.
 11. The title's own score.
 12. A title or alternate title that starts with the query, so `ap` puts App Store above AirPort
     Utility, which reaches the same score by skipping to `Port`.
@@ -444,12 +447,40 @@ per-item reset in its Actions menu, and users can clear all learned ranking in G
 
 ## The empty list
 
-Favorites, then Meetings, then Suggestions, then one section per kind. Meetings sit above
-Suggestions because a meeting is worth opening only until it ends. They keep the agenda's start
+Favorites, then Meetings, then Frequently Used, then Suggestions, then one section per kind. Meetings
+sit above the rest because a meeting is worth opening only until it ends. They keep the agenda's start
 order, including in the `Meetings` category listing, regardless of title or past usage. Each remaining
 kind section is sorted by the tiebreak, so what the user opens comes first and never-used entries still
 read alphabetically below it. The sort runs within each contiguous kind run of the publication order,
 so the sectioned view stays 1:1 with the flat selection.
+
+### Frequently Used
+
+With **Use macOS app usage** on (Settings › General › App Usage, off by default), the empty list
+gains a **Frequently Used** section of apps — never Tinycast, never a favorite — chosen from how macOS
+saw them opened from anywhere: the Dock, Finder, Spotlight, a link, or Tinycast itself.
+
+`AppUsageStore` reads it from Spotlight in one synchronous `MDQuery` off the main actor, over every
+application bundle whose `kMDItemLastUsedDate` falls within the longest window (90 days), taking the
+path, that stamp and `kMDItemUsedDates` — one date per local day the app was opened, which the SDK
+exports no constant for. It reads when the feature is switched on and then on a palette open at most
+every ten minutes, so a section the user is reading never churns; its `revision` is part of
+`AppIndex`'s cache keys. Spotlight counts launches and opens, so switching to an app already running
+with ⌘⇥ does not count, and an app Spotlight has no record for — often one on the sealed system
+volume — is never listed.
+
+`AppUsageRanking.frequency` is the distinct days used inside the chosen window (7, 30 or 90 days),
+at least one when the last use falls inside it, and nothing otherwise. The section lists 3, 5 or 8
+apps, or none; **Order** is *Most days used* (days, then latest use) or *Most recently used* (latest
+use alone). Suggestions are chosen from what the section left, so no row appears twice.
+`AppIndex.Results.frequentCount` sizes its header like the others.
+
+**Rank results by app usage** (on by default once the feature is) feeds the same day count into
+`LauncherOrder.Signals.systemUse`. Every comparison that consults frecency — rule 10, the tiebreak and
+so the empty list's kind order — consults it next, only when Tinycast's own frecency ties: what the
+user opens through Tinycast always outranks it, and a better alignment always does. So `c` lists the
+Chrome the user opens daily above Calculator, which the scorer cannot tell apart. All five settings
+travel in backups and as `search.appUsage*` / `search.frequentlyUsed*` in settings.json.
 
 ### Suggestions
 

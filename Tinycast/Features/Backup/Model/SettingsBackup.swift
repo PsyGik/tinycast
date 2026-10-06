@@ -42,6 +42,11 @@ struct SettingsBackup: Codable {
         var showFavoritesInCompactMode: Bool?
         var searchScopes: [String]?
         var launcherShowsSuggestions: Bool?
+        var appUsageEnabled: Bool?
+        var appUsageOrder: String?
+        var appUsageWindow: Int?
+        var appUsageSectionSize: Int?
+        var appUsageRanksSearch: Bool?
         var launcherShowsResourcePills: Bool?
         var rootSearchSensitivity: String?
         var openOnCursorScreen: Bool?
@@ -157,6 +162,11 @@ extension SettingsBackup {
             showFavoritesInCompactMode: s.showFavoritesInCompactMode,
             searchScopes: s.searchScopes,
             launcherShowsSuggestions: s.launcherShowsSuggestions,
+            appUsageEnabled: s.appUsageEnabled,
+            appUsageOrder: s.appUsageOrder.rawValue,
+            appUsageWindow: s.appUsageWindow.rawValue,
+            appUsageSectionSize: s.appUsageSectionSize.rawValue,
+            appUsageRanksSearch: s.appUsageRanksSearch,
             launcherShowsResourcePills: s.launcherShowsResourcePills,
             rootSearchSensitivity: s.rootSearchSensitivity.rawValue,
             openOnCursorScreen: s.openOnCursorScreen,
@@ -393,6 +403,26 @@ extension SettingsBackup {
         }
         if let flag = s.launcherShowsSuggestions {
             settings.launcherShowsSuggestions = flag
+            count += 1
+        }
+        if let flag = s.appUsageEnabled {
+            settings.appUsageEnabled = flag
+            count += 1
+        }
+        if let raw = s.appUsageOrder, let order = AppUsageOrder(rawValue: raw) {
+            settings.appUsageOrder = order
+            count += 1
+        }
+        if let raw = s.appUsageWindow, let window = AppUsageWindow(rawValue: raw) {
+            settings.appUsageWindow = window
+            count += 1
+        }
+        if let raw = s.appUsageSectionSize, let size = AppUsageSectionSize(rawValue: raw) {
+            settings.appUsageSectionSize = size
+            count += 1
+        }
+        if let flag = s.appUsageRanksSearch {
+            settings.appUsageRanksSearch = flag
             count += 1
         }
         if let flag = s.launcherShowsResourcePills {

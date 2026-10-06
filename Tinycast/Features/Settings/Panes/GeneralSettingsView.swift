@@ -208,6 +208,39 @@ struct GeneralSettingsView: View {
             } header: {
                 SettingsSectionHeader(.generalSearch)
             }
+
+            Section {
+                Toggle(isOn: $settings.appUsageEnabled) {
+                    SettingsRowTitle(.generalAppUsage, "Use macOS app usage")
+                    Text("Reads what Spotlight records about the apps you open, from anywhere.")
+                }
+                Group {
+                    Picker(selection: $settings.appUsageSectionSize) {
+                        ForEach(AppUsageSectionSize.allCases) { Text($0.title).tag($0) }
+                    } label: {
+                        SettingsRowTitle(.generalAppUsage, "Frequently Used")
+                        Text("A section of your apps while the search field is empty.")
+                    }
+                    Picker(selection: $settings.appUsageOrder) {
+                        ForEach(AppUsageOrder.allCases) { Text($0.title).tag($0) }
+                    } label: {
+                        SettingsRowTitle(.generalAppUsage, "Order")
+                    }
+                    .settingsEnabled(settings.appUsageSectionSize != .off)
+                    Picker(selection: $settings.appUsageWindow) {
+                        ForEach(AppUsageWindow.allCases) { Text($0.title).tag($0) }
+                    } label: {
+                        SettingsRowTitle(.generalAppUsage, "Count usage from")
+                    }
+                    Toggle(isOn: $settings.appUsageRanksSearch) {
+                        SettingsRowTitle(.generalAppUsage, "Rank results by app usage")
+                        Text("Among equally good matches, the app you use more comes first.")
+                    }
+                }
+                .settingsEnabled(settings.appUsageEnabled)
+            } header: {
+                SettingsSectionHeader(.generalAppUsage)
+            }
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.general)

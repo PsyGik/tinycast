@@ -88,6 +88,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             core.calendarCoordinator.paletteDidShow()
             core.palette.noteVisible(true)
             core.resourceWidgetsCoordinator.setPaletteShowing(core.settings.launcherShowsResourcePills)
+            core.applyAppUsage()
             core.clipboardStore.setTextSearchActive(true)
             // Only while we are on screen: a system-wide tap has no business outliving the window.
             commandEscapeTap.enable()

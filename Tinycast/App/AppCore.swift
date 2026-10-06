@@ -44,6 +44,7 @@ final class AppCore {
     let favorites = FavoritesStore()
     let visibility = VisibilityStore()
     let aliases = AliasStore()
+    let appUsage = AppUsageStore()
     let fallbacks = FallbackStore()
     let calcHistory = CalculatorHistoryStore()
     let currencyRates = CurrencyRateStore()
@@ -257,7 +258,7 @@ final class AppCore {
         self.chatHistory = chatHistory
         supportReminders = SupportReminderStore(settings: settings)
         aiChats = AIChatSurfacesState(history: chatHistory)
-        appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)
+        appIndex = AppIndex(ranking: launcherRanking, aliases: aliases, appUsage: appUsage)
         let clipboardManager = ClipboardManager(store: clipboardStore, settings: settings)
         self.clipboardManager = clipboardManager
         extensions = ExtensionManager(clipboardStore: clipboardStore)
@@ -528,6 +529,11 @@ final class AppCore {
         await dictationModels.stop()
     }
 
+    /// Reads Spotlight's app usage while the feature is on, and forgets it when it goes off.
+    func applyAppUsage(force: Bool = false) {
+        if settings.appUsageEnabled { appUsage.refresh(force: force) } else { appUsage.clear() }
+    }
+
     /// Idempotent: both switches are tracked, and either one flipping re-runs the whole decision.
     func applyClipboardTextSearch() {
         guard settings.clipboardEnabled, settings.clipboardTextSearchEnabled else {
@@ -723,6 +729,7 @@ final class AppCore {
                 _ = $0.fileSearchResultLimit
             }, reproject: { $0.fileSearchCoordinator.applyPolicy() })
         track({ _ = $0.snippetsEnabled }, reproject: { $0.snippetCoordinator.applySnippetsEnabled() })
+        track({ _ = $0.appUsageEnabled }, reproject: { $0.applyAppUsage(force: true) })
         // Not a feature switch, but the same re-projection: a combo has the chord's ⇧ bit baked in.
         track({ _ = $0.hyperKeyIncludesShift }, reproject: { $0.applyHyperChord() })
         track(

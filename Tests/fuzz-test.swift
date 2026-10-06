@@ -175,6 +175,7 @@ struct FuzzTest {
         var terms: [String] = []
         var priority = 3
         var boosted: Set<String> = []
+        var systemUse: Double = 0
 
         var profile: SearchProfile {
             FuzzTest.profile(name, alternates: alternates, subtitle: subtitle, keywords: keywords)
@@ -184,7 +185,7 @@ struct FuzzTest {
             LauncherOrder.Signals(
                 alias: alias.map { SearchText($0, transliterated: false) },
                 usage: LauncherUsage(frecency: frecency, searchTerms: terms), priority: priority,
-                title: name, boostedTerms: boosted)
+                title: name, boostedTerms: boosted, systemUse: systemUse)
         }
     }
 
@@ -201,6 +202,24 @@ struct FuzzTest {
 
     static func comparator() {
         print("\n# comparator")
+        check(
+            "macOS usage breaks a tie Tinycast's own frecency leaves",
+            first("c", [Item(name: "Calculator"), Item(name: "Chrome", systemUse: 20)]) == "Chrome")
+        check(
+            "…but never outranks a better alignment",
+            rank(
+                "calc", [Item(name: "Chocolatier Lace", systemUse: 90), Item(name: "Calculator")],
+                sensitivity: .low) == ["Calculator", "Chocolatier Lace"])
+        check(
+            "…nor what the user opens through Tinycast",
+            first(
+                "c", [Item(name: "Chrome", systemUse: 90), Item(name: "Calendar", frecency: 101)])
+                == "Calendar")
+        check(
+            "macOS usage orders the empty list where frecency ties",
+            LauncherOrder.byUsage(
+                [Item(name: "Atlas"), Item(name: "Zed", systemUse: 3)], signals: \.signals
+            ).map(\.name) == ["Zed", "Atlas"])
         check(
             "an exact alias beats an exact title",
             first("fig", [Item(name: "Fig"), Item(name: "Figma", alias: "fig")]) == "Figma")

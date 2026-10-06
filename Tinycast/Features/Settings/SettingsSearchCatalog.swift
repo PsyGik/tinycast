@@ -173,6 +173,21 @@ enum SettingsSearchCatalog {
             .generalSearch, "Show suggestions",
             keywords: ["frequent", "recent", "recommended", "empty", "root search"]),
         .init(
+            .generalAppUsage, "Use macOS app usage",
+            keywords: ["spotlight", "frequent", "recent", "most used", "history", "recency"]),
+        .init(
+            .generalAppUsage, "Frequently Used",
+            keywords: ["section", "most used", "top apps", "count"]),
+        .init(
+            .generalAppUsage, "Order",
+            keywords: ["frequency", "recency", "days used", "recently used"]),
+        .init(
+            .generalAppUsage, "Count usage from",
+            keywords: ["window", "days", "period", "lookback"]),
+        .init(
+            .generalAppUsage, "Rank results by app usage",
+            keywords: ["ranking", "order", "boost", "prefer"]),
+        .init(
             .generalSearch, "Show system stats",
             keywords: ["cpu", "memory", "ram", "network", "bandwidth", "resources", "footer", "pills"]),
         .init(

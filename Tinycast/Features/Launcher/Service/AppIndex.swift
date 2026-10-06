@@ -338,6 +338,7 @@ final class AppIndex {
         var entries: [AppEntry] = []
         var favoriteCount = 0
         var meetingCount = 0
+        var frequentCount = 0
         var suggestionCount = 0
     }
 
@@ -347,6 +348,14 @@ final class AppIndex {
         let rankingRevision: Int
         let aliasRevision: Int
         let sensitivity: SearchSensitivity
+        let appUsage: AppUsageKey
+    }
+
+    /// Everything about macOS app usage that can change a ranking or the Frequently Used section.
+    private struct AppUsageKey: Equatable {
+        let revision: Int
+        let ranks: Bool
+        let window: AppUsageWindow
     }
 
     private struct ResultsKey: Equatable {
@@ -355,6 +364,8 @@ final class AppIndex {
         let favoritesRevision: Int
         let hotKeysRevision: Int
         let showsSuggestions: Bool
+        let frequentOrder: AppUsageOrder
+        let frequentSize: AppUsageSectionSize
         /// Suggestions and usage order age with the clock, which no revision tracks.
         let minute: Int
     }
@@ -400,13 +411,15 @@ final class AppIndex {
     private var refreshPending = false
     private let ranking: LauncherRankingStore
     private let aliases: AliasStore
+    private let appUsage: AppUsageStore
     private var settings: AppSettings?
     /// Fired after every scan, even an unchanged one: LaunchServices can trail a deletion by seconds.
     @ObservationIgnored var onScan: (() -> Void)?
 
-    init(ranking: LauncherRankingStore, aliases: AliasStore) {
+    init(ranking: LauncherRankingStore, aliases: AliasStore, appUsage: AppUsageStore) {
         self.ranking = ranking
         self.aliases = aliases
+        self.appUsage = appUsage
     }
 
     /// The always-relevant built-ins, plus whatever a disabled feature has not hidden.
@@ -693,26 +706,34 @@ final class AppIndex {
     ) -> Results {
         let q = query.trimmingCharacters(in: .whitespaces)
         let showsSuggestions = settings?.launcherShowsSuggestions ?? true
+        let frequentOrder = settings?.appUsageOrder ?? .frequency
+        let frequentSize = appUsageEnabled ? settings?.appUsageSectionSize ?? .off : .off
         let usage = ranking.snapshot()
         let key = ResultsKey(
             match: matchKey(q), visibilityRevision: visibility.revision,
             favoritesRevision: favorites.revision, hotKeysRevision: hotKeys.revision,
-            showsSuggestions: showsSuggestions, minute: Int(usage.now.timeIntervalSince1970 / 60))
+            showsSuggestions: showsSuggestions, frequentOrder: frequentOrder,
+            frequentSize: frequentSize, minute: Int(usage.now.timeIntervalSince1970 / 60))
         return resultsMemo.value(for: key) {
             // Filtering stays downstream of `matches` so that memo is never keyed on hidden state.
             let visible = matches(q).filter(visibility.isVisible)
             guard q.isEmpty else { return Results(entries: visible) }
             let split = favorites.ordered(visible)
+            let frequent = frequentApps(
+                from: split.rest, order: frequentOrder, size: frequentSize, now: usage.now)
+            let listed = Set(frequent.map(\.id))
+            let unlisted = split.rest.filter { !listed.contains($0.id) }
             let suggested =
-                showsSuggestions ? suggestions(from: split.rest, usage: usage, hotKeys: hotKeys) : []
-            let shown = Set(suggested.map(\.id))
+                showsSuggestions ? suggestions(from: unlisted, usage: usage, hotKeys: hotKeys) : []
+            let shown = listed.union(suggested.map(\.id))
             let rest = byUsage(split.rest.filter { !shown.contains($0.id) }, usage: usage)
             // Above Suggestions: a meeting is worth opening only until it ends.
             let meetings = rest.filter { $0.kind == .meeting }
             return Results(
-                entries: split.favorites + meetings + suggested + rest.filter { $0.kind != .meeting },
+                entries: split.favorites + meetings + frequent + suggested
+                    + rest.filter { $0.kind != .meeting },
                 favoriteCount: split.favorites.count, meetingCount: meetings.count,
-                suggestionCount: suggested.count)
+                frequentCount: frequent.count, suggestionCount: suggested.count)
         }
     }
 
@@ -721,7 +742,33 @@ final class AppIndex {
     private func matchKey(_ query: String) -> MatchKey {
         MatchKey(
             query: query, entriesRevision: entriesRevision, rankingRevision: ranking.revision,
-            aliasRevision: aliases.revision, sensitivity: sensitivity)
+            aliasRevision: aliases.revision, sensitivity: sensitivity,
+            appUsage: AppUsageKey(
+                revision: appUsage.revision, ranks: appUsageRanks,
+                window: settings?.appUsageWindow ?? .month))
+    }
+
+    private var appUsageEnabled: Bool { settings?.appUsageEnabled ?? false }
+    private var appUsageRanks: Bool { appUsageEnabled && settings?.appUsageRanksSearch ?? false }
+
+    /// Apps only, and never Tinycast itself: what macOS saw opened, not what Tinycast offers.
+    private func frequentApps(
+        from entries: [AppEntry], order: AppUsageOrder, size: AppUsageSectionSize, now: Date
+    ) -> [AppEntry] {
+        guard size != .off else { return [] }
+        let apps = entries.filter {
+            $0.kind == .application && !($0.bundleID?.hasPrefix(Self.ownBundlePrefix) ?? false)
+        }
+        return AppUsageRanking.top(
+            apps, usage: { appUsage.usage(forAppAt: $0.url) }, order: order,
+            window: settings?.appUsageWindow ?? .month, now: now, limit: size.rawValue)
+    }
+
+    private func systemUse(of entry: AppEntry, now: Date) -> Double {
+        guard appUsageRanks, entry.kind == .application,
+            let usage = appUsage.usage(forAppAt: entry.url)
+        else { return 0 }
+        return AppUsageRanking.frequency(usage, window: settings?.appUsageWindow ?? .month, now: now)
     }
 
     private func rank(_ q: String, limit: Int) -> [AppEntry] {
@@ -779,6 +826,7 @@ final class AppIndex {
             alias: aliases.alias(for: entry.preferenceKey).map { SearchText($0, transliterated: false) },
             usage: usage.usage(for: entry.preferenceKey),
             priority: entry.kind.descriptor.rankPriority, title: entry.name,
-            boostedTerms: CommandCatalog.command(for: entry)?.boostedTerms ?? [])
+            boostedTerms: CommandCatalog.command(for: entry)?.boostedTerms ?? [],
+            systemUse: systemUse(of: entry, now: usage.now))
     }
 }
