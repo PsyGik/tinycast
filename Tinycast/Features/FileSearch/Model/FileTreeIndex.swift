@@ -84,8 +84,11 @@ struct FileTreeIndex: Sendable {
         return
             hits
             .sorted { left, right in
-                if left.score != right.score { return left.score > right.score }
+                let leftBand = FileNameScore.band(left.score)
+                let rightBand = FileNameScore.band(right.score)
+                if leftBand != rightBand { return leftBand > rightBand }
                 if left.depth != right.depth { return left.depth < right.depth }
+                if left.score != right.score { return left.score > right.score }
                 return name(at: left.index).localizedStandardCompare(name(at: right.index))
                     == .orderedAscending
             }
@@ -112,5 +115,11 @@ enum FileNameScore {
         guard let match = FuzzyMatch.match(query, candidate: name) else { return nil }
         guard match.tier == .subsequence else { return match.score }
         return match.spread * 4 - match.candidateLength
+    }
+
+    /// The kind of hit a score came from — exact, prefix, word start, substring or loose — so a
+    /// nearer item wins within one kind, while a stronger kind still wins from any depth.
+    static func band(_ score: Int) -> Int {
+        score >= 70_000 ? score / 10_000 : 0
     }
 }

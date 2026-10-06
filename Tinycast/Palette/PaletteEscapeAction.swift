@@ -10,20 +10,23 @@ enum PaletteEscapeAction: Equatable {
     case clearCategory
     /// Browse Files is a place reached from the launcher, so leaving it lands there, never closed.
     case returnToLauncher
+    /// Browse Files keeps its path in the field; Escape clears only what was typed after it.
+    case clearBrowseFilter
     case exitExtensionScreen
     case goBack
     case hidePalette
 
     static func resolve(
         menuOpen: Bool, menuQuery: String, argumentFocused: Bool, query: String, mode: PaletteMode,
-        canGoBack: Bool, behavior: EscapeKeyBehavior, categoryChosen: Bool = false
+        canGoBack: Bool, behavior: EscapeKeyBehavior, categoryChosen: Bool = false,
+        browseFilter: String = ""
     ) -> Self {
         if menuOpen { return menu(query: menuQuery) }
         // An argument field is a step deeper than the query, so it is left before anything clears.
         if argumentFocused { return .leaveArgumentField }
+        if mode == .browseFiles { return browseFilter.isEmpty ? .returnToLauncher : .clearBrowseFilter }
         if !query.isEmpty { return .clearQuery }
         if categoryChosen, mode == .launcher { return .clearCategory }
-        if mode == .browseFiles { return .returnToLauncher }
         guard behavior == .navigateBackOrClose else { return .hidePalette }
         // An extension pops its own navigation stack before the command is left.
         if mode == .extensionCommand { return .exitExtensionScreen }

@@ -23,6 +23,8 @@ final class FileBrowserSession {
     private(set) var rowsRevision = 0
     /// Nil while the folder itself is listed.
     private(set) var searchQuery: String?
+    /// What follows the path in the field; empty while the folder itself is listed.
+    private(set) var filter = ""
     /// True until the subtree has answered; the folder's own matches show in the meantime.
     private(set) var isSearching = false
     /// The folder just left, so going up lands on it rather than on the first row.
@@ -52,6 +54,8 @@ final class FileBrowserSession {
     }
 
     var displayPath: String { FileBrowserPath.display(directory, home: home) }
+    /// The field's text for the folder on screen: `~/Development/`.
+    var pathText: String { FileBrowserPath.typed(directory, home: home) }
     var canGoUp: Bool { directory.path != "/" }
 
     func apply(ignorePatterns: [String], showsHidden: Bool) {
@@ -65,20 +69,23 @@ final class FileBrowserSession {
     }
 
     /// Typed text: a path walks, and what is left after it searches the folder it reached.
+    @discardableResult
     func type(_ text: String) -> String {
         let location = FileBrowserPath.walk(
             text, from: directory, home: home, isDirectory: Self.isDirectory)
         if location.directory != directory {
             open(location.directory)
-        } else {
+        } else if !location.filter.isEmpty {
             revealedName = nil
         }
+        filter = location.filter
         search(location.filter)
         return location.filter
     }
 
     func open(_ folder: URL, revealing name: String? = nil) {
         releaseSearch()
+        filter = ""
         directory = folder.standardizedFileURL
         revealedName = name
         state = .loading
@@ -96,6 +103,19 @@ final class FileBrowserSession {
                 read = []
                 state = failure
             }
+            relist()
+        }
+    }
+
+    /// Re-reads the folder on screen, for a summon after files changed under it; nothing else resets.
+    func reload() {
+        generation &+= 1
+        let current = generation
+        let target = directory
+        Task {
+            let outcome = await Task.detached(priority: .userInitiated) { Self.list(target) }.value
+            guard current == generation, case .success(let entries) = outcome, entries != read else { return }
+            read = entries
             relist()
         }
     }
@@ -250,8 +270,11 @@ final class FileBrowserSession {
                 }
             }
             .sorted { left, right in
-                if left.1 != right.1 { return left.1 > right.1 }
+                let leftBand = FileNameScore.band(left.1)
+                let rightBand = FileNameScore.band(right.1)
+                if leftBand != rightBand { return leftBand > rightBand }
                 if left.2 != right.2 { return left.2 < right.2 }
+                if left.1 != right.1 { return left.1 > right.1 }
                 return left.0.name.localizedStandardCompare(right.0.name) == .orderedAscending
             }
             .prefix(searchLimit)

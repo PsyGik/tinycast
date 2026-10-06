@@ -52,7 +52,7 @@ final class FileSearchCoordinator {
     func browse() {
         guard settings.fileSearchEnabled else { return }
         core.fileBrowser.reset()
-        paletteCoordinator.togglePalette(mode: .browseFiles)
+        paletteCoordinator.togglePalette(mode: .browseFiles, seeding: core.fileBrowser.pathText)
     }
 
     /// `~` or `/` typed into the launcher: the launcher stays beneath, so Escape walks back to it.
@@ -60,11 +60,12 @@ final class FileSearchCoordinator {
         settings.fileSearchEnabled && settings.fileBrowserFromLauncher && FileBrowserPath.starts(query)
     }
 
+    /// The typed text stays in the field: it is the path, and what follows it is the filter.
     func browse(fromLauncher query: String) {
         core.fileBrowser.reset()
-        let filter = core.fileBrowser.type(query)
+        core.fileBrowser.type(query)
         paletteCoordinator.navigate(to: .browseFiles)
-        palette.query = filter
+        palette.query = query
     }
 
     func open(_ result: FileSearchResult) {

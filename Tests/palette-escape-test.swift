@@ -30,12 +30,13 @@ struct PaletteEscapeTests {
     static func resolve(
         menuOpen: Bool = false, menuQuery: String = "", argumentFocused: Bool = false,
         query: String = "", mode: PaletteMode = .launcher, canGoBack: Bool = false,
-        behavior: EscapeKeyBehavior = .navigateBackOrClose, categoryChosen: Bool = false
+        behavior: EscapeKeyBehavior = .navigateBackOrClose, categoryChosen: Bool = false,
+        browseFilter: String = ""
     ) -> PaletteEscapeAction {
         PaletteEscapeAction.resolve(
             menuOpen: menuOpen, menuQuery: menuQuery, argumentFocused: argumentFocused,
             query: query, mode: mode, canGoBack: canGoBack, behavior: behavior,
-            categoryChosen: categoryChosen)
+            categoryChosen: categoryChosen, browseFilter: browseFilter)
     }
 
     static func main() {
@@ -76,15 +77,19 @@ struct PaletteEscapeTests {
             .clearCategory,
             "the category clears first whatever the configured Escape behavior")
         expect(
-            resolve(query: "read", mode: .browseFiles),
-            .clearQuery,
-            "a typed search in Browse Files clears before the browser is left")
+            resolve(query: "~/Development/read", mode: .browseFiles, browseFilter: "read"),
+            .clearBrowseFilter,
+            "a typed search in Browse Files clears back to its path before the browser is left")
         expect(
-            resolve(mode: .browseFiles),
+            resolve(query: "~/Development/", mode: .browseFiles),
             .returnToLauncher,
-            "an empty Browse Files field returns to the root search, never closing the palette")
+            "with only the path in the field, Escape returns to the root search, never closing")
         expect(
-            resolve(mode: .browseFiles, behavior: .closeAndPopToRoot),
+            resolve(menuOpen: true, query: "~/x/", mode: .browseFiles),
+            .closeMenu,
+            "an open menu still closes before the browser is left")
+        expect(
+            resolve(query: "~/", mode: .browseFiles, behavior: .closeAndPopToRoot),
             .returnToLauncher,
             "Browse Files returns to the launcher whatever the configured Escape behavior")
         expect(

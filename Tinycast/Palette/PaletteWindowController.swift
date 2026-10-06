@@ -89,6 +89,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             core.palette.noteVisible(true)
             core.resourceWidgetsCoordinator.setPaletteShowing(core.settings.launcherShowsResourcePills)
             core.applyAppUsage()
+            if core.palette.mode == .browseFiles { core.fileBrowser.reload() }
             core.clipboardStore.setTextSearchActive(true)
             // Only while we are on screen: a system-wide tap has no business outliving the window.
             commandEscapeTap.enable()
@@ -401,7 +402,17 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         }
         // Backspace takes Escape's back step but never closes: a root screen falls to the launcher.
         panel.onBareBackspace = { [weak self] in
-            guard let core = self?.core, core.palette.query.isEmpty else { return false }
+            guard let core = self?.core else { return false }
+            // At `~/Dev/` a backspace takes the whole folder off, landing on it one level up.
+            let browser = core.fileBrowser
+            if core.palette.mode == .browseFiles, browser.filter.isEmpty, browser.canGoUp,
+                browser.directory != browser.home, !core.palette.query.isEmpty
+            {
+                browser.goUp()
+                core.palette.rewriteQuery(browser.pathText)
+                return true
+            }
+            guard core.palette.query.isEmpty else { return false }
             // A form field owns the key: the text it deletes is the field's, not a query's.
             if core.palette.isEditingField { return false }
             if core.palette.mode == .extensionCommand {
@@ -409,12 +420,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
                 return true
             }
             if core.palette.mode == .ai, core.quickAICoordinator.removeLastAttachment() {
-                return true
-            }
-            // Up the tree, until home; from there, or from a root path, backspace leaves the browser.
-            let browser = core.fileBrowser
-            if core.palette.mode == .browseFiles, browser.canGoUp, browser.directory != browser.home {
-                browser.goUp()
                 return true
             }
             // A chosen category reads like a token in the field, so backspace removes it first.
@@ -437,7 +442,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
                 return true
             }
             guard core.settings.fileBrowserSpaceQuickLook, !core.fileBrowser.rows.isEmpty,
-                core.palette.query.isEmpty || core.palette.browseSpaceLooks
+                core.fileBrowser.filter.isEmpty || core.palette.browseSpaceLooks
             else { return false }
             core.palette.fileSearchQuickLook = true
             return true
