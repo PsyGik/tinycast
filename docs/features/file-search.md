@@ -36,8 +36,15 @@ feature is enabled in Settings.
 - **File Search is off by default, and off means no entry point or Spotlight work.** A nonempty query
   on that screen is the first operation that searches, and the global shortcut no-ops while the
   feature switch is off.
-- **Tinycast asks for no file permission.** Hidden metadata items and application bundles are filtered,
-  and Spotlight or TCC omissions produce a thinner result set rather than a prompt for Full Disk Access.
+- **Searching asks for no file permission; browsing asks only on an explicit step.** Hidden metadata
+  items and application bundles are filtered, and Spotlight or TCC omissions produce a thinner result
+  set rather than a prompt for Full Disk Access. Browse Files reads a folder only when the user walks
+  into it — →, ↵, a click or a typed path — and a folder row's preview is its icon, never its contents,
+  so macOS's one-time prompt for Desktop, Documents or Downloads can only follow that step. A refused
+  read is a sentence pointing at Privacy & Security, never a retry.
+- **Browsing reads one folder, never a tree.** `FileBrowserSession` lists exactly the folder on screen
+  with one `contentsOfDirectory` call, keyed for the three facts a row needs, and nothing computes a
+  size or walks below it.
 - **A superseded query never publishes.** The session cancels its pending task and checks cancellation
   after the synchronous Spotlight call, so a late result cannot replace the newer query's rows. Editing
   the scopes or the patterns cancels the session for the same reason: a result found under the old
@@ -266,12 +273,41 @@ warm by the time a pointer can reach it; a landed drop hides the palette through
 `PaletteCoordinator.dragLanded()`. There is no stat first: a result is seconds old, and its session is
 cleared whenever the palette hides.
 
+## Browsing
+
+**Browse Files** (a command with its own shortcut) opens the same split — `FileSearchList` beside
+`FileSearchPreview`, the in-panel Quick Look over both — on one folder at a time, starting at home.
+Typing `~` or `/` into the launcher does the same at that path (`FileBrowserPath.starts`), pushed over
+the launcher so Escape walks back to it; **Browse from the launcher** in Settings › File Search ›
+Browsing turns that off, and the whole feature follows `fileSearchEnabled`.
+
+The field is a filter of the folder on screen. `FileBrowserPath.walk` reads a typed path: `~` and `/`
+restart from home or the root, `..` goes up, each segment followed by `/` that names a folder walks
+into it, and what is left filters — `~/Dev/ti` lands in `~/Dev` filtering by `ti`, and a segment that
+is no folder stops the walk and stays in the filter. A walk leaves only the filter in the field.
+
+→ opens the selected folder and ↵ does too; a file opens as a search result does. ← goes up while the
+field is empty (with text it moves the caret), and a bare backspace goes up until home, then leaves
+the browser — from `/` or a folder outside home it leaves at the root. Going up lands the highlight on
+the folder just left. ⌘↵ shows in Finder, ⌘Y is Quick Look, and ⌘K adds Copy Path, Copy Name and the
+two view toggles. Renaming, moving and trashing are Finder's: Show in Finder is the way there.
+
+`FileBrowserListing` orders folders first, then names as Finder sorts them, and caps a folder at
+2,000 rows, heading the list with how many more a filter would reach. Hidden items stay out unless
+**Show hidden files** (`fileBrowserShowsHidden`) is on. Folders the ignore list names — File Search's
+own patterns, the shipped defaults included, plus `.git`, `.venv`, `__pycache__`, `.next`, `.cache` and
+`.Trash` — are counted in the list's header rather than listed, by their own name only, so a folder
+the user walked into on purpose lists everything inside it; ⌘K's Show Excluded Folders lists them in
+place for that folder. A package is a file here: an `.app` opens rather than being walked into. A
+read that lands after the user has moved on is dropped by a generation check.
+
 ## Invocation
 
 Settings ▸ File Search owns the `fileSearchEnabled` switch, which is off when its preference is absent,
 along with the scope list, the ignore patterns, the Search Files command row, and a Results section with
 **Search file contents** (`fileSearchIncludesContent`, off) and **Maximum results**
-(`fileSearchResultLimit`, 200). All of them are
+(`fileSearchResultLimit`, 200), and a Browsing section with **Browse from the launcher**
+(`fileBrowserFromLauncher`, on) and **Show hidden files** (`fileBrowserShowsHidden`, off). All of them are
 ordinary settings carried by Tinycast settings backups; importing them grants no permission or
 background access.
 

@@ -74,6 +74,9 @@ struct RootPaletteView: View {
         case .fileSearch:
             return FileSearchScreen(
                 session: fileSearch, core: core, vm: vm, openActions: openActions)
+        case .browseFiles:
+            return FileBrowserScreen(
+                session: core.fileBrowser, core: core, vm: vm, openActions: openActions)
         case .menuSearch:
             return MenuSearchScreen(
                 session: menuSearch, core: core, vm: vm, openActions: openActions)
@@ -387,6 +390,18 @@ struct RootPaletteView: View {
             .modifier(PaletteHideObserver { if menuOpen { closeMenus() } })
             .onChange(of: vm.query) {
                 if vm.collapseQueryLineBreaks() { return }
+                if vm.mode == .launcher, core.fileSearchCoordinator.claimsLauncherQuery(vm.query) {
+                    core.fileSearchCoordinator.browse(fromLauncher: vm.query)
+                    return
+                }
+                // A `/` walks the path and leaves only what follows it in the field.
+                if vm.mode == .browseFiles {
+                    let filter = core.fileBrowser.type(vm.query)
+                    if filter != vm.query {
+                        vm.query = filter
+                        return
+                    }
+                }
                 land()
                 if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
                 if vm.mode == .dictionary { dictionary.lookUp(vm.query) }
@@ -405,6 +420,8 @@ struct RootPaletteView: View {
             .modifier(ExtensionSelectionForwarder(screen: extensionScreen, selection: vm.selection))
             // A narrower list means the old index points at a different row, or at none.
             .onChange(of: vm.clipboardFilter) { land() }
+            // A folder arrives after its read, so the highlight lands once there is something to land on.
+            .onChange(of: core.fileBrowser.listing) { if vm.mode == .browseFiles { land() } }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
             .onChange(of: vm.fileSearchFilter) {
                 land()
@@ -950,6 +967,7 @@ struct RootPaletteView: View {
         case .calculatorHistory: .calculatorHistory
         case .emoji: .searchEmoji
         case .fileSearch: .searchFiles
+        case .browseFiles: .browseFiles
         case .menuSearch: .searchMenuItems
         case .switchWindows: .switchWindows
         case .rooms: .switchRoom

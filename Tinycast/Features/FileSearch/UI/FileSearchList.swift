@@ -7,6 +7,8 @@ struct FileSearchList: View {
     let results: [FileSearchResult]
     let selectedID: FileSearchResult.ID?
     let scroll: ScrollIntent
+    /// Browsing one folder: every row shares the parent, and a folder is somewhere to go next.
+    var browsing = false
     let onSelect: (FileSearchResult) -> Void
     let onActivate: (FileSearchResult) -> Void
     let onActions: (FileSearchResult) -> Void
@@ -22,7 +24,8 @@ struct FileSearchList: View {
                 LazyVStack(spacing: 0) {
                     SectionHeader(title: title, isFirst: true, style: .palette)
                     ForEach(results) { result in
-                        FileSearchRow(result: result, selected: result.id == selectedID)
+                        FileSearchRow(
+                            result: result, selected: result.id == selectedID, browsing: browsing)
                             .selectionFrame(result.id == selectedID)
                             .contentShape(Rectangle())
                             .onRowClick(
@@ -59,12 +62,14 @@ private struct FileSearchRow: View {
     @Environment(\.metrics) private var metrics
     let result: FileSearchResult
     let selected: Bool
+    let browsing: Bool
     @State private var image: NSImage?
     @State private var hovered = false
 
-    init(result: FileSearchResult, selected: Bool) {
+    init(result: FileSearchResult, selected: Bool, browsing: Bool) {
         self.result = result
         self.selected = selected
+        self.browsing = browsing
         _image = State(initialValue: IconCache.cachedFitted(forFile: result.id))
     }
 
@@ -76,7 +81,7 @@ private struct FileSearchRow: View {
 
     /// A folder is named by where it sits: half the hits are some `src` or `Tinycast`.
     private var label: Text {
-        guard result.isDirectory, !result.parentName.isEmpty else { return Text(result.name) }
+        guard result.isDirectory, !browsing, !result.parentName.isEmpty else { return Text(result.name) }
         let parent = Text("\(result.parentName)/").foregroundStyle(.secondary)
         return Text("\(parent)\(result.name)")
     }
@@ -98,6 +103,11 @@ private struct FileSearchRow: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: 0)
+            if browsing, result.isDirectory {
+                Image(systemName: "chevron.right")
+                    .font(metrics.typography.rowTrailing)
+                    .foregroundStyle(Theme.Colors.textTertiary)
+            }
         }
         .padding(.horizontal, metrics.spacing.md)
         .padding(.vertical, metrics.spacing.md)

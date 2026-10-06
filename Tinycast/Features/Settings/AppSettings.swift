@@ -392,6 +392,15 @@ final class AppSettings {
         }
     }
 
+    /// Typing `~` or `/` in the launcher opens Browse Files; the command itself works either way.
+    var fileBrowserFromLauncher: Bool {
+        didSet { defaults.set(fileBrowserFromLauncher, forKey: Key.fileBrowserFromLauncher.rawValue) }
+    }
+
+    var fileBrowserShowsHidden: Bool {
+        didSet { defaults.set(fileBrowserShowsHidden, forKey: Key.fileBrowserShowsHidden.rawValue) }
+    }
+
     var fileSearchIncludesContent: Bool {
         didSet {
             defaults.set(fileSearchIncludesContent, forKey: Key.fileSearchIncludesContent.rawValue)
@@ -816,6 +825,10 @@ final class AppSettings {
         fileSearchIgnorePatterns =
             defaults.stringArray(forKey: Key.fileSearchIgnorePatterns.rawValue) ?? []
         fileSearchIncludesContent = defaults.bool(forKey: Key.fileSearchIncludesContent.rawValue)
+        fileBrowserFromLauncher =
+            defaults.object(forKey: Key.fileBrowserFromLauncher.rawValue) == nil
+            || defaults.bool(forKey: Key.fileBrowserFromLauncher.rawValue)
+        fileBrowserShowsHidden = defaults.bool(forKey: Key.fileBrowserShowsHidden.rawValue)
         fileSearchResultLimit =
             FileSearchResultLimit(rawValue: defaults.integer(forKey: Key.fileSearchResultLimit.rawValue))
             ?? .standard

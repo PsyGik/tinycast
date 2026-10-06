@@ -384,6 +384,12 @@ enum SettingsSearchCatalog {
             .fileSearchResults, "Search file contents",
             keywords: ["content", "text", "body", "metadata", "tags", "keywords", "deep"]),
         .init(
+            .fileSearchBrowsing, "Browse from the launcher",
+            keywords: ["browse", "explorer", "navigate", "folders", "tilde", "path", "~", "/"]),
+        .init(
+            .fileSearchBrowsing, "Show hidden files",
+            keywords: ["dotfiles", "hidden", "invisible"]),
+        .init(
             .fileSearchResults, "Maximum results",
             keywords: ["limit", "cap", "count", "max"]),
         .init(
