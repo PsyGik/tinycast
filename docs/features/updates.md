@@ -93,6 +93,8 @@ self-rescheduling pump, and one atomic JSON file.
 ~/Library/Caches/<bundle-id>/update-check.json
 ```
 
+The feed is `ReleaseFeed.repository`, `PsyGik/tinycast`: this fork ships its own releases, so an
+upstream one — signed with the Developer ID the signature check accepts — is never offered over it.
 It holds `lastCheckedAt`, the newest release seen, and the version the user dismissed. Freshness is
 measured from `lastCheckedAt`, so relaunching never re-asks GitHub; the interval is 24 h, dropping to
 2 h after a failed attempt, and the first check waits 30 s so it never lands in the login rush. The
