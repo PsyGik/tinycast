@@ -32,6 +32,8 @@ enum SettingsBackupCoverage {
         "fileSearchEnabled": .fileSearchEnabled,
         "fileSearchScopes": .fileSearchScopes,
         "fileSearchIgnorePatterns": .fileSearchIgnorePatterns,
+        "fileSearchIncludesContent": .fileSearchIncludesContent,
+        "fileSearchResultLimit": .fileSearchResultLimit,
         "notesEnabled": .notesEnabled,
         "notesRendersMarkdown": .notesRendersMarkdown,
         "notesShowsFormattingBar": .notesShowsFormattingBar,

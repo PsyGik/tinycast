@@ -34,7 +34,9 @@ final class FileSearchCoordinator {
 
     func applyPolicy() {
         session.apply(
-            scopes: settings.fileSearchScopes, ignorePatterns: settings.fileSearchIgnorePatterns)
+            scopes: settings.fileSearchScopes, ignorePatterns: settings.fileSearchIgnorePatterns,
+            includesContent: settings.fileSearchIncludesContent,
+            resultLimit: settings.fileSearchResultLimit.rawValue)
     }
 
     /// `query` is the fallback row's: the screen opens already narrowed to what was typed.
@@ -74,6 +76,25 @@ final class FileSearchCoordinator {
             relativeTo: CGRect(
                 x: anchor.bounds.maxX, y: anchor.bounds.midY, width: 0, height: 0),
             of: anchor, preferredEdge: .maxX)
+    }
+
+    func showInfo(_ result: FileSearchResult) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        Task {
+            guard await !AppLauncher.showInfoInFinder(result.url) else { return }
+            await core.showNotice(
+                title: "Couldn’t Open Get Info",
+                message: "Allow Tinycast to control Finder in System Settings › Privacy & Security "
+                    + "› Automation, then try again.",
+                symbol: "info.circle", tone: .danger)
+        }
+    }
+
+    /// Opens the Quicklinks editor prefilled, so the user names and saves it there.
+    func saveAsQuicklink(_ result: FileSearchResult) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        core.quicklinkCoordinator.editQuicklink(
+            Quicklink(name: result.name, link: result.url.absoluteString))
     }
 
     func copyPath(_ result: FileSearchResult) {

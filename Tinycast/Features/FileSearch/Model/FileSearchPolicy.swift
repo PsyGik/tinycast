@@ -7,13 +7,23 @@ struct FileSearchPolicy: Sendable, Equatable {
     let directRoots: [URL]
     let includesHome: Bool
     let ignore: FileSearchIgnoreList
+    let includesContent: Bool
+    let resultLimit: Int
 
-    init(scopes: [String], ignorePatterns: [String], homeDirectory: URL) {
+    /// Twice the rows, so the ignore list and ranking still have candidates to drop.
+    var candidateLimit: Int { max(FileSearchQuery.candidateLimit, resultLimit * 2) }
+
+    init(
+        scopes: [String], ignorePatterns: [String], homeDirectory: URL,
+        includesContent: Bool = false, resultLimit: Int = FileSearchQuery.resultLimit
+    ) {
         self.homeDirectory = homeDirectory
         let home = homeDirectory.standardizedFileURL.path
         let roots = FileSearchScope.roots(for: scopes, homeDirectory: homeDirectory)
         directRoots = roots.filter { $0.path != home }
         includesHome = roots.count != directRoots.count
         ignore = FileSearchIgnoreList(patterns: FileSearchIgnoreList.defaults + ignorePatterns)
+        self.includesContent = includesContent
+        self.resultLimit = resultLimit
     }
 }

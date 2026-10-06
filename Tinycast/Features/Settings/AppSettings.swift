@@ -330,6 +330,18 @@ final class AppSettings {
         }
     }
 
+    var fileSearchIncludesContent: Bool {
+        didSet {
+            defaults.set(fileSearchIncludesContent, forKey: Key.fileSearchIncludesContent.rawValue)
+        }
+    }
+
+    var fileSearchResultLimit: FileSearchResultLimit {
+        didSet {
+            defaults.set(fileSearchResultLimit.rawValue, forKey: Key.fileSearchResultLimit.rawValue)
+        }
+    }
+
     var notesEnabled: Bool {
         didSet { defaults.set(notesEnabled, forKey: Key.notesEnabled.rawValue) }
     }
@@ -721,6 +733,10 @@ final class AppSettings {
             ?? FileSearchScope.defaultScopes
         fileSearchIgnorePatterns =
             defaults.stringArray(forKey: Key.fileSearchIgnorePatterns.rawValue) ?? []
+        fileSearchIncludesContent = defaults.bool(forKey: Key.fileSearchIncludesContent.rawValue)
+        fileSearchResultLimit =
+            FileSearchResultLimit(rawValue: defaults.integer(forKey: Key.fileSearchResultLimit.rawValue))
+            ?? .standard
         notesEnabled = defaults.bool(forKey: Key.notesEnabled.rawValue)
         dictationEnabled = defaults.bool(forKey: Key.dictationEnabled.rawValue)
         dictationMode =

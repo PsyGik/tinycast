@@ -5,6 +5,10 @@ import Foundation
 final class FileSearchSession {
     typealias SearchOperation =
         @Sendable (String, FileSearchFilter, FileSearchPolicy) async throws -> [FileSearchResult]
+    /// The name matches go in, and come back merged with the content matches and re-ranked.
+    typealias ContentOperation =
+        @Sendable (String, FileSearchFilter, FileSearchPolicy, [FileSearchResult]) async throws
+        -> [FileSearchResult]
 
     enum State: Equatable {
         case idle
@@ -24,6 +28,7 @@ final class FileSearchSession {
     @ObservationIgnored private var policy: FileSearchPolicy
     @ObservationIgnored private let debounce: Duration
     @ObservationIgnored private let searchOperation: SearchOperation
+    @ObservationIgnored private let contentOperation: ContentOperation?
 
     private struct Request: Equatable {
         let query: String
@@ -48,22 +53,33 @@ final class FileSearchSession {
                 try FileSearchService.search(query: query, policy: policy, filter: filter)
             }.value
         }
+        contentOperation = { query, filter, policy, names in
+            try await Task.detached(priority: .userInitiated) {
+                try FileSearchService.contentSearch(
+                    query: query, policy: policy, filter: filter, merging: names)
+            }.value
+        }
     }
 
     init(
-        policy: FileSearchPolicy, debounce: Duration,
+        policy: FileSearchPolicy, debounce: Duration, contentOperation: ContentOperation? = nil,
         searchOperation: @escaping SearchOperation
     ) {
         homeDirectory = policy.homeDirectory
         self.policy = policy
         self.debounce = debounce
         self.searchOperation = searchOperation
+        self.contentOperation = contentOperation
     }
 
     /// Resolved here rather than per search, so glob compilation stays off the keystroke path.
-    func apply(scopes: [String], ignorePatterns: [String]) {
+    func apply(
+        scopes: [String], ignorePatterns: [String], includesContent: Bool = false,
+        resultLimit: Int = FileSearchQuery.resultLimit
+    ) {
         let policy = FileSearchPolicy(
-            scopes: scopes, ignorePatterns: ignorePatterns, homeDirectory: homeDirectory)
+            scopes: scopes, ignorePatterns: ignorePatterns, homeDirectory: homeDirectory,
+            includesContent: includesContent, resultLimit: resultLimit)
         guard policy != self.policy else { return }
         self.policy = policy
         // A result found under the old rules must not publish, and the same query has to re-run.
@@ -114,6 +130,16 @@ final class FileSearchSession {
                 guard revision == pending.revision, self.request == request else { continue }
                 results = candidates
                 state = .ready
+                // Names publish first; a newer keystroke waiting means this content pass is moot.
+                guard pendingSearch == nil, policy.includesContent, !request.query.isEmpty,
+                    candidates.count < policy.resultLimit, let contentOperation
+                else { continue }
+                let merged = try? await contentOperation(
+                    request.query, request.filter, policy, candidates)
+                guard let merged, revision == pending.revision, self.request == request else {
+                    continue
+                }
+                results = merged
             } catch {
                 guard revision == pending.revision, self.request == request else { continue }
                 results = []

@@ -360,6 +360,12 @@ enum SettingsSearchCatalog {
             group: .fileSearchCommands, "File search commands",
             keywords: ["shortcut", "launcher"]),
         .init(
+            .fileSearchResults, "Search file contents",
+            keywords: ["content", "text", "body", "metadata", "tags", "keywords", "deep"]),
+        .init(
+            .fileSearchResults, "Maximum results",
+            keywords: ["limit", "cap", "count", "max"]),
+        .init(
             group: .fileSearchSearchScopes, "Search Scopes",
             keywords: ["folders", "locations", "home", "add folder"]),
         .init(
