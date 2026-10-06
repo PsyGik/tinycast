@@ -22,6 +22,15 @@ enum FileSearchQuery {
         return (matches + types + excludes).joined(separator: " && ")
     }
 
+    /// Every typed letter in order, anywhere in the name: Spotlight's nearest thing to fuzzy.
+    static func subsequenceExpression(for query: String, excluding exclusions: [String] = []) -> String? {
+        let letters = query.filter { !$0.isWhitespace }
+        guard !letters.isEmpty else { return nil }
+        let pattern = "*" + letters.map { escape(String($0)) + "*" }.joined()
+        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
+        return (["kMDItemFSName == \"\(pattern)\"cd"] + excludes).joined(separator: " && ")
+    }
+
     /// Word-prefix matches on what a file says rather than what it is called, one group per term.
     static func contentExpression(
         for query: String, excluding exclusions: [String] = [], filter: FileSearchFilter = .all

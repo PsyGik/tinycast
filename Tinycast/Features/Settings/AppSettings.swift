@@ -401,6 +401,10 @@ final class AppSettings {
         didSet { defaults.set(fileBrowserShowsHidden, forKey: Key.fileBrowserShowsHidden.rawValue) }
     }
 
+    var fileBrowserSpaceQuickLook: Bool {
+        didSet { defaults.set(fileBrowserSpaceQuickLook, forKey: Key.fileBrowserSpaceQuickLook.rawValue) }
+    }
+
     var fileSearchIncludesContent: Bool {
         didSet {
             defaults.set(fileSearchIncludesContent, forKey: Key.fileSearchIncludesContent.rawValue)
@@ -829,6 +833,9 @@ final class AppSettings {
             defaults.object(forKey: Key.fileBrowserFromLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.fileBrowserFromLauncher.rawValue)
         fileBrowserShowsHidden = defaults.bool(forKey: Key.fileBrowserShowsHidden.rawValue)
+        fileBrowserSpaceQuickLook =
+            defaults.object(forKey: Key.fileBrowserSpaceQuickLook.rawValue) == nil
+            || defaults.bool(forKey: Key.fileBrowserSpaceQuickLook.rawValue)
         fileSearchResultLimit =
             FileSearchResultLimit(rawValue: defaults.integer(forKey: Key.fileSearchResultLimit.rawValue))
             ?? .standard

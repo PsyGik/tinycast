@@ -390,6 +390,9 @@ enum SettingsSearchCatalog {
             .fileSearchBrowsing, "Show hidden files",
             keywords: ["dotfiles", "hidden", "invisible"]),
         .init(
+            .fileSearchBrowsing, "Space opens Quick Look",
+            keywords: ["space", "spacebar", "quick look", "preview", "finder"]),
+        .init(
             .fileSearchResults, "Maximum results",
             keywords: ["limit", "cap", "count", "max"]),
         .init(

@@ -396,6 +396,8 @@ struct RootPaletteView: View {
                 }
                 // A `/` walks the path and leaves only what follows it in the field.
                 if vm.mode == .browseFiles {
+                    // Typing takes Space back for the field, as Finder's type-select does.
+                    if !vm.query.isEmpty { vm.browseSpaceLooks = false }
                     let filter = core.fileBrowser.type(vm.query)
                     if filter != vm.query {
                         vm.query = filter
@@ -421,7 +423,7 @@ struct RootPaletteView: View {
             // A narrower list means the old index points at a different row, or at none.
             .onChange(of: vm.clipboardFilter) { land() }
             // A folder arrives after its read, so the highlight lands once there is something to land on.
-            .onChange(of: core.fileBrowser.listing) { if vm.mode == .browseFiles { land() } }
+            .onChange(of: core.fileBrowser.rowsRevision) { if vm.mode == .browseFiles { land() } }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
             .onChange(of: vm.fileSearchFilter) {
                 land()
@@ -450,6 +452,7 @@ struct RootPaletteView: View {
                     dictionary.reset()
                 }
                 if vm.mode != .menuSearch { menuSearch.reset() }
+                if vm.mode != .browseFiles { core.fileBrowser.releaseSearch() }
                 if vm.mode != .switchWindows { windowSwitch.reset() }
                 if vm.mode != .meetingDetails { calendarStore.clearDetails() }
                 if vm.mode != .rooms, vm.mode != .roomWindows { core.roomCoordinator.screensDidClose() }
@@ -593,6 +596,8 @@ struct RootPaletteView: View {
                 case .clearCategory:
                     vm.launcherCategory = nil
                     vm.selection = 0
+                case .returnToLauncher:
+                    vm.prepare(mode: .launcher)
                 case .exitExtensionScreen:
                     core.extensionCoordinator.exitExtensionScreen()
                 case .goBack:

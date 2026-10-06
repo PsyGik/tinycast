@@ -52,6 +52,15 @@ enum FileBrowserPath {
         directory.path == "/" ? directory : directory.deletingLastPathComponent().standardizedFileURL
     }
 
+    /// The folders between `base` and an item below it, `Swift/tinycast`; nil for a direct child.
+    static func between(_ base: URL?, and item: URL) -> String? {
+        guard let base else { return nil }
+        let parent = item.deletingLastPathComponent().standardizedFileURL.pathComponents
+        let root = base.standardizedFileURL.pathComponents
+        guard parent.count > root.count, Array(parent.prefix(root.count)) == root else { return nil }
+        return parent.dropFirst(root.count).joined(separator: "/")
+    }
+
     /// `~/Development` rather than `/Users/me/Development`, as the field is typed.
     static func display(_ directory: URL, home: URL) -> String {
         let path = directory.standardizedFileURL.path

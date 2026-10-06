@@ -49,7 +49,7 @@ struct FileBrowserListing: Equatable, Sendable {
     }
 
     /// By its own name only: a folder the user walked into on purpose lists everything inside it.
-    private static func isExcluded(_ name: String, ignore: FileSearchIgnoreList) -> Bool {
+    static func isExcluded(_ name: String, ignore: FileSearchIgnoreList) -> Bool {
         alwaysExcluded.contains(name) || ignore.excludes(path: name)
     }
 }

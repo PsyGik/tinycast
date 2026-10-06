@@ -42,9 +42,13 @@ feature is enabled in Settings.
   into it — →, ↵, a click or a typed path — and a folder row's preview is its icon, never its contents,
   so macOS's one-time prompt for Desktop, Documents or Downloads can only follow that step. A refused
   read is a sentence pointing at Privacy & Security, never a retry.
-- **Browsing reads one folder, never a tree.** `FileBrowserSession` lists exactly the folder on screen
-  with one `contentsOfDirectory` call, keyed for the three facts a row needs, and nothing computes a
-  size or walks below it.
+- **Browsing lists one folder, and searching below it holds nothing past the visit.** The folder on
+  screen is one `contentsOfDirectory` call and nothing computes a size. Typing reads the names below it
+  into a `FileTreeIndex` — UTF-8 back to back, with start offsets, parent links and a folder flag, about
+  30 bytes an item, capped at 100,000 items and one second — which is dropped, with
+  `malloc_zone_pressure_relief`, the moment the folder changes, the browser is left or the palette
+  hides. Each folder read drains its own autorelease pool, and the walk queues folders by index, so
+  no `URL` and its cached attributes outlive the read that found them.
 - **A superseded query never publishes.** The session cancels its pending task and checks cancellation
   after the synchronous Spotlight call, so a late result cannot replace the newer query's rows. Editing
   the scopes or the patterns cancels the session for the same reason: a result found under the old
@@ -292,6 +296,39 @@ the browser — from `/` or a folder outside home it leaves at the root. Going u
 the folder just left. ⌘↵ shows in Finder, ⌘Y is Quick Look, and ⌘K adds Copy Path, Copy Name and the
 two view toggles. Renaming, moving and trashing are Finder's: Show in Finder is the way there.
 
+⇥ completes like a shell: first to the longest prefix every name in the folder starting with the
+typed text shares (`dev` → `Develop`, `FileBrowserCompletion`), then to the highlighted row — a folder
+is walked into, a file's name fills the field. ⇧⇥ goes up. **Space looks, as in Finder**, while
+**Space opens Quick Look** (`fileBrowserSpaceQuickLook`, on) is on: with the field empty, or once
+the highlight has been moved by an arrow or a click, a bare Space toggles Quick Look — caught in
+`PalettePanel.sendEvent` before the field editor can type it. Typing any other character hands Space
+back to the field (`PaletteState.browseSpaceLooks`), so `annual report` still types its space. Escape
+clears typed text, then returns to the root search whatever the configured Escape behavior
+(`PaletteEscapeAction.returnToLauncher`): the browser is a place reached from the launcher, so leaving
+it never closes the palette.
+
+### Searching below a folder
+
+Text that is not a path searches the folder on screen and everything below it. The folder's own
+items rank at once, by `FileNameScore`; after an 80 ms pause the subtree answers and replaces them.
+`FileNameScore` is the launcher's fuzzy tiers — exact, prefix, word start, substring, letters in order
+— with one change for names: among letters-in-order hits, the tightness bonus counts four times and
+the name's length is subtracted, so between equally tight hits the shorter name wins, while letters
+landing on word starts still read as initials (`tcfg` → `the_list_that_cut_forecast_go…`). Ties go to
+the shallower item, then to the name.
+
+`FileTreeIndexer` reads the subtree on the first keystroke, breadth first, skipping hidden items
+unless shown, packages' insides and the excluded folders; it never enters Desktop, Documents,
+Downloads, `~/Library` or iCloud Drive from above, since a walk is no step the user took. Every later
+keystroke ranks what is already in memory: on the developer's `~/Development`, 60,133 items took
+650–730 ms to read once and 2–4 ms a query (43 ms for a single letter). Home, `/` and the folders above
+home are never walked — `FileTreeIndexer.walks` — and a walk that hit its cap or its second is
+incomplete: both are answered by `FileSearchService.subtree`, a Spotlight query for every typed letter
+in order (`kMDItemFSName == "*t*c*f*g*"cd`, `FileSearchQuery.subsequenceExpression`) under that
+folder, with the ignore list and the browser's own exclusions applied, ranked by the same score. Rows
+below the folder name the folders between, dimmed (`Swift/tinycast/README.md`), and ⇥ on a deep folder
+walks straight into it.
+
 `FileBrowserListing` orders folders first, then names as Finder sorts them, and caps a folder at
 2,000 rows, heading the list with how many more a filter would reach. Hidden items stay out unless
 **Show hidden files** (`fileBrowserShowsHidden`) is on. Folders the ignore list names — File Search's
@@ -307,7 +344,8 @@ Settings ▸ File Search owns the `fileSearchEnabled` switch, which is off when 
 along with the scope list, the ignore patterns, the Search Files command row, and a Results section with
 **Search file contents** (`fileSearchIncludesContent`, off) and **Maximum results**
 (`fileSearchResultLimit`, 200), and a Browsing section with **Browse from the launcher**
-(`fileBrowserFromLauncher`, on) and **Show hidden files** (`fileBrowserShowsHidden`, off). All of them are
+(`fileBrowserFromLauncher`, on), **Show hidden files** (`fileBrowserShowsHidden`, off) and **Space opens
+Quick Look** (`fileBrowserSpaceQuickLook`, on). All of them are
 ordinary settings carried by Tinycast settings backups; importing them grants no permission or
 background access.
 

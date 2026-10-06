@@ -42,6 +42,10 @@ struct FileSearchSettingsView: View {
                     SettingsRowTitle(.fileSearchBrowsing, "Show hidden files")
                     Text("Dotfiles and other hidden items, while browsing.")
                 }
+                Toggle(isOn: $settings.fileBrowserSpaceQuickLook) {
+                    SettingsRowTitle(.fileSearchBrowsing, "Space opens Quick Look")
+                    Text("With the field empty, or after moving the highlight, as in Finder.")
+                }
             } header: {
                 SettingsSectionHeader(.fileSearchBrowsing)
             }

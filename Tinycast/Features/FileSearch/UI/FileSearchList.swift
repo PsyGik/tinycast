@@ -9,6 +9,8 @@ struct FileSearchList: View {
     let scroll: ScrollIntent
     /// Browsing one folder: every row shares the parent, and a folder is somewhere to go next.
     var browsing = false
+    /// The folder being browsed; a deeper result names the folders between it and the match.
+    var base: URL?
     let onSelect: (FileSearchResult) -> Void
     let onActivate: (FileSearchResult) -> Void
     let onActions: (FileSearchResult) -> Void
@@ -25,7 +27,8 @@ struct FileSearchList: View {
                     SectionHeader(title: title, isFirst: true, style: .palette)
                     ForEach(results) { result in
                         FileSearchRow(
-                            result: result, selected: result.id == selectedID, browsing: browsing)
+                            result: result, selected: result.id == selectedID, browsing: browsing,
+                            base: base)
                             .selectionFrame(result.id == selectedID)
                             .contentShape(Rectangle())
                             .onRowClick(
@@ -63,13 +66,15 @@ private struct FileSearchRow: View {
     let result: FileSearchResult
     let selected: Bool
     let browsing: Bool
+    let base: URL?
     @State private var image: NSImage?
     @State private var hovered = false
 
-    init(result: FileSearchResult, selected: Bool, browsing: Bool) {
+    init(result: FileSearchResult, selected: Bool, browsing: Bool, base: URL?) {
         self.result = result
         self.selected = selected
         self.browsing = browsing
+        self.base = base
         _image = State(initialValue: IconCache.cachedFitted(forFile: result.id))
     }
 
@@ -81,7 +86,11 @@ private struct FileSearchRow: View {
 
     /// A folder is named by where it sits: half the hits are some `src` or `Tinycast`.
     private var label: Text {
-        guard result.isDirectory, !browsing, !result.parentName.isEmpty else { return Text(result.name) }
+        if browsing {
+            guard let between = FileBrowserPath.between(base, and: result.url) else { return Text(result.name) }
+            return Text("\(Text("\(between)/").foregroundStyle(.secondary))\(result.name)")
+        }
+        guard result.isDirectory, !result.parentName.isEmpty else { return Text(result.name) }
         let parent = Text("\(result.parentName)/").foregroundStyle(.secondary)
         return Text("\(parent)\(result.name)")
     }

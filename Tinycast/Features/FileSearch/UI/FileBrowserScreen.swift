@@ -46,6 +46,8 @@ struct FileBrowserScreen: PaletteScreen {
 
     /// → opens the selected folder; ← goes up while the field is empty, else it moves the caret.
     func move(_ delta: Int, axis: PaletteAxis, from selection: Int) -> Int? {
+        // Moving the highlight is pointing at a row, so Space now looks rather than types.
+        vm.browseSpaceLooks = true
         guard axis == .horizontal else { return nil }
         if delta > 0 {
             guard let result = result(at: selection), result.isDirectory else { return nil }
@@ -60,6 +62,28 @@ struct FileBrowserScreen: PaletteScreen {
     private func enter(_ folder: FileSearchResult) {
         vm.query = ""
         session.open(folder.url)
+    }
+
+    /// ⇥ completes like a shell: the folder's shared prefix first, then the highlighted row itself.
+    func tab(at selection: Int, backwards: Bool) -> Bool {
+        if backwards {
+            if session.canGoUp { session.goUp() }
+            return true
+        }
+        let typed = vm.query
+        if !typed.isEmpty, let prefix = FileBrowserCompletion.sharedPrefix(
+            of: session.listing.entries.map(\.name), extending: typed), prefix.count > typed.count
+        {
+            vm.query = prefix
+            return true
+        }
+        guard let result = result(at: selection) else { return true }
+        if result.isDirectory {
+            enter(result)
+        } else if typed != result.name {
+            vm.query = result.name
+        }
+        return true
     }
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
@@ -128,7 +152,9 @@ struct FileBrowserScreen: PaletteScreen {
         case .loading where rows.isEmpty:
             Color.clear
         default:
-            if rows.isEmpty {
+            if rows.isEmpty, session.isSearching {
+                Color.clear
+            } else if rows.isEmpty {
                 EmptyResults(text: emptyText)
             } else {
                 list(selection: selection, scroll: scroll)
@@ -137,13 +163,17 @@ struct FileBrowserScreen: PaletteScreen {
     }
 
     private var emptyText: String {
-        if !vm.query.isEmpty { return "Nothing in \(session.displayPath) matches" }
+        if session.isSearching { return "" }
+        if !vm.query.isEmpty { return "Nothing under \(session.displayPath) matches" }
         let excluded = session.listing.excludedCount
         return excluded > 0 ? "Only excluded folders here — ⌘K to show them" : "This folder is empty"
     }
 
     /// The path heads the list, with what was set aside, so a missing folder is never a mystery.
     private var title: String {
+        if session.searchQuery != nil {
+            return "Results under \(session.displayPath)" + (session.isSearching ? " · searching…" : "")
+        }
         var parts = [session.displayPath]
         if session.listing.excludedCount > 0, !session.showsExcluded {
             parts.append("\(session.listing.excludedCount) excluded")
@@ -159,8 +189,11 @@ struct FileBrowserScreen: PaletteScreen {
         return HStack(spacing: 0) {
             FileSearchList(
                 title: title, results: rows, selectedID: selected?.id, scroll: scroll,
-                browsing: true,
-                onSelect: { result in vm.selection = rows.firstIndex(of: result) ?? 0 },
+                browsing: true, base: session.directory,
+                onSelect: { result in
+                    vm.selection = rows.firstIndex(of: result) ?? 0
+                    vm.browseSpaceLooks = true
+                },
                 onActivate: { result in
                     if let index = rows.firstIndex(of: result) { activate(at: index) }
                 },
