@@ -225,6 +225,7 @@ Tinycast/
   Platform/         system shims: Permissions, LaunchAtLogin, InputSourceSwitcher, ScreenTarget,
                     AppDisplayName,
                     NotificationToken, AppPaths, Signposts, HealthTicker, Memo, ActivationPolicy,
+                    SystemSwitcherHotKeys,
                     ProcessExit,
                     Images/, Compression/
   Resources/        RaycastRuntime.generated.js, the embedded extension runtime
