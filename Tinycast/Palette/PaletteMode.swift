@@ -8,6 +8,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case calculatorHistory
     case emoji
     case fileSearch
+    /// One folder at a time, reached by Browse Files or by typing `~` or `/` in the launcher.
+    case browseFiles
     case menuSearch
     case switchWindows
     case rooms
@@ -35,6 +37,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .calculatorHistory: return "plus.forwardslash.minus"
         case .emoji: return "face.smiling"
         case .fileSearch: return "doc.text.magnifyingglass"
+        case .browseFiles: return "folder"
         case .menuSearch: return "menubar.rectangle"
         case .switchWindows: return "macwindow.on.rectangle"
         case .rooms: return "door.left.hand.open"
@@ -58,6 +61,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .calculatorHistory: return "Do math, convert units, or search your past calculations…"
         case .emoji: return "Search emoji and symbols…"
         case .fileSearch: return "Search files and folders…"
+        case .browseFiles: return "Filter, or type a path…"
         case .menuSearch: return "Search menu bar items…"
         case .switchWindows: return "Search open windows…"
         case .rooms: return "Search rooms, or name a new one…"

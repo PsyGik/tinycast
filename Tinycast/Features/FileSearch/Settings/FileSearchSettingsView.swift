@@ -33,6 +33,19 @@ struct FileSearchSettingsView: View {
                 SettingsSectionHeader(.fileSearchResults)
             }
             .settingsEnabled(settings.fileSearchEnabled)
+            Section {
+                Toggle(isOn: $settings.fileBrowserFromLauncher) {
+                    SettingsRowTitle(.fileSearchBrowsing, "Browse from the launcher")
+                    Text("Typing ~ or / opens Browse Files at that path.")
+                }
+                Toggle(isOn: $settings.fileBrowserShowsHidden) {
+                    SettingsRowTitle(.fileSearchBrowsing, "Show hidden files")
+                    Text("Dotfiles and other hidden items, while browsing.")
+                }
+            } header: {
+                SettingsSectionHeader(.fileSearchBrowsing)
+            }
+            .settingsEnabled(settings.fileSearchEnabled)
             FileSearchScopesSection()
                 .settingsEnabled(settings.fileSearchEnabled)
             FileSearchIgnoreSection()

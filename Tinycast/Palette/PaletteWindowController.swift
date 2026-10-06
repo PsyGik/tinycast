@@ -410,6 +410,12 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             if core.palette.mode == .ai, core.quickAICoordinator.removeLastAttachment() {
                 return true
             }
+            // Up the tree, until home; from there, or from a root path, backspace leaves the browser.
+            let browser = core.fileBrowser
+            if core.palette.mode == .browseFiles, browser.canGoUp, browser.directory != browser.home {
+                browser.goUp()
+                return true
+            }
             // A chosen category reads like a token in the field, so backspace removes it first.
             if core.palette.mode == .launcher, core.palette.launcherCategory != nil {
                 core.palette.launcherCategory = nil

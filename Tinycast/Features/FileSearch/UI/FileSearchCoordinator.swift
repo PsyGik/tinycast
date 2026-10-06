@@ -26,7 +26,7 @@ final class FileSearchCoordinator {
     }
 
     func applyEnabled() {
-        appIndex.setCommandsVisible([.searchFiles], settings.fileSearchEnabled)
+        appIndex.setCommandsVisible([.searchFiles, .browseFiles], settings.fileSearchEnabled)
         guard !settings.fileSearchEnabled else { return }
         session.cancel()
         if palette.mode == .fileSearch { palette.prepare(mode: .launcher) }
@@ -37,12 +37,34 @@ final class FileSearchCoordinator {
             scopes: settings.fileSearchScopes, ignorePatterns: settings.fileSearchIgnorePatterns,
             includesContent: settings.fileSearchIncludesContent,
             resultLimit: settings.fileSearchResultLimit.rawValue)
+        core.fileBrowser.apply(
+            ignorePatterns: settings.fileSearchIgnorePatterns,
+            showsHidden: settings.fileBrowserShowsHidden)
     }
 
     /// `query` is the fallback row's: the screen opens already narrowed to what was typed.
     func show(query: String = "") {
         guard settings.fileSearchEnabled else { return }
         paletteCoordinator.togglePalette(mode: .fileSearch, seeding: query.isEmpty ? nil : query)
+    }
+
+    /// Browse Files: a fresh summon starts at home, as a new Search Files starts blank.
+    func browse() {
+        guard settings.fileSearchEnabled else { return }
+        core.fileBrowser.reset()
+        paletteCoordinator.togglePalette(mode: .browseFiles)
+    }
+
+    /// `~` or `/` typed into the launcher: the launcher stays beneath, so Escape walks back to it.
+    func claimsLauncherQuery(_ query: String) -> Bool {
+        settings.fileSearchEnabled && settings.fileBrowserFromLauncher && FileBrowserPath.starts(query)
+    }
+
+    func browse(fromLauncher query: String) {
+        core.fileBrowser.reset()
+        let filter = core.fileBrowser.type(query)
+        paletteCoordinator.navigate(to: .browseFiles)
+        palette.query = filter
     }
 
     func open(_ result: FileSearchResult) {

@@ -59,6 +59,7 @@ final class AppCore {
     let runningApps = RunningAppsMonitor()
     let palette = PaletteState()
     let fileSearch = FileSearchSession()
+    let fileBrowser = FileBrowserSession()
     let dictionary = DictionarySession()
     let menuSearch = MenuSearchSession()
     let windowSwitch = WindowSwitchSession()
@@ -727,6 +728,7 @@ final class AppCore {
                 _ = $0.fileSearchIgnorePatterns
                 _ = $0.fileSearchIncludesContent
                 _ = $0.fileSearchResultLimit
+                _ = $0.fileBrowserShowsHidden
             }, reproject: { $0.fileSearchCoordinator.applyPolicy() })
         track({ _ = $0.snippetsEnabled }, reproject: { $0.snippetCoordinator.applySnippetsEnabled() })
         track({ _ = $0.appUsageEnabled }, reproject: { $0.applyAppUsage(force: true) })

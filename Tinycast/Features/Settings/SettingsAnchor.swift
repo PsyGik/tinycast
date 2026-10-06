@@ -60,6 +60,7 @@ extension SettingsAnchor {
     static let fileSearchFileSearch = Self(tab: .fileSearch, title: "File Search")
     static let fileSearchCommands = Self(tab: .fileSearch, title: "Commands")
     static let fileSearchResults = Self(tab: .fileSearch, title: "Results")
+    static let fileSearchBrowsing = Self(tab: .fileSearch, title: "Browsing")
     static let fileSearchSearchScopes = Self(tab: .fileSearch, title: "Search Scopes")
     static let fileSearchIgnorePatterns = Self(tab: .fileSearch, title: "Ignore Patterns")
 

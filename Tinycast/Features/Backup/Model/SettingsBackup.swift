@@ -59,6 +59,8 @@ struct SettingsBackup: Codable {
         var fileSearchScopes: [String]?
         var fileSearchIgnorePatterns: [String]?
         var fileSearchIncludesContent: Bool?
+        var fileBrowserFromLauncher: Bool?
+        var fileBrowserShowsHidden: Bool?
         var fileSearchResultLimit: Int?
         var notesEnabled: Bool?
         var notesRendersMarkdown: Bool?
@@ -181,6 +183,8 @@ extension SettingsBackup {
             fileSearchScopes: s.fileSearchScopes,
             fileSearchIgnorePatterns: s.fileSearchIgnorePatterns,
             fileSearchIncludesContent: s.fileSearchIncludesContent,
+            fileBrowserFromLauncher: s.fileBrowserFromLauncher,
+            fileBrowserShowsHidden: s.fileBrowserShowsHidden,
             fileSearchResultLimit: s.fileSearchResultLimit.rawValue,
             notesEnabled: s.notesEnabled,
             notesRendersMarkdown: s.notesRendersMarkdown,
@@ -474,6 +478,14 @@ extension SettingsBackup {
         }
         if let flag = s.fileSearchIncludesContent {
             settings.fileSearchIncludesContent = flag
+            count += 1
+        }
+        if let flag = s.fileBrowserFromLauncher {
+            settings.fileBrowserFromLauncher = flag
+            count += 1
+        }
+        if let flag = s.fileBrowserShowsHidden {
+            settings.fileBrowserShowsHidden = flag
             count += 1
         }
         if let raw = s.fileSearchResultLimit, let limit = FileSearchResultLimit(rawValue: raw) {
