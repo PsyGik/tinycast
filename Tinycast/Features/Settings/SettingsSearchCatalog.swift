@@ -173,6 +173,12 @@ enum SettingsSearchCatalog {
             .generalSearch, "Show suggestions",
             keywords: ["frequent", "recent", "recommended", "empty", "root search"]),
         .init(
+            .generalCategories, "Show categories",
+            keywords: ["filter", "chips", "pills", "kinds", "tabs", "narrow"]),
+        .init(
+            .generalCategories, "Keep categories visible while scrolling",
+            keywords: ["pin", "sticky", "chips", "pills"]),
+        .init(
             .generalAppUsage, "Use macOS app usage",
             keywords: ["spotlight", "frequent", "recent", "most used", "history", "recency"]),
         .init(

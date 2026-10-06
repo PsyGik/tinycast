@@ -34,6 +34,12 @@ struct LauncherScreen: PaletteScreen {
     /// How many follow the meetings as Suggestions; zero unless the field is empty.
     private let frequentCount: Int
     private let suggestionCount: Int
+    /// Inside a chosen category, how many of `results` lead as Recently Used.
+    private let recentCount: Int
+    /// The pills on offer, in section order; empty while categories are off or out of place.
+    private let categoryKinds: [AppEntry.Kind]
+    /// Nil is All. A choice whose pill has gone — hidden, or its last entry removed — reads as All.
+    private let category: AppEntry.Kind?
     /// The `Use "…" with` section, below every result; empty unless something is typed.
     private let fallbacks: [(fallback: Fallback, entry: AppEntry)]
     /// Resolved in `init`: the palette indexes this several times per event, so it can't recompute.
@@ -60,41 +66,57 @@ struct LauncherScreen: PaletteScreen {
         // Listed even when hidden from search: the shortcut that opened it still has to be answered.
         let pinned = vm.argumentEntryID.flatMap(core.customCommands.command(entryID:))
             .map(AppEntry.init).flatMap { $0.name == vm.query ? $0 : nil }
+        let pinsFavorites = vm.query.trimmingCharacters(in: .whitespaces).isEmpty
+        let settings = core.settings
+        let present = appIndex.presentKinds(visibility: visibility)
+        let offered =
+            settings.launcherShowsCategories && !settings.compactMode && pinned == nil
+            ? AppEntry.Kind.sectionOrder.filter { present.contains($0) && settings.showsCategory($0) }
+            : []
+        let category = vm.launcherCategory.flatMap(AppEntry.Kind.init(rawValue:))
+            .flatMap { offered.contains($0) ? $0 : nil }
+        // With All chosen, typing searches everything as it always has, so the pills step aside.
+        self.categoryKinds = pinsFavorites || category != nil ? offered : []
+        self.category = category
         let ordered =
             pinned.map { AppIndex.Results(entries: [$0]) }
             ?? appIndex.orderedResults(
-                query: vm.query, visibility: visibility, favorites: favorites, hotKeys: core.hotKeys)
+                query: vm.query, visibility: visibility, favorites: favorites, hotKeys: core.hotKeys,
+                category: category)
         var results = ordered.entries
+        // Inside a category only its own entries answer: no card, web address or fallback.
+        let scoped = category != nil
         // A typed web address leads: nothing the index holds answers it better.
-        if pinned == nil, let browser = CommandCatalog.openInBrowser(for: vm.query),
+        if pinned == nil, !scoped, let browser = CommandCatalog.openInBrowser(for: vm.query),
             visibility.isVisible(browser)
         {
             results.insert(browser, at: 0)
         }
         // No card over a pinned row: its fields hang off the selection, which must start on it.
         let calc =
-            pinned == nil
+            pinned == nil && !scoped
             ? CalcMemo.evaluate(
                 vm.query, rates: currencyRates.rates, currency: core.settings.calcDefaultCurrency,
                 format: core.calcNumberFormat) : nil
         // After the calculator: `#FF5733` is never arithmetic, so the two can't both answer.
-        let color = calc == nil && pinned == nil ? ColorValue.parse(vm.query) : nil
-        let fallbacks = core.fallbackCoordinator.entries(for: vm.query)
+        let color = calc == nil && pinned == nil && !scoped ? ColorValue.parse(vm.query) : nil
+        let fallbacks = scoped ? [] : core.fallbackCoordinator.entries(for: vm.query)
         let entries = results.map(Row.entry) + fallbacks.map { Row.fallback($0.fallback, $0.entry) }
-        let pinsFavorites = vm.query.trimmingCharacters(in: .whitespaces).isEmpty
         // At most one of them leads, so the flat index keeps a single-row offset.
-        let meeting = pinsFavorites ? meeting : nil
+        let meeting = pinsFavorites && !scoped ? meeting : nil
         self.meeting = meeting
         self.results = results
         self.calc = calc
         self.fallbacks = fallbacks
         self.color = color
-        self.showSections = pinsFavorites || AppEntry.Kind.named(by: vm.query) != nil
+        self.showSections =
+            scoped ? pinsFavorites : pinsFavorites || AppEntry.Kind.named(by: vm.query) != nil
         self.pinsFavorites = pinsFavorites
         self.favoriteCount = pinsFavorites ? ordered.favoriteCount : 0
         self.meetingCount = pinsFavorites ? ordered.meetingCount : 0
         self.frequentCount = pinsFavorites ? ordered.frequentCount : 0
         self.suggestionCount = pinsFavorites ? ordered.suggestionCount : 0
+        self.recentCount = pinsFavorites ? ordered.recentCount : 0
         if let calc {
             self.rows = [.calc(calc)] + entries
         } else if let color {
@@ -445,6 +467,7 @@ struct LauncherScreen: PaletteScreen {
             meetingCount: meetingCount,
             frequentCount: frequentCount,
             suggestionCount: suggestionCount,
+            recentCount: recentCount,
             showSections: showSections,
             scroll: scroll,
             card: leadCard,
@@ -467,8 +490,40 @@ struct LauncherScreen: PaletteScreen {
                 openActions()
             },
             onDropped: { core.paletteCoordinator.dragLanded() },
-            fallbacks: fallbackSection
+            fallbacks: fallbackSection,
+            categories: categoryBar
         )
+    }
+
+    private var categoryBar: LauncherList.CategoryBar? {
+        guard !categoryKinds.isEmpty else { return nil }
+        return LauncherList.CategoryBar(
+            kinds: categoryKinds, selected: category, pinned: core.settings.launcherPinsCategories,
+            onSelect: { choose($0) })
+    }
+
+    private func choose(_ kind: AppEntry.Kind?) {
+        vm.launcherCategory = kind?.rawValue
+        vm.selection = 0
+    }
+
+    var footerContext: PaletteFooterContext? {
+        category.map {
+            PaletteFooterContext(title: $0.descriptor.sectionTitle, systemImage: $0.descriptor.categorySymbol)
+        }
+    }
+
+    /// ← and → step the pills while the field is empty; with text in it they stay with the caret.
+    func move(_ delta: Int, axis: PaletteAxis, from selection: Int) -> Int? {
+        guard axis == .horizontal, !categoryKinds.isEmpty, vm.query.isEmpty, !vm.isComposing else {
+            return nil
+        }
+        let options: [AppEntry.Kind?] = [nil] + categoryKinds
+        let current = options.firstIndex(of: category) ?? 0
+        let next = min(max(current + delta, 0), options.count - 1)
+        guard next != current else { return selection }
+        choose(options[next])
+        return 0
     }
 
     /// Nil when nothing is typed, which is the one state the section has no input for.

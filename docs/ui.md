@@ -166,7 +166,7 @@ shortcut-recorder callout and the Notes switcher. `menuRow` remains the popover-
 ### Size (`Theme.Size`)
 
 `panelWidth 750` · `panelHeight 475` · `headerHeight 45` · `bottomBarHeight 39` · `barButtonHeight 28` ·
-`rowIcon 24` · `resultRowIcon 26` · `keyCap 18` · `footerKeyCap 24×22` · `footerBrandIcon 18` · `footerSeparatorHeight 10` ·
+`rowIcon 24` · `resultRowIcon 26` · `categoryChipHeight 26` · `keyCap 18` · `footerKeyCap 24×22` · `footerBrandIcon 18` · `footerSeparatorHeight 10` ·
 `recorderKeyCap 16` · `menuButton 36` · `clipboardListWidth 290` ·
 `menuWidth 276` · `clipboardFilterMenuWidth 200` · `fileSearchFilterMenuWidth 200` ·
 `emojiCategoryMenuWidth 220` · `menuIcon 20` ·
@@ -196,7 +196,7 @@ that selecting a longer provider never resizes the panel), `aiProvidersList 262`
 and `aiVariableName 170`. `segmentLabelInset 13` is what the system leaves either side of a
 segment's label once a segmented control has settled.
 
-`keyCap` sizes standard chips; the footer uses its own 24×22pt keycap. `recorderKeyCap` (both size and
+The launcher's category pills are `categoryChipHeight 26` with the `categoryChip 7` radius, `controlSurface` at rest and `categoryChipSelectedFill`/`Stroke` (the system accent) when chosen. `keyCap` sizes standard chips; the footer uses its own 24×22pt keycap. `recorderKeyCap` (both size and
 radius) is the intentionally-smaller Settings shortcut-recorder chip.
 
 ### Typography (`Theme.Typography`)

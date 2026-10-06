@@ -30,11 +30,12 @@ struct PaletteEscapeTests {
     static func resolve(
         menuOpen: Bool = false, menuQuery: String = "", argumentFocused: Bool = false,
         query: String = "", mode: PaletteMode = .launcher, canGoBack: Bool = false,
-        behavior: EscapeKeyBehavior = .navigateBackOrClose
+        behavior: EscapeKeyBehavior = .navigateBackOrClose, categoryChosen: Bool = false
     ) -> PaletteEscapeAction {
         PaletteEscapeAction.resolve(
             menuOpen: menuOpen, menuQuery: menuQuery, argumentFocused: argumentFocused,
-            query: query, mode: mode, canGoBack: canGoBack, behavior: behavior)
+            query: query, mode: mode, canGoBack: canGoBack, behavior: behavior,
+            categoryChosen: categoryChosen)
     }
 
     static func main() {
@@ -62,6 +63,22 @@ struct PaletteEscapeTests {
             resolve(),
             .hidePalette,
             "an empty launcher query hides the palette")
+        expect(
+            resolve(query: "snip", categoryChosen: true),
+            .clearQuery,
+            "inside a category, the typed text clears before the category does")
+        expect(
+            resolve(categoryChosen: true),
+            .clearCategory,
+            "an empty field inside a category drops back to All before the palette hides")
+        expect(
+            resolve(behavior: .closeAndPopToRoot, categoryChosen: true),
+            .clearCategory,
+            "the category clears first whatever the configured Escape behavior")
+        expect(
+            resolve(mode: .clipboard, categoryChosen: true),
+            .hidePalette,
+            "a category only belongs to the launcher; another screen ignores it")
         // The surface where the field is not a search field: a chat draft.
         expect(
             resolve(query: "why is the sky", mode: .ai),

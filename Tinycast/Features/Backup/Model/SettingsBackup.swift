@@ -42,6 +42,9 @@ struct SettingsBackup: Codable {
         var showFavoritesInCompactMode: Bool?
         var searchScopes: [String]?
         var launcherShowsSuggestions: Bool?
+        var launcherShowsCategories: Bool?
+        var launcherHiddenCategories: [String]?
+        var launcherPinsCategories: Bool?
         var appUsageEnabled: Bool?
         var appUsageOrder: String?
         var appUsageWindow: Int?
@@ -162,6 +165,9 @@ extension SettingsBackup {
             showFavoritesInCompactMode: s.showFavoritesInCompactMode,
             searchScopes: s.searchScopes,
             launcherShowsSuggestions: s.launcherShowsSuggestions,
+            launcherShowsCategories: s.launcherShowsCategories,
+            launcherHiddenCategories: s.launcherHiddenCategories,
+            launcherPinsCategories: s.launcherPinsCategories,
             appUsageEnabled: s.appUsageEnabled,
             appUsageOrder: s.appUsageOrder.rawValue,
             appUsageWindow: s.appUsageWindow.rawValue,
@@ -403,6 +409,18 @@ extension SettingsBackup {
         }
         if let flag = s.launcherShowsSuggestions {
             settings.launcherShowsSuggestions = flag
+            count += 1
+        }
+        if let names = s.launcherHiddenCategories {
+            settings.launcherHiddenCategories = names.filter { AppEntry.Kind(rawValue: $0) != nil }
+            count += 1
+        }
+        if let flag = s.launcherShowsCategories {
+            settings.launcherShowsCategories = flag
+            count += 1
+        }
+        if let flag = s.launcherPinsCategories {
+            settings.launcherPinsCategories = flag
             count += 1
         }
         if let flag = s.appUsageEnabled {

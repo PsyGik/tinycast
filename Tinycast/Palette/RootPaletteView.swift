@@ -564,7 +564,8 @@ struct RootPaletteView: View {
                     menuOpen: menuOpen, menuQuery: vm.menuQuery,
                     argumentFocused: argumentFocused != nil, query: vm.query, mode: vm.mode,
                     canGoBack: vm.canGoBack,
-                    behavior: settings.escapeKeyBehavior)
+                    behavior: settings.escapeKeyBehavior,
+                    categoryChosen: vm.launcherCategory != nil)
                 {
                 case .clearMenuQuery, .closeMenu:
                     escapeMenu()
@@ -572,6 +573,9 @@ struct RootPaletteView: View {
                     returnFocusToSearchField()
                 case .clearQuery:
                     vm.query = ""
+                case .clearCategory:
+                    vm.launcherCategory = nil
+                    vm.selection = 0
                 case .exitExtensionScreen:
                     core.extensionCoordinator.exitExtensionScreen()
                 case .goBack:
@@ -846,6 +850,9 @@ struct RootPaletteView: View {
     private var searchPrompt: String {
         // Squeezed to the caret, the field has no room for a prompt; beside one it keeps it.
         if headerAccessory?.placement == .afterQuery, vm.mode != .ai { return "" }
+        if vm.mode == .launcher, let kind = vm.launcherCategory.flatMap(AppEntry.Kind.init(rawValue:)) {
+            return "Search \(kind.descriptor.sectionTitle)…"
+        }
         // Inside a running command the search bar belongs to the extension.
         if vm.mode == .extensionCommand, let placeholder = extensionScreen.searchPlaceholder {
             return placeholder

@@ -140,6 +140,7 @@ run app-name-test          Tinycast/Platform/AppDisplayName.swift \
                            $L/SearchRelevance.swift
 run favorites-test         $L/FavoriteSlots.swift
 run app-usage-test         $L/AppUsage.swift
+run launcher-category-test $L/LauncherCategories.swift
 run launcher-file-test     $L/LauncherFileFormat.swift \
                            Tinycast/Features/Settings/Model/SettingsFileJSON.swift
 run launcher-settings-file-test \

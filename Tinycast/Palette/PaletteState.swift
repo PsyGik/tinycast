@@ -22,6 +22,8 @@ final class PaletteState {
     var clipboardFilter: ClipboardFilter = .all
     /// The file search screen's type filter, reset on each summon like the clipboard's.
     var fileSearchFilter: FileSearchFilter = .all
+    /// The launcher's chosen category as an `AppEntry.Kind` raw value: the palette harnesses lack the type.
+    var launcherCategory: String?
     /// The emoji picker's visible category, reset with the rest of a freshly opened screen.
     var emojiCategoryFilter: EmojiCategoryFilter = .all
     /// Nil means the configured default; zoom only overrides it for this picker session.
@@ -151,6 +153,7 @@ final class PaletteState {
         argumentEntryID = nil
         clipboardFilter = .all
         fileSearchFilter = .all
+        launcherCategory = nil
         emojiCategoryFilter = .all
         emojiGridColumnsOverride = nil
         fileSearchQuickLook = false

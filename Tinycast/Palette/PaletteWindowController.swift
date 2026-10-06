@@ -410,6 +410,12 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             if core.palette.mode == .ai, core.quickAICoordinator.removeLastAttachment() {
                 return true
             }
+            // A chosen category reads like a token in the field, so backspace removes it first.
+            if core.palette.mode == .launcher, core.palette.launcherCategory != nil {
+                core.palette.launcherCategory = nil
+                core.palette.selection = 0
+                return true
+            }
             if core.palette.pop() { return true }
             guard core.palette.mode != .launcher else { return false }
             core.palette.prepare(mode: .launcher)

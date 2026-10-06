@@ -122,6 +122,45 @@ final class AppSettings {
         }
     }
 
+    /// The launcher's category pills; it also turns itself off once every category is unticked.
+    var launcherShowsCategories: Bool {
+        didSet {
+            defaults.set(launcherShowsCategories, forKey: Key.launcherShowsCategories.rawValue)
+            // On with nothing to show would be a switch that does nothing, so it brings them back.
+            if launcherShowsCategories, hidesEveryCategory { launcherHiddenCategories = [] }
+        }
+    }
+
+    /// `AppEntry.Kind` raw values the user unticked; empty shows every category.
+    var launcherHiddenCategories: [String] {
+        didSet {
+            defaults.set(launcherHiddenCategories, forKey: Key.launcherHiddenCategories.rawValue)
+            if launcherShowsCategories, hidesEveryCategory { launcherShowsCategories = false }
+        }
+    }
+
+    var launcherPinsCategories: Bool {
+        didSet { defaults.set(launcherPinsCategories, forKey: Key.launcherPinsCategories.rawValue) }
+    }
+
+    private var hidesEveryCategory: Bool {
+        LauncherCategoryVisibility.hidesAll(
+            launcherHiddenCategories, of: AppEntry.Kind.sectionOrder.map(\.rawValue))
+    }
+
+    func showsCategory(_ kind: AppEntry.Kind) -> Bool {
+        launcherShowsCategories && !launcherHiddenCategories.contains(kind.rawValue)
+    }
+
+    func setCategory(_ kind: AppEntry.Kind, shown: Bool) {
+        if shown {
+            launcherHiddenCategories.removeAll { $0 == kind.rawValue }
+            if !launcherShowsCategories { launcherShowsCategories = true }
+        } else if !launcherHiddenCategories.contains(kind.rawValue) {
+            launcherHiddenCategories.append(kind.rawValue)
+        }
+    }
+
     /// Off by default: reading Spotlight's record of every app opened is an opt-in.
     var appUsageEnabled: Bool {
         didSet { defaults.set(appUsageEnabled, forKey: Key.appUsageEnabled.rawValue) }
@@ -733,6 +772,12 @@ final class AppSettings {
         launcherShowsSuggestions =
             defaults.object(forKey: Key.launcherShowsSuggestions.rawValue) == nil
             || defaults.bool(forKey: Key.launcherShowsSuggestions.rawValue)
+        launcherShowsCategories =
+            defaults.object(forKey: Key.launcherShowsCategories.rawValue) == nil
+            || defaults.bool(forKey: Key.launcherShowsCategories.rawValue)
+        launcherHiddenCategories =
+            defaults.stringArray(forKey: Key.launcherHiddenCategories.rawValue) ?? []
+        launcherPinsCategories = defaults.bool(forKey: Key.launcherPinsCategories.rawValue)
         appUsageEnabled = defaults.bool(forKey: Key.appUsageEnabled.rawValue)
         appUsageOrder =
             defaults.string(forKey: Key.appUsageOrder.rawValue).flatMap(AppUsageOrder.init)

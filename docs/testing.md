@@ -89,6 +89,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `ranking-test` | `Launcher/Model/LauncherRankingStore.swift` |
 | `scopes-test` | `Launcher/Model/SearchScopes.swift` |
 | `app-usage-test` | `Launcher/Model/AppUsage.swift` — the Frequently Used window, day count and order |
+| `launcher-category-test` | `Launcher/Model/LauncherCategories.swift` — Recently Used inside a category, and the rule that switches categories off |
 | `app-name-test` | `Platform/AppDisplayName.swift` — every path that names a scanned bundle |
 | `calc-test` | all of `Calculator/Model/` |
 | `calendar-test` | all of `Calendar/Model/` — link detection, the join window, the day buckets |

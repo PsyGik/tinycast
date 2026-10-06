@@ -23,74 +23,88 @@ struct AppEntry: Identifiable, Hashable, Sendable {
                 return KindDescriptor(
                     label: "Application", sectionTitle: "Applications",
                     openVerb: "Open Application", canHideFromSearch: true,
-                    canRevealInFinder: true, canDragOut: true, isSymbolIcon: false, rankPriority: 4)
+                    canRevealInFinder: true, canDragOut: true, isSymbolIcon: false, rankPriority: 4,
+                    categorySymbol: "square.grid.2x2", listsRecents: true)
             case .systemSettings:
                 return KindDescriptor(
                     label: "System Setting", sectionTitle: "System Settings",
                     openVerb: "Open System Setting", canHideFromSearch: true,
-                    canRevealInFinder: true, canDragOut: false, isSymbolIcon: false, rankPriority: 1)
+                    canRevealInFinder: true, canDragOut: false, isSymbolIcon: false, rankPriority: 1,
+                    categorySymbol: "gearshape", listsRecents: true)
             case .command:
                 return KindDescriptor(
                     label: "Command", sectionTitle: "Commands",
                     openVerb: "Run Command", canHideFromSearch: true,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "command", listsRecents: true)
             case .quickAction:
                 return KindDescriptor(
                     label: "Quick Action", sectionTitle: "Quick Actions",
                     openVerb: "Run Quick Action", canHideFromSearch: true,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "bolt", listsRecents: true)
             case .customCommand:
                 return KindDescriptor(
                     label: "Custom Command", sectionTitle: "Custom Commands",
                     openVerb: "Run Custom Command", canHideFromSearch: false,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "terminal", listsRecents: true)
             case .snippet:
                 return KindDescriptor(
                     label: "Snippet", sectionTitle: "Snippets",
                     openVerb: "Paste Snippet", canHideFromSearch: false,
-                    canRevealInFinder: true, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: true, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "text.quote", listsRecents: true)
             case .systemAction:
                 return KindDescriptor(
                     label: "System Action", sectionTitle: "System Actions",
                     openVerb: "Run System Action", canHideFromSearch: true,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "power", listsRecents: true)
             case .windowCommand:
                 return KindDescriptor(
                     label: "Window Command", sectionTitle: "Window Management",
                     openVerb: "Move Window", canHideFromSearch: true,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "macwindow", listsRecents: true)
             case .windowLayout:
                 return KindDescriptor(
                     label: "Window Layout", sectionTitle: "Window Layouts",
                     openVerb: "Arrange Windows", canHideFromSearch: true,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "rectangle.split.2x1", listsRecents: true)
             case .windowRoom:
                 return KindDescriptor(
                     label: "Room", sectionTitle: "Rooms", openVerb: "Enter Room",
                     canHideFromSearch: true, canRevealInFinder: false, canDragOut: false,
-                    isSymbolIcon: true, rankPriority: 3)
+                    isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "door.left.hand.open", listsRecents: true)
             case .quicklink:
                 return KindDescriptor(
                     label: "Quicklink", sectionTitle: "Quicklinks",
                     openVerb: "Open Quicklink", canHideFromSearch: false,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 2)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 2,
+                    categorySymbol: "link", listsRecents: true)
             case .appleShortcut:
                 // File-backed so every row draws the Shortcuts app's own icon.
                 return KindDescriptor(
                     label: "Apple Shortcut", sectionTitle: "Apple Shortcuts",
                     openVerb: "Run Shortcut", canHideFromSearch: true,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: false, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: false, rankPriority: 3,
+                    categorySymbol: "square.2.layers.3d", listsRecents: true)
             case .extensionCommand:
                 // The label is per-entry, the owning extension's title; this is the fallback.
                 return KindDescriptor(
                     label: "Extension", sectionTitle: "Extensions",
                     openVerb: "Run Command", canHideFromSearch: true,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3,
+                    categorySymbol: "puzzlepiece.extension", listsRecents: true)
             case .meeting:
                 return KindDescriptor(
                     label: "Meeting", sectionTitle: "Meetings",
                     openVerb: "Join Meeting", canHideFromSearch: false,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 1)
+                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 1,
+                    categorySymbol: "calendar", listsRecents: false)
             }
         }
     }
@@ -108,6 +122,10 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         let isSymbolIcon: Bool
         /// Breaks a full tie, apps first: Calculator over Calculator History.
         let rankPriority: Int
+        /// The SF Symbol on this kind's category chip and Settings row.
+        let categorySymbol: String
+        /// Whether its category opens on Recently Used; a meeting's own order is the agenda's.
+        let listsRecents: Bool
     }
 
     let id: String  // file path (or "command:…" id) — always unique
@@ -320,6 +338,13 @@ extension AppEntry.Kind {
         $0[$1.descriptor.label.lowercased()] = $1
     }
 
+    /// Publication order, so the launcher's sections and its category chips agree.
+    static let sectionOrder: [AppEntry.Kind] = [
+        .meeting, .application, .systemSettings, .extensionCommand, .quicklink, .appleShortcut,
+        .snippet, .systemAction, .windowLayout, .windowRoom, .windowCommand, .customCommand,
+        .quickAction, .command,
+    ]
+
     /// The category a query names outright. Exact only — a prefix would take a word from an entry.
     static func named(by query: String) -> AppEntry.Kind? {
         byCategoryName[query.trimmingCharacters(in: .whitespaces).lowercased()]
@@ -340,6 +365,8 @@ final class AppIndex {
         var meetingCount = 0
         var frequentCount = 0
         var suggestionCount = 0
+        /// Inside a chosen category: how many lead as Recently Used.
+        var recentCount = 0
     }
 
     private struct MatchKey: Equatable {
@@ -366,6 +393,7 @@ final class AppIndex {
         let showsSuggestions: Bool
         let frequentOrder: AppUsageOrder
         let frequentSize: AppUsageSectionSize
+        let category: AppEntry.Kind?
         /// Suggestions and usage order age with the clock, which no revision tracks.
         let minute: Int
     }
@@ -373,6 +401,7 @@ final class AppIndex {
     /// Repeated renders for the same query reuse the ranking instead of re-matching every frame.
     @ObservationIgnored private var matchMemo = Memo<MatchKey, [AppEntry]>()
     @ObservationIgnored private var resultsMemo = Memo<ResultsKey, Results>()
+    @ObservationIgnored private var kindsMemo = Memo<KindsKey, Set<AppEntry.Kind>>()
     /// Bumped whenever `apps` changes, so both memos above name the entry set they were built from.
     private var entriesRevision = 0
 
@@ -702,7 +731,8 @@ final class AppIndex {
 
     /// The launcher's rows: ranked matches, or favorites, suggestions and each kind by usage.
     func orderedResults(
-        query: String, visibility: VisibilityStore, favorites: FavoritesStore, hotKeys: HotKeyManager
+        query: String, visibility: VisibilityStore, favorites: FavoritesStore, hotKeys: HotKeyManager,
+        category: AppEntry.Kind? = nil
     ) -> Results {
         let q = query.trimmingCharacters(in: .whitespaces)
         let showsSuggestions = settings?.launcherShowsSuggestions ?? true
@@ -713,8 +743,12 @@ final class AppIndex {
             match: matchKey(q), visibilityRevision: visibility.revision,
             favoritesRevision: favorites.revision, hotKeysRevision: hotKeys.revision,
             showsSuggestions: showsSuggestions, frequentOrder: frequentOrder,
-            frequentSize: frequentSize, minute: Int(usage.now.timeIntervalSince1970 / 60))
+            frequentSize: frequentSize, category: category,
+            minute: Int(usage.now.timeIntervalSince1970 / 60))
         return resultsMemo.value(for: key) {
+            if let category {
+                return categoryResults(category, query: q, visibility: visibility, usage: usage)
+            }
             // Filtering stays downstream of `matches` so that memo is never keyed on hidden state.
             let visible = matches(q).filter(visibility.isVisible)
             guard q.isEmpty else { return Results(entries: visible) }
@@ -738,6 +772,49 @@ final class AppIndex {
     }
 
     private var sensitivity: SearchSensitivity { settings?.rootSearchSensitivity ?? .default }
+
+    /// One chosen category: a query ranks inside it alone, an empty one leads with Recently Used.
+    private func categoryResults(
+        _ kind: AppEntry.Kind, query: String, visibility: VisibilityStore,
+        usage: LauncherRankingStore.Snapshot
+    ) -> Results {
+        let members = apps.filter { $0.kind == kind && visibility.isVisible($0) }
+        guard query.isEmpty else {
+            return Results(
+                entries: LauncherOrder.ranked(
+                    members, query: LauncherOrder.Query(query), sensitivity: sensitivity,
+                    limit: members.count, profile: \.search,
+                    signals: { self.signals(for: $0, usage: usage) }))
+        }
+        let recent =
+            kind.descriptor.listsRecents
+            ? LauncherCategoryRecents.select(
+                members, lastUsed: { lastUsed(of: $0, usage: usage) }, now: usage.now) : []
+        let listed = Set(recent.map(\.id))
+        let rest = byUsage(members.filter { !listed.contains($0.id) }, usage: usage)
+        return Results(entries: recent + rest, recentCount: recent.count)
+    }
+
+    /// The later of a launch through Tinycast and, for an app, the last open macOS saw.
+    private func lastUsed(of entry: AppEntry, usage: LauncherRankingStore.Snapshot) -> Date? {
+        let opened = usage.lastOpened(for: entry.preferenceKey)
+        guard entry.kind == .application, appUsageEnabled,
+            let system = appUsage.usage(forAppAt: entry.url)?.lastUsed
+        else { return opened }
+        return max(opened ?? system, system)
+    }
+
+    /// The kinds with a visible entry, which are the only ones worth a category chip.
+    func presentKinds(visibility: VisibilityStore) -> Set<AppEntry.Kind> {
+        kindsMemo.value(for: KindsKey(entries: entriesRevision, visibility: visibility.revision)) {
+            Set(apps.lazy.filter(visibility.isVisible).map(\.kind))
+        }
+    }
+
+    private struct KindsKey: Equatable {
+        let entries: Int
+        let visibility: Int
+    }
 
     private func matchKey(_ query: String) -> MatchKey {
         MatchKey(

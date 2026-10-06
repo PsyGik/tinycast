@@ -56,6 +56,7 @@ struct InterfaceMetrics: Equatable, Sendable {
         var palettePanel: CGFloat { scaledPoints(Theme.Radius.palettePanel, scale) }
         var listRow: CGFloat { scaledPoints(Theme.Radius.listRow, scale) }
         var paletteListRow: CGFloat { scaledPoints(Theme.Radius.paletteListRow, scale) }
+        var categoryChip: CGFloat { scaledPoints(Theme.Radius.categoryChip, scale) }
         var row: CGFloat { scaledPoints(Theme.Radius.row, scale) }
         var emojiCell: CGFloat { scaledPoints(Theme.Radius.emojiCell, scale) }
         var menu: CGFloat { scaledPoints(Theme.Radius.menu, scale) }
@@ -87,6 +88,7 @@ struct InterfaceMetrics: Equatable, Sendable {
         var barButtonHeight: CGFloat { scaledPoints(Theme.Size.barButtonHeight, scale) }
         var rowIcon: CGFloat { scaledPoints(Theme.Size.rowIcon, scale) }
         var resultRowIcon: CGFloat { scaledPoints(Theme.Size.resultRowIcon, scale) }
+        var categoryChipHeight: CGFloat { scaledPoints(Theme.Size.categoryChipHeight, scale) }
         var colorDot: CGFloat { scaledPoints(Theme.Size.colorDot, scale) }
         var calendarBarWidth: CGFloat { scaledPoints(Theme.Size.calendarBarWidth, scale) }
         var calendarBarHeight: CGFloat { scaledPoints(Theme.Size.calendarBarHeight, scale) }
