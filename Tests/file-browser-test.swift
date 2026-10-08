@@ -252,6 +252,27 @@ struct FileBrowserTest {
             showsExcluded: false, ignore: ignore, type: .folders)
         check("the Folders filter lists folders alone", foldersOnly.entries.map(\.name) == ["src"])
 
+        func crumbs(_ path: String, kept: Int = 3) -> [String] {
+            FileBrowserPath.crumbs(URL(fileURLWithPath: path), home: home, kept: kept).map(\.title)
+        }
+        check("home is a single ~", crumbs("/Users/test") == ["~"])
+        check(
+            "a folder in home reads from ~",
+            crumbs("/Users/test/Development/Swift") == ["~", "Development", "Swift"])
+        check(
+            "a long path keeps its last folders and folds the middle into …",
+            crumbs("/Users/test/a/b/c/d/e") == ["~", "…", "c", "d", "e"])
+        check(
+            "a path one past the limit still shows whole, since … would hide just one folder",
+            crumbs("/Users/test/a/b/c/d") == ["~", "a", "b", "c", "d"])
+        check("outside home it reads from the root", crumbs("/Applications/Utilities") == ["/", "Applications", "Utilities"])
+        check("the root alone is /", crumbs("/") == ["/"])
+        let trail = FileBrowserPath.crumbs(URL(fileURLWithPath: "/Users/test/a/b/c/d/e"), home: home)
+        check(
+            "every segment jumps to its own folder, and … to none",
+            trail.map { $0.folder?.path } == ["/Users/test", nil, "/Users/test/a/b/c", "/Users/test/a/b/c/d",
+                "/Users/test/a/b/c/d/e"])
+
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
     }

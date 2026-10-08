@@ -11,6 +11,8 @@ struct FileSearchList: View {
     var browsing = false
     /// The folder being browsed; a deeper result names the folders between it and the match.
     var base: URL?
+    /// Browse Files' header: the path as segments to jump to, in place of a plain title.
+    var breadcrumbs: Breadcrumbs?
     let onSelect: (FileSearchResult) -> Void
     let onActivate: (FileSearchResult) -> Void
     let onActions: (FileSearchResult) -> Void
@@ -24,7 +26,11 @@ struct FileSearchList: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    SectionHeader(title: title, isFirst: true, style: .palette)
+                    if let breadcrumbs {
+                        BreadcrumbHeader(breadcrumbs: breadcrumbs)
+                    } else {
+                        SectionHeader(title: title, isFirst: true, style: .palette)
+                    }
                     ForEach(results) { result in
                         FileSearchRow(
                             result: result, selected: result.id == selectedID, browsing: browsing,
@@ -57,6 +63,69 @@ struct FileSearchList: View {
         RowDrag(
             item: { .file(result.url, image: IconCache.cachedFitted(forFile: result.id)) },
             dropped: onDropped)
+    }
+}
+
+extension FileSearchList {
+    struct Breadcrumbs {
+        let crumbs: [FileBrowserPath.Crumb]
+        /// Plain text after the path: a search's state, or what the folder set aside.
+        let note: String?
+        let onOpen: (URL) -> Void
+    }
+}
+
+/// Set like the palette's section header, each folder a button: the last is where you are.
+private struct BreadcrumbHeader: View {
+    let breadcrumbs: FileSearchList.Breadcrumbs
+    @Environment(\.metrics) private var metrics
+
+    var body: some View {
+        HStack(spacing: metrics.spacing.xxs) {
+            ForEach(Array(breadcrumbs.crumbs.enumerated()), id: \.offset) { position, crumb in
+                if position > 0 {
+                    Image(systemName: "chevron.compact.right")
+                        .imageScale(.small)
+                        .foregroundStyle(.tertiary)
+                }
+                CrumbButton(
+                    crumb: crumb, isCurrent: position == breadcrumbs.crumbs.count - 1,
+                    onOpen: breadcrumbs.onOpen)
+            }
+            if let note = breadcrumbs.note {
+                Text("· \(note)")
+                    .lineLimit(1)
+                    .layoutPriority(-1)
+            }
+            Spacer(minLength: 0)
+        }
+        .font(metrics.typography.paletteSectionHeader)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, metrics.spacing.md)
+        .padding(.top, metrics.spacing.xs)
+        .padding(.bottom, metrics.spacing.sectionHeaderBottom)
+    }
+}
+
+/// Hover state lives here, so lighting one folder never re-renders the path around it.
+private struct CrumbButton: View {
+    let crumb: FileBrowserPath.Crumb
+    let isCurrent: Bool
+    let onOpen: (URL) -> Void
+    @State private var hovered = false
+
+    var body: some View {
+        if let folder = crumb.folder, !isCurrent {
+            Button { onOpen(folder) } label: { Text(crumb.title).lineLimit(1) }
+                .buttonStyle(.plain)
+                .foregroundStyle(hovered ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+                .onHover { hovered = $0 }
+                .help(FileBrowserPath.display(folder, home: FileManager.default.homeDirectoryForCurrentUser))
+        } else {
+            Text(crumb.title)
+                .lineLimit(1)
+                .foregroundStyle(isCurrent ? Theme.Colors.textPrimary : Theme.Colors.textTertiary)
+        }
     }
 }
 

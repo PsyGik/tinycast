@@ -47,6 +47,10 @@ struct FileSearchScreen: PaletteScreen {
         case .copyPath: return run(.copyPath, at: selection)
         case .pasteFile: return run(.pasteFile, at: selection)
         case .quickLook: return toggleQuickLook(at: selection)
+        case .openInQuickLook:
+            guard let result = result(at: selection) else { return false }
+            core.fileSearchCoordinator.openInQuickLook(result, among: rows)
+            return true
         case .showInfo, .saveAsQuicklink:
             guard let result = result(at: selection) else { return false }
             let coordinator = core.fileSearchCoordinator
@@ -171,6 +175,10 @@ enum FileSearchActionsMenu {
                 PopoverMenuItem(title: "Quick Look", systemImage: "eye", shortcut: "⌘Y") {
                     vm.fileSearchQuickLook = true
                 },
+                PopoverMenuItem(
+                    title: "Open in Quick Look", systemImage: "arrow.up.left.and.arrow.down.right",
+                    shortcut: "⌥⌘Y"
+                ) { coordinator.openInQuickLook(result, among: core.fileSearch.results) },
                 PopoverMenuItem(title: "Share…", systemImage: "square.and.arrow.up") {
                     coordinator.share(result)
                 },

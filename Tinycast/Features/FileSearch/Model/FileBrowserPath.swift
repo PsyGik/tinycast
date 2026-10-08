@@ -58,6 +58,34 @@ enum FileBrowserPath {
         return shown == "/" ? shown : shown + "/"
     }
 
+    /// One segment of the header's path: a folder to jump to, or the `…` standing in for several.
+    struct Crumb: Equatable, Sendable {
+        let title: String
+        /// Nil for the `…` that stands in for the folders a long path leaves out.
+        let folder: URL?
+    }
+
+    /// `~ › Development › Swift › tinycast`, the middle folded into `…` past `kept` trailing folders.
+    static func crumbs(_ directory: URL, home: URL, kept: Int = 3) -> [Crumb] {
+        let path = directory.standardizedFileURL
+        let homePath = home.standardizedFileURL
+        let underHome = path.path == homePath.path || path.path.hasPrefix(homePath.path + "/")
+        let root = underHome ? homePath : URL(fileURLWithPath: "/")
+        var folders: [URL] = []
+        var current = path
+        while current.path != root.path, current.path != "/" {
+            folders.insert(current, at: 0)
+            current = parent(of: current)
+        }
+        var crumbs = [Crumb(title: underHome ? "~" : "/", folder: root)]
+        if folders.count > kept + 1 {
+            crumbs.append(Crumb(title: "…", folder: nil))
+            folders = Array(folders.suffix(kept))
+        }
+        crumbs += folders.map { Crumb(title: $0.lastPathComponent, folder: $0) }
+        return crumbs
+    }
+
     /// The folders between `base` and an item below it, `Swift/tinycast`; nil for a direct child.
     static func between(_ base: URL?, and item: URL) -> String? {
         guard let base else { return nil }

@@ -60,6 +60,7 @@ final class AppCore {
     let palette = PaletteState()
     let fileSearch = FileSearchSession()
     let fileBrowser = FileBrowserSession()
+    let systemQuickLook = SystemQuickLook()
     let dictionary = DictionarySession()
     let menuSearch = MenuSearchSession()
     let windowSwitch = WindowSwitchSession()

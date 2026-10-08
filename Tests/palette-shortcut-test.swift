@@ -60,6 +60,9 @@ struct PaletteShortcutTests {
             "an extra Option still reads ⇧⌘T")
         expect(resolve("y", command: true), .quickLook, "⌘Y toggles Quick Look")
         expect(resolve("y", command: true, shift: true), .quickLook, "an extra Shift still reads ⌘Y")
+        expect(
+            resolve("y", command: true, option: true), .openInQuickLook,
+            "⌥⌘Y opens the system Quick Look window, as in Finder")
         expect(resolve("o", command: true), .openInApp, "⌘O opens the row in its own app")
         expect(resolve("o", command: true, shift: true), nil, "⇧⌘O is not the open chord")
         expect(resolve("i", command: true), .showDetails, "⌘I shows the row's details")
@@ -98,7 +101,7 @@ struct PaletteShortcutTests {
         expect(resolve("a"), nil, "typing is never a chord")
 
         let expanded: [PaletteShortcut] = [
-            .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
+            .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInQuickLook, .openInApp,
             .showDetails, .showInfo, .saveAsQuicklink, .toggleFavorite, .hideFromSearch, .quit,
             .forceQuit, .restart
         ]
@@ -115,7 +118,7 @@ struct PaletteShortcutTests {
 
         let closing: [PaletteShortcut] = [
             .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
-            .quickLook, .openInApp, .showDetails, .showInfo, .saveAsQuicklink, .toggleFavorite,
+            .quickLook, .openInQuickLook, .openInApp, .showDetails, .showInfo, .saveAsQuicklink, .toggleFavorite,
             .hideFromSearch, .newItem, .settings
         ]
         let leaving: [PaletteShortcut] = [

@@ -83,6 +83,14 @@ final class FileSearchCoordinator {
         }
     }
 
+    /// The system Quick Look window over every listed row, opened on `result`; the palette steps aside.
+    func openInQuickLook(_ result: FileSearchResult, among rows: [FileSearchResult]) {
+        let returnTo = paletteCoordinator.targetApp
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        let index = rows.firstIndex(of: result) ?? 0
+        core.systemQuickLook.show(rows.map(\.url), at: index, returningTo: returnTo)
+    }
+
     func showInFinder(_ result: FileSearchResult) {
         paletteCoordinator.hidePalette(restoreFocus: false)
         AppLauncher.showInFinder(result.url)
