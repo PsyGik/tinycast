@@ -385,6 +385,11 @@ struct RootPaletteView: View {
             // Every show bumps focusToken so the search field refocuses.
             .onChange(of: vm.focusToken) {
                 searchFocused = !screen.hidesSearchField
+                // Browse Files keeps a path in the field: a refocus that selects it all would let the
+                // next keystroke replace it, so the caret goes after it instead.
+                if vm.mode == .browseFiles {
+                    Task { @MainActor in (hostWindow as? PalettePanel)?.moveFieldEditorCaretToEnd() }
+                }
             }
             // A preserved screen re-summons as it was left, so a menu must end with the palette.
             .modifier(PaletteHideObserver { if menuOpen { closeMenus() } })
@@ -426,7 +431,11 @@ struct RootPaletteView: View {
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
             .onChange(of: vm.fileSearchFilter) {
                 land()
-                fileSearch.search(vm.query, filter: vm.fileSearchFilter)
+                if vm.mode == .browseFiles {
+                    core.fileBrowser.typeFilter = vm.fileSearchFilter
+                } else {
+                    fileSearch.search(vm.query, filter: vm.fileSearchFilter)
+                }
             }
             .onChange(of: vm.mode) {
                 vm.clipboardFilter = .all
@@ -737,7 +746,7 @@ struct RootPaletteView: View {
                     filter: vm.clipboardFilter, isOpen: openMenu == .clipboardFilter,
                     action: toggleClipboardFilter)
             }
-            if !isCollapsed, vm.mode == .fileSearch {
+            if !isCollapsed, vm.mode == .fileSearch || vm.mode == .browseFiles {
                 headerGutter(width: metrics.spacing.md)
                 HeaderMenuButton(
                     title: vm.fileSearchFilter.title, systemImage: vm.fileSearchFilter.systemImage,

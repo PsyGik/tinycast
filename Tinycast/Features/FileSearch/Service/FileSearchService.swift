@@ -46,12 +46,13 @@ enum FileSearchService {
 
     /// Browse Files' answer for a subtree too wide to read: name matches under one folder.
     nonisolated static func subtree(
-        _ query: String, in folder: URL, ignore: FileSearchIgnoreList, homeDirectory: URL
+        _ query: FileQuery, in folder: URL, filter: FileSearchFilter = .all, ignore: FileSearchIgnoreList,
+        homeDirectory: URL
     ) throws -> [FileSearchResult] {
         try Signposts.interval("FileSearchService.subtree") {
             guard
                 let expression = FileSearchQuery.subsequenceExpression(
-                    for: query, excluding: ignore.spotlightNameExclusions)
+                    for: query, filter: filter, excluding: ignore.spotlightNameExclusions)
             else { return [] }
             return try spotlightPaths(
                 expression: expression, scopes: [folder], limit: FileSearchQuery.candidateLimit
@@ -128,7 +129,9 @@ enum FileSearchService {
             guard
                 filter.accepts(
                     contentType: candidate.contentType, isDirectory: candidate.isDirectory),
-                FileSearchQuery.matches(filename: candidate.url.lastPathComponent, query: query)
+                FileSearchQuery.matches(
+                    filename: candidate.url.lastPathComponent, query: query,
+                    isDirectory: candidate.isDirectory)
             else { return nil }
             return FileSearchResult(
                 url: candidate.url, isDirectory: candidate.isDirectory,

@@ -23,18 +23,25 @@ struct FileBrowserListing: Equatable, Sendable {
     static let alwaysExcluded = [".git", ".venv", "__pycache__", ".next", ".cache", ".Trash"]
 
     /// Folders first, then the name as Finder sorts it; a filter keeps every term's match.
+    /// Under a type filter folders stay, since they are the way on, unless the filter is Folders.
     init(
         _ read: [FileBrowserEntry], filter: String, showsHidden: Bool, showsExcluded: Bool,
-        ignore: FileSearchIgnoreList
+        ignore: FileSearchIgnoreList, type: FileSearchFilter = .all
     ) {
         var kept: [FileBrowserEntry] = []
         var excluded = 0
+        var types: [String: Bool] = [:]
         for entry in read where showsHidden || !entry.isHidden {
             if entry.isDirectory, Self.isExcluded(entry.name, ignore: ignore) {
                 excluded += 1
                 guard showsExcluded else { continue }
             }
             guard filter.isEmpty || FileSearchQuery.matches(filename: entry.name, query: filter) else {
+                continue
+            }
+            if !entry.isDirectory || type == .folders,
+                !type.accepts(name: entry.name, isDirectory: entry.isDirectory, cache: &types)
+            {
                 continue
             }
             kept.append(entry)

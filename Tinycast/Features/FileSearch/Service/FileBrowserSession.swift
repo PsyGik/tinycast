@@ -32,6 +32,14 @@ final class FileBrowserSession {
     var showsExcluded = false {
         didSet { if showsExcluded != oldValue { relist() } }
     }
+    /// The header's type filter: it narrows the folder's files and every search below it.
+    var typeFilter: FileSearchFilter = .all {
+        didSet {
+            guard typeFilter != oldValue else { return }
+            relist()
+            if let searchQuery { search(searchQuery) }
+        }
+    }
 
     let home: URL
     @ObservationIgnored private var read: [FileBrowserEntry] = []
@@ -128,6 +136,7 @@ final class FileBrowserSession {
     /// Back to the user's home, as a fresh summon of the browser starts.
     func reset() {
         showsExcluded = false
+        typeFilter = .all
         open(home)
     }
 
@@ -157,9 +166,12 @@ final class FileBrowserSession {
 
     private func relist() {
         listing = FileBrowserListing(
-            read, filter: "", showsHidden: showsHidden, showsExcluded: showsExcluded, ignore: ignore)
+            read, filter: "", showsHidden: showsHidden, showsExcluded: showsExcluded, ignore: ignore,
+            type: typeFilter)
         if let searchQuery {
-            if isSearching { publish(Self.rankFolder(listing.entries, searchQuery, home: home)) }
+            if isSearching {
+                publish(Self.rankFolder(listing.entries, searchQuery, type: typeFilter, home: home))
+            }
         } else {
             publish(listingRows)
         }
@@ -182,10 +194,11 @@ final class FileBrowserSession {
         }
         searchQuery = query
         isSearching = true
-        publish(Self.rankFolder(listing.entries, query, home: home))
+        publish(Self.rankFolder(listing.entries, query, type: typeFilter, home: home))
         let folder = directory
         let home = home
         let ignore = ignore
+        let type = typeFilter
         let walks = FileTreeIndexer.walks(folder, home: home)
         searchTask = Task { [weak self] in
             try? await Task.sleep(for: Self.debounce)
@@ -193,7 +206,7 @@ final class FileBrowserSession {
             let tree = walks ? await treeIndex(for: folder) : nil
             guard !Task.isCancelled else { return }
             let results = await Task.detached(priority: .userInitiated) {
-                Self.results(query, in: folder, tree: tree, home: home, ignore: ignore)
+                Self.results(query, in: folder, tree: tree, type: type, home: home, ignore: ignore)
             }.value
             guard !Task.isCancelled, searchQuery == query, directory == folder else { return }
             isSearching = false
@@ -225,15 +238,24 @@ final class FileBrowserSession {
     }
 
     /// The folder's own items, instantly, while the subtree is still being asked.
+    /// The folder's own items, instantly, while the subtree is still being asked.
     private static func rankFolder(
-        _ entries: [FileBrowserEntry], _ query: String, home: URL
+        _ entries: [FileBrowserEntry], _ text: String, type: FileSearchFilter, home: URL
     ) -> [FileSearchResult] {
-        let folded = FuzzyMatch.Query(query)
+        let query = FileQuery(text)
+        let folded = FileQuery.Folded(query)
+        var types: [String: Bool] = [:]
         let scored: [(entry: FileBrowserEntry, score: Int)] = entries.compactMap { entry in
-            guard let score = FileNameScore.score(folded, entry.name) else { return nil }
+            guard query.admits(name: entry.name, isDirectory: entry.isDirectory),
+                type.accepts(name: entry.name, isDirectory: entry.isDirectory, cache: &types),
+                let score = FileQuery.score(folded, entry.name)
+            else { return nil }
             return (entry, score)
         }
         let ranked = scored.sorted { left, right in
+            let leftBand = FileNameScore.band(left.score)
+            let rightBand = FileNameScore.band(right.score)
+            if leftBand != rightBand { return leftBand > rightBand }
             if left.score != right.score { return left.score > right.score }
             return left.entry.name.localizedStandardCompare(right.entry.name) == .orderedAscending
         }
@@ -244,31 +266,41 @@ final class FileBrowserSession {
 
     /// The index answers what it read; Spotlight answers for a tree too wide, or one it cut short.
     private nonisolated static func results(
-        _ query: String, in folder: URL, tree: FileTreeIndex?, home: URL, ignore: FileSearchIgnoreList
+        _ text: String, in folder: URL, tree: FileTreeIndex?, type: FileSearchFilter, home: URL,
+        ignore: FileSearchIgnoreList
     ) -> [FileSearchResult] {
-        var found: [FileSearchResult] = []
+        let query = FileQuery(text)
+        let folded = FileQuery.Folded(query)
+        var types: [String: Bool] = [:]
+        var found: [(result: FileSearchResult, score: Int)] = []
         if let tree {
-            found = tree.search(query, limit: searchLimit).map { index in
-                FileSearchResult(
+            let hits = tree.search(query, limit: searchLimit) { name, isDirectory in
+                type.accepts(name: name, isDirectory: isDirectory, cache: &types)
+            }
+            found = hits.map { index in
+                let result = FileSearchResult(
                     url: URL(fileURLWithPath: tree.path(at: index)), isDirectory: tree.isDirectory(at: index),
                     homeDirectory: home)
+                // A hit the scorer cannot place came from the typo pass, and ranks as one.
+                return (result, FileQuery.score(folded, result.name) ?? FileQuery.typoScore(for: result.name))
             }
         }
         if tree?.isTruncated ?? true {
-            let seen = Set(found.map(\.id))
-            let spotlight = (try? FileSearchService.subtree(query, in: folder, ignore: ignore, homeDirectory: home))
-                ?? []
-            found += spotlight.filter { !seen.contains($0.id) }
+            let seen = Set(found.map(\.result.id))
+            let spotlight =
+                (try? FileSearchService.subtree(
+                    query, in: folder, filter: type, ignore: ignore, homeDirectory: home)) ?? []
+            for result in spotlight where !seen.contains(result.id) {
+                guard query.admits(name: result.name, isDirectory: result.isDirectory),
+                    let score = FileQuery.score(folded, result.name)
+                else { continue }
+                found.append((result, score))
+            }
         }
-        let folded = FuzzyMatch.Query(query)
         let base = folder.standardizedFileURL.pathComponents.count
         return
             found
-            .compactMap { result in
-                FileNameScore.score(folded, result.name).map {
-                    (result, $0, result.url.pathComponents.count - base)
-                }
-            }
+            .map { ($0.result, $0.score, $0.result.url.pathComponents.count - base) }
             .sorted { left, right in
                 let leftBand = FileNameScore.band(left.1)
                 let rightBand = FileNameScore.band(right.1)

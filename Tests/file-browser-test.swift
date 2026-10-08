@@ -166,8 +166,91 @@ struct FileBrowserTest {
             "the folders macOS guards are never entered from above",
             FileTreeIndexer.protectedFolders(home: home).contains("/Users/test/Documents"))
         check(
-            "Spotlight gets every typed letter in order, spaces dropped",
-            FileSearchQuery.subsequenceExpression(for: "a b") == "kMDItemFSName == \"*a*b*\"cd")
+            "Spotlight gets each word's letters in order, the words in any order",
+            FileSearchQuery.subsequenceExpression(for: "ab cd")
+                == "kMDItemFSName == \"*a*b*\"cd && kMDItemFSName == \"*c*d*\"cd")
+        check(
+            "a type word reaches Spotlight as the end of the name, with the header's filter",
+            FileSearchQuery.subsequenceExpression(for: FileQuery(".pdf inv"), filter: .images)
+                == "kMDItemFSName == \"*i*n*v*\"cd && kMDItemFSName == \"*.pdf\"cd && "
+                + FileSearchFilter.images.spotlightClause!)
+
+        let parsed = FileQuery("  .pdf  annual .TAR.gz report . ")
+        check(
+            "a dotted word is a type, lowercased; the rest, a lone dot included, are words",
+            parsed.words == ["annual", "report", "."] && parsed.extensions == ["pdf", "tar.gz"])
+        check(
+            "a type word keeps only files ending in it, never a folder",
+            FileQuery(".pdf").admits(name: "Invoice.PDF", isDirectory: false)
+                && !FileQuery(".pdf").admits(name: "Invoice.pdf.txt", isDirectory: false)
+                && !FileQuery(".pdf").admits(name: "manual.pdf", isDirectory: true))
+        check(".zshrc finds the dotfile it names", FileQuery(".zshrc").admits(name: ".zshrc", isDirectory: false))
+
+        var words = FileTreeIndex(root: "/Users/test/Documents")
+        let reports = words.append(name: "Reports", parent: -1, isDirectory: true)
+        words.append(name: "annual-report-2025.pdf", parent: reports, isDirectory: false)
+        words.append(name: "annual-report-2025.key", parent: reports, isDirectory: false)
+        words.append(name: "monthly report.pdf", parent: -1, isDirectory: false)
+        words.append(name: "README.md", parent: -1, isDirectory: false)
+        words.append(name: "notes.md", parent: reports, isDirectory: false)
+        words.append(name: "photo.png", parent: -1, isDirectory: false)
+        words.append(name: "invoice-march.pdf", parent: -1, isDirectory: false)
+        func hits(_ text: String) -> [String] { words.search(text, limit: 10).map { words.name(at: $0) } }
+
+        check(
+            "words match in any order, each on its own",
+            hits("report annual").prefix(2).sorted() == ["annual-report-2025.key", "annual-report-2025.pdf"])
+        check("every word must hit", !hits("report annual").contains("monthly report.pdf"))
+        check(
+            "a type word narrows the words to that type",
+            hits(".pdf report").sorted() == ["annual-report-2025.pdf", "monthly report.pdf"])
+        check(
+            "a type word alone lists every file of it, nearest first",
+            hits(".md") == ["README.md", "notes.md"])
+        check("a type word never lists a folder", !hits(".pdf").contains("Reports"))
+        check("a swapped pair is forgiven", hits("raedme") == ["README.md"])
+        check("a mistyped letter is forgiven", hits("readmw").first == "README.md")
+        check("an extra letter is forgiven", hits("readdme").first == "README.md")
+        check("a missing letter was never a typo: in-order letters already match", hits("rdme").first == "README.md")
+        check("a typo works inside a type word's narrowing", hits(".pdf invioce") == ["invoice-march.pdf"])
+        check("two slips in one word are too far to guess", hits("raedmw").isEmpty)
+        var noisy = FileTreeIndex(root: "/Users/test")
+        noisy.append(name: "in-various-old-pieces-of-oceanography.txt", parent: -1, isDirectory: false)
+        noisy.append(name: "invoice.pdf", parent: -1, isDirectory: false)
+        check(
+            "letters scattered through a long name do not hide the word one slip away, which ranks first",
+            noisy.search("invioce", limit: 5).map { noisy.name(at: $0) }.first == "invoice.pdf")
+        check("a short word gets no typo guesses", hits("pgn").isEmpty)
+        let accepted = words.search(FileQuery("report"), limit: 10) { name, _ in name.hasSuffix(".key") }
+        check(
+            "the caller's filter sees only names that matched, and narrows them",
+            accepted.map { words.name(at: $0) } == ["annual-report-2025.key"])
+
+        check(
+            "typo matching is one edit, anywhere in the name",
+            FileTypo.matches(Array("invoice".utf8), in: ArraySlice(Array("my-invioce.pdf".utf8)))
+                && FileTypo.matches(Array("invoice".utf8), in: ArraySlice(Array("INVOCE".utf8)))
+                && !FileTypo.matches(Array("invoice".utf8), in: ArraySlice(Array("nvoce".utf8)))
+                && !FileTypo.matches(Array("abc".utf8), in: ArraySlice(Array("abd".utf8))))
+
+        var cache: [String: Bool] = [:]
+        check(
+            "the type filter reads a file's kind from its name",
+            FileSearchFilter.images.accepts(name: "a.PNG", isDirectory: false, cache: &cache)
+                && !FileSearchFilter.images.accepts(name: "a.txt", isDirectory: false, cache: &cache)
+                && FileSearchFilter.folders.accepts(name: "src", isDirectory: true, cache: &cache)
+                && !FileSearchFilter.images.accepts(name: "src", isDirectory: true, cache: &cache)
+                && FileSearchFilter.all.accepts(name: "x", isDirectory: true, cache: &cache))
+        let typed = FileBrowserListing(
+            [entry("src", folder: true), entry("a.png"), entry("b.txt")], filter: "", showsHidden: false,
+            showsExcluded: false, ignore: ignore, type: .images)
+        check(
+            "under a type filter the folder keeps its folders, the way on",
+            typed.entries.map(\.name) == ["src", "a.png"])
+        let foldersOnly = FileBrowserListing(
+            [entry("src", folder: true), entry("a.png")], filter: "", showsHidden: false,
+            showsExcluded: false, ignore: ignore, type: .folders)
+        check("the Folders filter lists folders alone", foldersOnly.entries.map(\.name) == ["src"])
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
