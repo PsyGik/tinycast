@@ -247,6 +247,7 @@ not outlive the window.
 | Show in Finder | ⌘↵ | reveals and dismisses |
 | Show Info in Finder | ⇧⌘I | `AppLauncher.showInfoInFinder`, the same Apple-events route Uninstall uses; hides the palette, and a refused Automation grant reports through a notice |
 | Quick Look | ⌘Y | the in-panel overlay above |
+| Open in Quick Look | ⌥⌘Y | the system `QLPreviewPanel`, Finder's full-size chord: the palette steps aside, `SystemQuickLook` (on `AppCore`) loads every listed row so the window's own arrows page through them, opens on the selection, and on close gives focus back to the app the palette was summoned over. ⌥Space, Finder's other chord, is left alone: other apps — ChatGPT's launcher among them — claim it system-wide |
 | Share… | — | `NSSharingServicePicker`, anchored to the palette's trailing edge so the row it was opened from stays visible beside it. Escape or a click elsewhere dismisses it, and the palette is never hidden, so the flow returns to the same row. There is no chord: the destinations are the system's, and it is the only place a system popover is right |
 | Save as Quicklink | ⌘S | hides the palette and opens Settings ▸ Quicklinks with the editor prefilled — the file's name and its `file://` URL — so the user names and saves it there |
 | Copy File | ⇧⌘C | the file itself on the pasteboard through `PasteboardFiles.write`, which declares `.fileURL` and the path as `.string` |
@@ -299,8 +300,12 @@ way typing `~` came in.
 nothing follows the path (with a filter it moves the caret). A bare backspace with nothing after the
 path takes the whole last folder off — `~/Development/Swift/` becomes `~/Development/` — except at
 home and the root, where the field editor deletes the slash itself, so `~/` → `~` → empty → launcher.
-Going up lands the highlight on the folder just left. ⌘↵ shows in Finder, ⌘Y is Quick Look, and ⌘K
-adds Copy Path, Copy Name and the two view toggles. Renaming, moving and trashing are Finder's: Show
+Going up lands the highlight on the folder just left. ⌘↵ shows in Finder, ⌘Y is Quick Look, ⌥⌘Y opens
+the system Quick Look window, and ⌘K adds Copy Path, Copy Name and the two view toggles. The list's
+header is the path as breadcrumbs (`FileBrowserPath.crumbs`): `~` or `/`, then each folder, the
+current one emphasised; any other segment is a button that opens that folder and writes the field
+back. Past four folders below the root the middle folds into an inert `…`, keeping the last three.
+After the path the header notes a search's state or what the folder set aside. Renaming, moving and trashing are Finder's: Show
 in Finder is the way there. A summon re-reads the folder on screen (`FileBrowserSession.reload`), so a
 file added while the palette was hidden shows up.
 

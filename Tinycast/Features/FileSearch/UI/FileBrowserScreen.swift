@@ -96,6 +96,8 @@ struct FileBrowserScreen: PaletteScreen {
         switch shortcut {
         case .quickLook:
             vm.fileSearchQuickLook.toggle()
+        case .openInQuickLook:
+            core.fileSearchCoordinator.openInQuickLook(result, among: rows)
         case .copyPath:
             core.fileSearchCoordinator.copyPath(result)
         case .copyName:
@@ -123,6 +125,10 @@ struct FileBrowserScreen: PaletteScreen {
                 PopoverMenuItem(title: "Quick Look", systemImage: "eye", shortcut: "⌘Y") {
                     vm.fileSearchQuickLook = true
                 },
+                PopoverMenuItem(
+                    title: "Open in Quick Look", systemImage: "arrow.up.left.and.arrow.down.right",
+                    shortcut: "⌥⌘Y"
+                ) { coordinator.openInQuickLook(result, among: rows) },
                 PopoverMenuItem(
                     title: "Copy Path", systemImage: "doc.on.clipboard", startsSection: true,
                     shortcut: "⌃⌘C"
@@ -176,17 +182,20 @@ struct FileBrowserScreen: PaletteScreen {
 
     /// The path heads the list, with what was set aside, so a missing folder is never a mystery.
     private var title: String {
-        if session.searchQuery != nil {
-            return "Results under \(session.displayPath)" + (session.isSearching ? " · searching…" : "")
-        }
-        var parts = [session.displayPath]
+        ([session.displayPath] + (note.map { [$0] } ?? [])).joined(separator: " · ")
+    }
+
+    /// What follows the clickable path: a search's state, or what the folder left out.
+    private var note: String? {
+        if session.searchQuery != nil { return session.isSearching ? "searching…" : "results" }
+        var parts: [String] = []
         if session.listing.excludedCount > 0, !session.showsExcluded {
             parts.append("\(session.listing.excludedCount) excluded")
         }
         if session.listing.hiddenByLimit > 0 {
             parts.append("\(session.listing.hiddenByLimit) more — type to filter")
         }
-        return parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     private func list(selection: Int, scroll: ScrollIntent) -> some View {
@@ -195,6 +204,12 @@ struct FileBrowserScreen: PaletteScreen {
             FileSearchList(
                 title: title, results: rows, selectedID: selected?.id, scroll: scroll,
                 browsing: true, base: session.directory,
+                breadcrumbs: FileSearchList.Breadcrumbs(
+                    crumbs: FileBrowserPath.crumbs(session.directory, home: session.home), note: note,
+                    onOpen: { folder in
+                        session.open(folder)
+                        vm.rewriteQuery(session.pathText)
+                    }),
                 onSelect: { result in
                     vm.selection = rows.firstIndex(of: result) ?? 0
                     vm.browseSpaceLooks = true
