@@ -13,22 +13,42 @@ enum FileSearchQuery {
     static func expression(
         for query: String, excluding exclusions: [String] = [], filter: FileSearchFilter = .all
     ) -> String? {
-        let terms = terms(in: query)
-        guard !terms.isEmpty else { return nil }
-        let matches = terms.map { "kMDItemFSName == \"*\(escape($0))*\"cd" }
+        let parsed = FileQuery(query)
+        guard !parsed.isEmpty else { return nil }
+        var matches = parsed.words.map { "kMDItemFSName == \"*\(escape($0))*\"cd" }
+        if let types = extensionClause(parsed.extensions) { matches.append(types) }
         // Excluding in the predicate keeps ignored files from consuming the candidate cap.
         let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
         let types = filter.spotlightClause.map { [$0] } ?? []
         return (matches + types + excludes).joined(separator: " && ")
     }
 
-    /// Every typed letter in order, anywhere in the name: Spotlight's nearest thing to fuzzy.
-    static func subsequenceExpression(for query: String, excluding exclusions: [String] = []) -> String? {
-        let letters = query.filter { !$0.isWhitespace }
-        guard !letters.isEmpty else { return nil }
-        let pattern = "*" + letters.map { escape(String($0)) + "*" }.joined()
+    /// Each word's letters in order, anywhere in the name, the words in any order: Spotlight's
+    /// nearest thing to fuzzy, with a `.ext` word anchored to the end.
+    static func subsequenceExpression(
+        for query: FileQuery, filter: FileSearchFilter = .all, excluding exclusions: [String] = []
+    ) -> String? {
+        var clauses = query.words.compactMap { word -> String? in
+            let letters = word.filter { !$0.isWhitespace }
+            guard !letters.isEmpty else { return nil }
+            return "kMDItemFSName == \"*" + letters.map { escape(String($0)) + "*" }.joined() + "\"cd"
+        }
+        if let types = extensionClause(query.extensions) { clauses.append(types) }
+        guard !clauses.isEmpty else { return nil }
+        let types = filter.spotlightClause.map { [$0] } ?? []
         let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
-        return (["kMDItemFSName == \"\(pattern)\"cd"] + excludes).joined(separator: " && ")
+        return (clauses + types + excludes).joined(separator: " && ")
+    }
+
+    static func subsequenceExpression(for query: String, excluding exclusions: [String] = []) -> String? {
+        subsequenceExpression(for: FileQuery(query), excluding: exclusions)
+    }
+
+    /// Any of the typed types, each as the end of the name.
+    private static func extensionClause(_ extensions: [String]) -> String? {
+        guard !extensions.isEmpty else { return nil }
+        let clauses = extensions.map { "kMDItemFSName == \"*.\(escape($0))\"cd" }
+        return clauses.count == 1 ? clauses[0] : "(" + clauses.joined(separator: " || ") + ")"
     }
 
     /// Word-prefix matches on what a file says rather than what it is called, one group per term.
@@ -77,10 +97,13 @@ enum FileSearchQuery {
         _ results: [FileSearchResult], for query: String, ignoring ignore: FileSearchIgnoreList,
         limit: Int = resultLimit
     ) -> [FileSearchResult] {
-        let terms = terms(in: query)
-        guard !terms.isEmpty else { return [] }
+        let parsed = FileQuery(query)
+        guard !parsed.isEmpty else { return [] }
+        // A `.ext` word filtered the candidates already; only the words rank them.
+        let words = parsed.words.joined(separator: " ")
+        let terms = parsed.words
         // Folded once each: a thousand candidates would otherwise re-fold every term per result.
-        let whole = FuzzyMatch.Query(query)
+        let whole = FuzzyMatch.Query(words)
         let folded = terms.map(FuzzyMatch.Query.init)
         return results.filter { !isExcludedPath($0.id, ignoring: ignore) }.map { result in
             let full = FuzzyMatch.score(whole, candidate: result.name)
@@ -107,10 +130,11 @@ enum FileSearchQuery {
         .map(\.0)
     }
 
-    static func matches(filename: String, query: String) -> Bool {
-        terms(in: query).allSatisfy { term in
-            filename.range(
-                of: term, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+    static func matches(filename: String, query: String, isDirectory: Bool = false) -> Bool {
+        let parsed = FileQuery(query)
+        guard parsed.admits(name: filename, isDirectory: isDirectory) else { return false }
+        return parsed.words.allSatisfy { term in
+            filename.range(of: term, options: [.caseInsensitive, .diacriticInsensitive]) != nil
         }
     }
 

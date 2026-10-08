@@ -315,13 +315,40 @@ filter back to the path (`clearBrowseFilter`), then returns to the root search w
 Escape behavior (`returnToLauncher`): the browser is a place reached from the launcher, so leaving it
 never closes the palette.
 
-Quick Look and the preview pane never take the keyboard: `QuickLookSurface` marks its `QLPreviewView`
+Every refocus of the field in Browse Files — a menu closing, a summon — puts the caret after the path
+rather than selecting it all, so the next keystroke extends it. Quick Look and the preview pane never
+take the keyboard: `QuickLookSurface` marks its `QLPreviewView`
 `KeyboardFocusRefusing`, as the PDF and player surfaces already were, so a click or a scroll inside a
 preview leaves the caret in the field. Closing Quick Look also re-focuses the field and, a turn later,
 puts the caret after the path — re-focusing selects the whole field, and the next keystroke would
 otherwise replace the path.
 
 ### Searching below a folder
+
+**How a query reads** (`FileQuery`): words separated by spaces, each matched on its own and in any
+order, so `report annual` finds `annual-report-2025.pdf`; every word must hit, and the weakest decides
+the score unless the words read better as one phrase. A word that starts with a dot is a type:
+`.pdf invoice` keeps only files ending in `.pdf` — any of several (`.png .jpg`), never a folder, and
+`.zshrc` therefore also finds the dotfile itself. A type word alone lists every file of that type,
+nearest first. Search Files reads the same way: a type word becomes an end-anchored Spotlight clause
+(`kMDItemFSName == "*.pdf"cd`), the other words stay substrings, and ranking reads only the words.
+
+**One slip is forgiven** (`FileTypo`), below the browser's literal matches: a word of five letters or
+more may be one letter extra, missing, swapped or mistyped — `raedme` finds `README.md`, `invioce`
+finds `invoice.pdf` — matched anywhere in the name by a bounded Damerau edit-distance pass over
+ASCII names. It runs only when fewer than five names hold every word literally (substring or
+stronger), since loose letters-in-order hits are exactly what a typo looks like, and it promotes a
+loose hit that is also one slip away. A typo hit ranks above every loose hit and below every literal
+one, shorter names first. Four letters or fewer get no guesses: one less is a fragment half the disk
+contains. On the developer's `~/Development` (60,000 names) a query that matches nothing, the typo
+pass's worst case, takes about 24 ms.
+
+**The type filter** (⌘P, the header button Search Files already had) narrows Browse Files too,
+sharing `PaletteState.fileSearchFilter`. In the folder listing it drops files of other types but
+keeps every folder, the way on, unless the filter is Folders; searches below drop non-matching files
+and folders alike. A local list decides a file's kind from its extension through `UTType`, one lookup
+per extension per pass (`FileSearchFilter.accepts(name:isDirectory:cache:)`); Spotlight gets the same
+filter's `kMDItemContentTypeTree` clause.
 
 Text that is not a path searches the folder on screen and everything below it. The folder's own
 items rank at once, by `FileNameScore`; after an 80 ms pause the subtree answers and replaces them.

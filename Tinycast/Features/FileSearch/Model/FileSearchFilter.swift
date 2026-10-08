@@ -70,6 +70,17 @@ enum FileSearchFilter: CaseIterable, Sendable {
         return "(" + clauses.joined(separator: " || ") + ")"
     }
 
+    /// From the name alone, for lists that never ask Spotlight; `cache` keeps one lookup per type.
+    func accepts(name: String, isDirectory: Bool, cache: inout [String: Bool]) -> Bool {
+        guard self != .all else { return true }
+        if isDirectory { return self == .folders }
+        let ext = (name as NSString).pathExtension.lowercased()
+        if let known = cache[ext] { return known }
+        let accepted = accepts(contentType: UTType(filenameExtension: ext), isDirectory: false)
+        cache[ext] = accepted
+        return accepted
+    }
+
     /// The home-root branch never reaches Spotlight, so it answers the same question locally.
     func accepts(contentType: UTType?, isDirectory: Bool) -> Bool {
         guard self != .all else { return true }

@@ -19,7 +19,7 @@ enum PaletteFilterAction: Equatable {
         switch mode {
         case .extensionCommand: return commandHasAccessory ? .extensionAccessory : .ignored
         case .clipboard: return .clipboardFilter
-        case .fileSearch: return .fileSearchFilter
+        case .fileSearch, .browseFiles: return .fileSearchFilter
         case .emoji: return .emojiCategory
         case .ai: return .aiModel
         default: return .ignored

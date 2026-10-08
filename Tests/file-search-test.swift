@@ -39,6 +39,18 @@ struct FileSearchTests {
             "terms split on whitespace")
         expect(FileSearchQuery.expression(for: " \n ") == nil, "empty input creates no query")
         expect(
+            FileSearchQuery.expression(for: ".pdf invoice")
+                == "kMDItemFSName == \"*invoice*\"cd && kMDItemFSName == \"*.pdf\"cd",
+            "a type word asks Spotlight for names ending in it, the words still anywhere")
+        expect(
+            FileSearchQuery.expression(for: ".png .jpg")
+                == "(kMDItemFSName == \"*.png\"cd || kMDItemFSName == \"*.jpg\"cd)",
+            "several type words admit any of them")
+        expect(
+            FileSearchQuery.matches(filename: "Invoice March.pdf", query: ".pdf march")
+                && !FileSearchQuery.matches(filename: "march.txt", query: ".pdf march"),
+            "a home-root item answers a type word locally, as Spotlight would")
+        expect(
             FileSearchQuery.contentExpression(for: " ") == nil, "empty input creates no content query")
         let content = FileSearchQuery.contentExpression(
             for: "annual report", excluding: ["*.log"], filter: .images)
