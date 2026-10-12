@@ -82,11 +82,25 @@ Add a token rather than a magic number when introducing a new value.
 extension list panel, Quick Actions, dialogs and HUDs. Settings, Onboarding,
 Support, Update, About and Notes never scale.
 
-`DesignSystem/InterfaceMetrics.swift` stores **only a scale** and derives every value from the `Theme`
-literal, so `Theme` stays the one place a number is written down. **In any view a scaled surface can
-reach, read `@Environment(\.metrics)` rather than `Theme.Spacing/Radius/Size/Typography`** — the key
-defaults to `.standard`, so a shared `DesignSystem/` component renders unscaled in Settings without
-being forked. An AppKit site reads `settings.interfaceSize.metrics` where it computes its frame.
+`DesignSystem/InterfaceMetrics.swift` stores **only a scale and a shape** and derives every value from
+the `Theme` literal, so `Theme` stays the one place a number is written down. **In any view a scaled
+surface can reach, read `@Environment(\.metrics)` rather than `Theme.Spacing/Radius/Size/Typography`**
+— the key defaults to `.standard`, so a shared `DesignSystem/` component renders unscaled in Settings
+without being forked. An AppKit site reads `settings.metrics` where it computes its frame.
+
+### Corners (`InterfaceShape`)
+
+`AppSettings.interfaceShape` (General → Appearance → Corners) picks the palette's look. **Less
+Rounded** (`.square`, the default) is the flat Raycast-style bar: `palettePanel 14`, `paletteListRow 6`
+strips, a 45pt header, a 39pt opaque footer band behind hairlines, and the footer's context title.
+**More Rounded** (`.rounded`) is the floating look: the `panel 26` corner, `row 10` rows with the
+roomier `lg` gap and `sm` inset, capsule category pills, a 44pt header with the 20pt search field, and a
+52pt footer of glass controls — the menu circle and one frosted capsule — over rows that pass beneath
+and dissolve rather than clip. Only the shape-aware tokens (`palettePanel`, `paletteListRow`,
+`categoryChip`, `paletteRowGap`, `paletteRowInset`, `paletteSectionSpacing`, `headerHeight`,
+`bottomBarHeight`, `searchFieldSize`, `paletteRowTitle`, `paletteRowSecondary`,
+`paletteSectionHeader`) and `RootPaletteView`'s footer branch read the shape; a palette row restyled
+later must use them rather than a fixed `Theme` step, or it will not follow the setting.
 
 A length measured against the **screen** does not scale; a length measured against **our own content**
 does. So `hairline`, `paletteTopMarginFraction`, `paletteSnapDistance`, `paletteMinimumVisible`, the

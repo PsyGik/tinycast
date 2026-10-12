@@ -101,7 +101,7 @@ private struct QuicklinkRow: View {
 
     var body: some View {
         IconCache.observeStyle()
-        return HStack(spacing: metrics.spacing.xl) {
+        return HStack(spacing: metrics.spacing.paletteRowGap) {
             Image(nsImage: IconCache.symbolIcon(named: quicklink.symbol))
                 .resizable()
                 .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
@@ -130,7 +130,7 @@ private struct QuicklinkRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.paletteRowInset)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)

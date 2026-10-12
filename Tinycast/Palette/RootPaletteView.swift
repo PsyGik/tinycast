@@ -324,8 +324,7 @@ struct RootPaletteView: View {
                         screen.body(selection: sel, scroll: scroll)
                     }
                 }
-                // The frame already stops at both bars; clipping keeps rows from drawing under them.
-                .clipped()
+                .modifier(PaletteContentClip(isClipped: !metrics.isRounded))
                 .safeAreaInset(edge: .top, spacing: 0) {
                     header
                         .opacity(screen.hidesSearchField ? 0 : 1)
@@ -832,7 +831,7 @@ struct RootPaletteView: View {
         .padding(.bottom, isCollapsed ? metrics.size.headerPadding : 0)
         .frame(maxWidth: .infinity)
         // Collapsed, nothing sits below the bar to divide it from.
-        .overlay(alignment: .bottom) { if !isCollapsed { PaletteDivider() } }
+        .overlay(alignment: .bottom) { if !isCollapsed, !metrics.isRounded { PaletteDivider() } }
         // Next turn, once the show's `land()` and search refocus are done, so neither undoes it.
         .onChange(of: vm.pendingArgumentEntryID) {
             Task { @MainActor in focusPendingArgument() }
@@ -987,7 +986,12 @@ struct RootPaletteView: View {
     ) -> some View {
         HStack(spacing: 0) {
             Group {
-                if let footerContext {
+                if metrics.isRounded {
+                    HStack(spacing: metrics.spacing.sm) {
+                        MenuCircleButton(action: toggleAppMenu)
+                        if vm.mode == .launcher, settings.launcherShowsResourcePills { ResourcePills() }
+                    }
+                } else if let footerContext {
                     appMenuButton(context: footerContext)
                 } else if vm.mode == .launcher, settings.launcherShowsResourcePills {
                     ResourcePills()
@@ -995,20 +999,30 @@ struct RootPaletteView: View {
             }
             .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
             if showActionGroup {
-                actionGroup(
-                    primaryActionLabel: primaryActionLabel,
-                    formPrimaryShortcut: formPrimaryShortcut,
-                    primaryActionEnabled: primaryActionEnabled,
-                    showActions: showActions
-                )
+                Group {
+                    if metrics.isRounded {
+                        capsuleActionGroup(
+                            primaryActionLabel: primaryActionLabel,
+                            formPrimaryShortcut: formPrimaryShortcut,
+                            primaryActionEnabled: primaryActionEnabled,
+                            showActions: showActions)
+                    } else {
+                        actionGroup(
+                            primaryActionLabel: primaryActionLabel,
+                            formPrimaryShortcut: formPrimaryShortcut,
+                            primaryActionEnabled: primaryActionEnabled,
+                            showActions: showActions)
+                    }
+                }
                 .fixedSize()
             }
         }
-        .padding(.horizontal, metrics.spacing.xl)
+        .padding(.horizontal, metrics.isRounded ? metrics.spacing.md : metrics.spacing.xl)
         .frame(height: metrics.size.bottomBarHeight)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.paletteFooterSurface)
-        .overlay(alignment: .top) { PaletteDivider() }
+        // Rounded, the controls float and the edge dissolve ghosts the rows passing beneath.
+        .background { if !metrics.isRounded { Theme.Colors.paletteFooterSurface } }
+        .overlay(alignment: .top) { if !metrics.isRounded { PaletteDivider() } }
     }
 
     /// Kept out of `PaletteMode`: the pure palette harnesses compile it without `CommandID`.
@@ -1045,9 +1059,51 @@ struct RootPaletteView: View {
     }
 
     private func appMenuButton(context: PaletteFooterContext) -> some View {
-        FooterAppMenuButton(context: context) {
-            if openMenu == .app { closeMenus() } else { open(.app, highlighting: 0) }
+        FooterAppMenuButton(context: context, action: toggleAppMenu)
+    }
+
+    private func toggleAppMenu() {
+        if openMenu == .app { closeMenus() } else { open(.app, highlighting: 0) }
+    }
+
+    /// More Rounded's footer group: primary action and the Actions toggle sharing one glass capsule.
+    private func capsuleActionGroup(
+        primaryActionLabel: String, formPrimaryShortcut: Bool, primaryActionEnabled: Bool,
+        showActions: Bool
+    ) -> some View {
+        HStack(spacing: 2) {
+            BarButton(action: activateSelection) {
+                HStack(spacing: metrics.spacing.sm) {
+                    Text(primaryActionLabel)
+                        .font(metrics.typography.bar)
+                        .foregroundStyle(pillTint)
+                    if formPrimaryShortcut {
+                        HStack(spacing: metrics.spacing.xxs) {
+                            KeyCapChip(text: "⌘", style: .outline)
+                            KeyCapChip(text: "↵", style: .outline)
+                        }
+                    } else {
+                        KeyCapChip(text: "↵", style: .outline)
+                    }
+                }
+            }
+            .disabled(!primaryActionEnabled)
+            if showActions {
+                BarButton(action: toggleActions) {
+                    HStack(spacing: metrics.spacing.sm) {
+                        Text("Actions")
+                            .font(metrics.typography.bar)
+                            .foregroundStyle(Theme.Colors.textSecondary)
+                        HStack(spacing: metrics.spacing.xxs) {
+                            KeyCapChip(text: "⌘", style: .outline)
+                            KeyCapChip(text: "K", style: .outline)
+                        }
+                    }
+                }
+            }
         }
+        .padding(metrics.spacing.xs)
+        .frosted(in: Capsule())
     }
 
     private func actionGroup(
@@ -1687,6 +1743,39 @@ private struct HeaderBackButton: View {
         .onHover { hovered = $0 }
         .animation(.easeOut(duration: Theme.Duration.hover), value: hovered)
         .help(help)
+    }
+}
+
+/// More Rounded's menu control; hover lives here, so a sweep never re-renders the body.
+private struct MenuCircleButton: View {
+    let action: () -> Void
+    @State private var hovered = false
+    @Environment(\.metrics) private var metrics
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 3) {
+                Capsule().frame(width: 14, height: 1.5)
+                Capsule().frame(width: 8, height: 1.5)
+            }
+            .foregroundStyle(Theme.Colors.textSecondary)
+            .frame(width: metrics.size.menuButton, height: metrics.size.menuButton)
+            .background(Circle().fill(hovered ? Theme.Colors.rowHover : Color.clear))
+            .contentShape(.circle)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovered = $0 }
+        .frosted(in: Circle())
+        .accessibilityLabel("Tinycast menu")
+    }
+}
+
+/// Square bars stop the rows at their edge; rounded ones let them pass under to dissolve.
+private struct PaletteContentClip: ViewModifier {
+    let isClipped: Bool
+
+    func body(content: Content) -> some View {
+        if isClipped { content.clipped() } else { content }
     }
 }
 

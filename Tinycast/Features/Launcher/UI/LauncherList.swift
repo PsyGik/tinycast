@@ -305,7 +305,7 @@ private struct AppRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.xl) {
+        HStack(spacing: metrics.spacing.paletteRowGap) {
             AppIconView(app: app, pointSize: metrics.size.resultRowIcon)
                 .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
                 .overlay(alignment: .bottom) {
@@ -335,6 +335,14 @@ private struct AppRow: View {
                     .font(metrics.typography.paletteRowSecondary)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .padding(.horizontal, metrics.isRounded ? metrics.spacing.sm : 0)
+                    .padding(.vertical, metrics.isRounded ? metrics.spacing.xxs : 0)
+                    .background {
+                        if metrics.isRounded {
+                            RoundedRectangle(cornerRadius: metrics.radius.menu, style: .continuous)
+                                .fill(Theme.Colors.controlSurface)
+                        }
+                    }
             }
             if let caps = shortcutCaps {
                 HStack(spacing: metrics.spacing.xxs) {
@@ -363,7 +371,7 @@ private struct AppRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.paletteRowInset)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)

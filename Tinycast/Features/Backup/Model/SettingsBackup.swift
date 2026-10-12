@@ -39,6 +39,7 @@ struct SettingsBackup: Codable {
         var calcNumberStyle: String?
         var calcDefaultCurrency: String?
         var interfaceSize: String?
+        var interfaceShape: String?
         var compactMode: Bool?
         var showFavoritesInCompactMode: Bool?
         var searchScopes: [String]?
@@ -167,6 +168,7 @@ extension SettingsBackup {
             calcNumberStyle: s.calcNumberStyle.rawValue,
             calcDefaultCurrency: s.calcDefaultCurrency,
             interfaceSize: s.interfaceSize.rawValue,
+            interfaceShape: s.interfaceShape.rawValue,
             compactMode: s.compactMode,
             showFavoritesInCompactMode: s.showFavoritesInCompactMode,
             searchScopes: s.searchScopes,
@@ -395,6 +397,10 @@ extension SettingsBackup {
         }
         if let raw = s.interfaceSize, let size = InterfaceSize(rawValue: raw) {
             settings.interfaceSize = size
+            count += 1
+        }
+        if let raw = s.interfaceShape, let shape = InterfaceShape(rawValue: raw) {
+            settings.interfaceShape = shape
             count += 1
         }
         if let raw = s.appearance, let appearance = AppAppearance(rawValue: raw) {

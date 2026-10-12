@@ -54,7 +54,7 @@ private struct WindowSwitchRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.xl) {
+        HStack(spacing: metrics.spacing.paletteRowGap) {
             Group {
                 if let iconURL = entry.iconURL {
                     EntryIconView(source: .file(stamp: entry.iconStamp), fileURL: iconURL)
@@ -76,7 +76,7 @@ private struct WindowSwitchRow: View {
                 .lineLimit(1)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.paletteRowInset)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)

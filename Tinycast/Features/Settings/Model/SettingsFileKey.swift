@@ -12,6 +12,7 @@ enum SettingsFileKey: String, CaseIterable, Sendable {
     case supportReminders = "general.supportReminders"
     case appearance = "appearance.theme"
     case interfaceSize = "appearance.interfaceSize"
+    case interfaceShape = "appearance.interfaceShape"
     case compactMode = "appearance.compactMode"
     case showFavoritesInCompactMode = "appearance.showFavoritesInCompactMode"
     case openOnCursorScreen = "appearance.followCursorAcrossDisplays"

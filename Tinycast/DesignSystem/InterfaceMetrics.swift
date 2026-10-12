@@ -1,21 +1,39 @@
 import SwiftUI
 
+/// The palette's two looks: flat Raycast-style bars and strips, or rounded floating controls.
+enum InterfaceShape: String, CaseIterable, Identifiable, Sendable {
+    case square
+    case rounded
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .square: "Less Rounded"
+        case .rounded: "More Rounded"
+        }
+    }
+}
+
 /// `Theme`'s palette geometry at the user's Interface Size; `.standard` is `Theme` verbatim.
 struct InterfaceMetrics: Equatable, Sendable {
     static let standard = InterfaceMetrics(scale: 1)
 
     let scale: CGFloat
+    var shape: InterfaceShape = .square
 
-    var spacing: Spacing { Spacing(scale: scale) }
-    var radius: Radius { Radius(scale: scale) }
-    var size: Size { Size(scale: scale) }
-    var typography: Typography { Typography(scale: scale) }
+    var isRounded: Bool { shape == .rounded }
+    var spacing: Spacing { Spacing(scale: scale, shape: shape) }
+    var radius: Radius { Radius(scale: scale, shape: shape) }
+    var size: Size { Size(scale: scale, shape: shape) }
+    var typography: Typography { Typography(scale: scale, shape: shape) }
 
     /// For a tuned length a surface owns itself, where `Theme` states no token for it.
     func scaled(_ value: CGFloat) -> CGFloat { scaledPoints(value, scale) }
 
     struct Spacing: Equatable, Sendable {
         let scale: CGFloat
+        let shape: InterfaceShape
 
         var xxs: CGFloat { scaledPoints(Theme.Spacing.xxs, scale) }
         var xs: CGFloat { scaledPoints(Theme.Spacing.xs, scale) }
@@ -24,8 +42,11 @@ struct InterfaceMetrics: Equatable, Sendable {
         var lg: CGFloat { scaledPoints(Theme.Spacing.lg, scale) }
         var xl: CGFloat { scaledPoints(Theme.Spacing.xl, scale) }
         var paletteSectionSpacing: CGFloat {
-            scaledPoints(Theme.Spacing.paletteSectionSpacing, scale)
+            shape == .rounded ? sectionSpacing : scaledPoints(Theme.Spacing.paletteSectionSpacing, scale)
         }
+        /// A palette row's icon-to-title gap and vertical inset, roomier in the square look.
+        var paletteRowGap: CGFloat { shape == .rounded ? lg : xl }
+        var paletteRowInset: CGFloat { shape == .rounded ? sm : md }
         var footerPrimaryKeyCapGap: CGFloat {
             scaledPoints(Theme.Spacing.footerPrimaryKeyCapGap, scale)
         }
@@ -51,12 +72,22 @@ struct InterfaceMetrics: Equatable, Sendable {
 
     struct Radius: Equatable, Sendable {
         let scale: CGFloat
+        let shape: InterfaceShape
 
         var panel: CGFloat { scaledPoints(Theme.Radius.panel, scale) }
-        var palettePanel: CGFloat { scaledPoints(Theme.Radius.palettePanel, scale) }
+        var palettePanel: CGFloat {
+            scaledPoints(shape == .rounded ? Theme.Radius.panel : Theme.Radius.palettePanel, scale)
+        }
         var listRow: CGFloat { scaledPoints(Theme.Radius.listRow, scale) }
-        var paletteListRow: CGFloat { scaledPoints(Theme.Radius.paletteListRow, scale) }
-        var categoryChip: CGFloat { scaledPoints(Theme.Radius.categoryChip, scale) }
+        var paletteListRow: CGFloat {
+            scaledPoints(shape == .rounded ? Theme.Radius.row : Theme.Radius.paletteListRow, scale)
+        }
+        /// Rounded, a pill is a capsule: half its own height.
+        var categoryChip: CGFloat {
+            shape == .rounded
+                ? scaledPoints(Theme.Size.categoryChipHeight, scale) / 2
+                : scaledPoints(Theme.Radius.categoryChip, scale)
+        }
         var row: CGFloat { scaledPoints(Theme.Radius.row, scale) }
         var formField: CGFloat { scaledPoints(Theme.Radius.formField, scale) }
         var emojiCell: CGFloat { scaledPoints(Theme.Radius.emojiCell, scale) }
@@ -76,16 +107,22 @@ struct InterfaceMetrics: Equatable, Sendable {
 
     struct Size: Equatable, Sendable {
         let scale: CGFloat
+        let shape: InterfaceShape
 
         var panelWidth: CGFloat { scaledPoints(Theme.Size.panelWidth, scale) }
         var panelHeight: CGFloat { scaledPoints(Theme.Size.panelHeight, scale) }
-        var headerHeight: CGFloat { scaledPoints(Theme.Size.headerHeight, scale) }
+        var headerHeight: CGFloat {
+            scaledPoints(shape == .rounded ? Theme.Size.roundedHeaderHeight : Theme.Size.headerHeight, scale)
+        }
         var headerIconSlot: CGFloat { scaledPoints(Theme.Size.headerIconSlot, scale) }
         var searchFieldMinWidth: CGFloat { scaledPoints(Theme.Size.searchFieldMinWidth, scale) }
         var headerPadding: CGFloat { scaledPoints(Theme.Size.headerPadding, scale) }
         /// Derived, not scaled: the compact bar must stay exactly the header in symmetric slack.
         var compactHeight: CGFloat { headerHeight + headerPadding * 2 }
-        var bottomBarHeight: CGFloat { scaledPoints(Theme.Size.bottomBarHeight, scale) }
+        var bottomBarHeight: CGFloat {
+            scaledPoints(
+                shape == .rounded ? Theme.Size.roundedBottomBarHeight : Theme.Size.bottomBarHeight, scale)
+        }
         var barButtonHeight: CGFloat { scaledPoints(Theme.Size.barButtonHeight, scale) }
         var rowIcon: CGFloat { scaledPoints(Theme.Size.rowIcon, scale) }
         var resultRowIcon: CGFloat { scaledPoints(Theme.Size.resultRowIcon, scale) }
@@ -118,7 +155,7 @@ struct InterfaceMetrics: Equatable, Sendable {
         var menuRowSpacing: CGFloat { scaledPoints(Theme.Size.menuRowSpacing, scale) }
         var menuSectionHeader: CGFloat { scaledPoints(Theme.Size.menuSectionHeader, scale) }
         /// Derived like `Theme`'s, so the row cap still counts whole rows at every size.
-        var menuRowHeight: CGFloat { menuIcon + Spacing(scale: scale).md * 2 }
+        var menuRowHeight: CGFloat { menuIcon + Spacing(scale: scale, shape: shape).md * 2 }
         var menuRowsMaxHeight: CGFloat {
             (Theme.Size.menuVisibleRows * (menuRowHeight + menuRowSpacing)).rounded()
         }
@@ -175,16 +212,22 @@ struct InterfaceMetrics: Equatable, Sendable {
     /// `NSFont` is the only public source of a text style's size and face.
     struct Typography: Sendable {
         let scale: CGFloat
+        let shape: InterfaceShape
 
-        var searchFieldSize: CGFloat { scaledPoints(Theme.Typography.searchFieldSize, scale) }
+        var searchFieldSize: CGFloat {
+            scaledPoints(
+                shape == .rounded
+                    ? Theme.Typography.roundedSearchFieldSize : Theme.Typography.searchFieldSize,
+                scale)
+        }
         var searchField: Font {
-            scale == 1
+            scale == 1 && shape == .square
                 ? Theme.Typography.searchField
                 : .system(size: searchFieldSize, weight: .regular)
         }
         /// Isolated because `Theme`'s twin is, not because resolving a font needs main.
         @MainActor var searchFieldNSFont: NSFont {
-            scale == 1
+            scale == 1 && shape == .square
                 ? Theme.Typography.searchFieldNSFont
                 : NSFont.systemFont(ofSize: searchFieldSize, weight: .regular)
         }
@@ -195,14 +238,18 @@ struct InterfaceMetrics: Equatable, Sendable {
         }
 
         var paletteRowTitle: Font {
-            scale == 1
+            if shape == .rounded { return rowTitle }
+            return scale == 1
                 ? Theme.Typography.paletteRowTitle
                 : .system(
                     size: scaledPoints(Theme.Typography.paletteRowTitleSize, scale), weight: .medium)
         }
-        var paletteRowSecondary: Font { font(Theme.Typography.paletteRowSecondary, .body) }
+        var paletteRowSecondary: Font {
+            shape == .rounded ? rowTrailing : font(Theme.Typography.paletteRowSecondary, .body)
+        }
         var paletteSectionHeader: Font {
-            font(Theme.Typography.paletteSectionHeader, .callout, .semibold)
+            shape == .rounded
+                ? sectionHeader : font(Theme.Typography.paletteSectionHeader, .callout, .semibold)
         }
         var footerPrimaryLabel: Font {
             font(Theme.Typography.footerPrimaryLabel, .callout, .semibold)

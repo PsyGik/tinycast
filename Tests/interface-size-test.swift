@@ -28,6 +28,7 @@ struct InterfaceSizeTests {
         sizesGrow()
         derivationsHold()
         theEnumIsWellFormed()
+        roundedRestoresTheFloatingLook()
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
@@ -280,6 +281,34 @@ struct InterfaceSizeTests {
         expect(
             InterfaceSize.allCases.count == Set(InterfaceSize.allCases.map(\.title)).count,
             "every size has its own title")
+    }
+
+    /// More Rounded is the upstream palette: its tokens, and the square look's left untouched.
+    static func roundedRestoresTheFloatingLook() {
+        let square = InterfaceMetrics.standard
+        let rounded = InterfaceMetrics(scale: 1, shape: .rounded)
+        expect(square.shape == .square, "the default shape is the flat look")
+        expect(rounded.radius.palettePanel, Theme.Radius.panel, "rounded panel takes the panel radius")
+        expect(rounded.radius.paletteListRow, Theme.Radius.row, "rounded rows take the row radius")
+        expect(
+            rounded.radius.categoryChip, Theme.Size.categoryChipHeight / 2, "rounded pills are capsules")
+        expect(rounded.size.headerHeight, Theme.Size.roundedHeaderHeight, "rounded header height")
+        expect(rounded.size.bottomBarHeight, Theme.Size.roundedBottomBarHeight, "rounded footer height")
+        expect(
+            rounded.typography.searchFieldSize, Theme.Typography.roundedSearchFieldSize,
+            "rounded search field size")
+        expect(rounded.spacing.paletteRowGap, Theme.Spacing.lg, "rounded row gap")
+        expect(rounded.spacing.paletteRowInset, Theme.Spacing.sm, "rounded row inset")
+        expect(rounded.spacing.paletteSectionSpacing, Theme.Spacing.sectionSpacing, "rounded section gap")
+        expect(square.spacing.paletteRowGap, Theme.Spacing.xl, "square row gap")
+        expect(square.spacing.paletteRowInset, Theme.Spacing.md, "square row inset")
+        expect(square.radius.palettePanel, Theme.Radius.palettePanel, "square panel radius")
+        expect(square.size.bottomBarHeight, Theme.Size.bottomBarHeight, "square footer height")
+        let large = InterfaceMetrics(scale: 1.2, shape: .rounded)
+        expect(large.size.bottomBarHeight, (Theme.Size.roundedBottomBarHeight * 1.2).rounded(), "shape scales")
+        expect(
+            InterfaceShape.allCases.count == Set(InterfaceShape.allCases.map(\.title)).count,
+            "every shape has its own title")
     }
 
     /// Every scalable length, paired with its name, so one loop covers rounding and growth.

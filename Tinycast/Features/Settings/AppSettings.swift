@@ -306,7 +306,15 @@ final class AppSettings {
         }
     }
 
-    /// Scales the palette and its floating siblings only. Read through `InterfaceSize.metrics`.
+    /// The palette's look: Less Rounded's flat bars and strips, or More Rounded's floating capsule.
+    var interfaceShape: InterfaceShape {
+        didSet { defaults.set(interfaceShape.rawValue, forKey: Key.interfaceShape.rawValue) }
+    }
+
+    /// The palette's geometry at the chosen size and shape, for every surface that floats with it.
+    var metrics: InterfaceMetrics { InterfaceMetrics(scale: interfaceSize.scale, shape: interfaceShape) }
+
+    /// Scales the palette and its floating siblings only. Read through `metrics`.
     var interfaceSize: InterfaceSize {
         didSet {
             defaults.set(interfaceSize.rawValue, forKey: Key.interfaceSize.rawValue)
@@ -789,6 +797,9 @@ final class AppSettings {
         interfaceSize =
             defaults.string(forKey: Key.interfaceSize.rawValue).flatMap(InterfaceSize.init)
             ?? .standard
+        interfaceShape =
+            defaults.string(forKey: Key.interfaceShape.rawValue).flatMap(InterfaceShape.init)
+            ?? .square
         compactMode = defaults.bool(forKey: Key.compactMode.rawValue)
         // Defaults to true, so absence must be distinguished from a stored `false`.
         showFavoritesInCompactMode =

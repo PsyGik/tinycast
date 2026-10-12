@@ -385,10 +385,9 @@ final class AppSettings {
     var quicklinkPassesSelectedText = false
     var quicklinkOpensNewWindow = false
     var quicklinkConfirmsBeforeDelete = false
-    var interfaceSize = InterfaceSize()
+    var metrics: Int { 0 }
 }
 
-struct InterfaceSize { var metrics: Int { 0 } }
 enum CommandID { case createQuicklink, searchQuicklinks, importQuicklinks, exportQuicklinks }
 
 @MainActor

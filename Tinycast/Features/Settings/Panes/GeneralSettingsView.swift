@@ -71,6 +71,14 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalAppearance, "Theme")
                 }
                 InterfaceSizeRow()
+                Picker(selection: $settings.interfaceShape) {
+                    ForEach(InterfaceShape.allCases) { shape in
+                        Text(shape.title).tag(shape)
+                    }
+                } label: {
+                    SettingsRowTitle(.generalAppearance, "Corners")
+                    Text("Flat bars and strips, or rounded rows and a floating footer.")
+                }
                 WindowModeRow()
                 Toggle(isOn: $settings.showFavoritesInCompactMode) {
                     SettingsRowTitle(.generalAppearance, "Show favorites in compact mode")

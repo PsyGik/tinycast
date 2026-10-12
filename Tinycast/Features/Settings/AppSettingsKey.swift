@@ -22,6 +22,7 @@ enum AppSettingsKey: String, CaseIterable {
     case calcNumberStyle = "calculatorNumberStyle"
     case calcDefaultCurrency = "calculatorDefaultCurrency"
     case interfaceSize = "interfaceSize"
+    case interfaceShape = "interfaceShape"
     case compactMode = "compactMode"
     case showFavoritesInCompactMode = "showFavoritesInCompactMode"
     case searchScopes = "launcherSearchScopes"

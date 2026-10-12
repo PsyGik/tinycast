@@ -31,7 +31,7 @@ final class ResourceWidgetsCoordinator {
 
     func show() {
         panelOpen = true
-        panelController.show(metrics: settings.interfaceSize.metrics)
+        panelController.show(metrics: settings.metrics)
         updateSampling()
     }
 

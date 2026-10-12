@@ -22,6 +22,7 @@ enum SettingsBackupCoverage {
         "calcNumberStyle": .calcNumberStyle,
         "calcDefaultCurrency": .calcDefaultCurrency,
         "interfaceSize": .interfaceSize,
+        "interfaceShape": .interfaceShape,
         "compactMode": .compactMode,
         "showFavoritesInCompactMode": .showFavoritesInCompactMode,
         "searchScopes": .searchScopes,

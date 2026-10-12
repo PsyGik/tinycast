@@ -107,7 +107,7 @@ private struct MenuSearchRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.xl) {
+        HStack(spacing: metrics.spacing.paletteRowGap) {
             Group {
                 if let icon {
                     Image(nsImage: icon).resizable()
@@ -139,7 +139,7 @@ private struct MenuSearchRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.paletteRowInset)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)

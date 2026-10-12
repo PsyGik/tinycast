@@ -143,6 +143,9 @@ enum SettingsSearchCatalog {
             .generalAppearance, "Interface size",
             keywords: ["text size", "font size", "scale", "zoom", "bigger", "larger", "legible"]),
         .init(
+            .generalAppearance, "Corners",
+            keywords: ["rounded", "square", "flat", "raycast", "pill", "capsule", "style", "look"]),
+        .init(
             .generalAppearance, "Window mode",
             keywords: ["compact", "expanded", "slim", "search bar", "small"]),
         .init(

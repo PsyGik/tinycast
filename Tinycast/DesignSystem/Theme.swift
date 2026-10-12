@@ -121,6 +121,9 @@ enum Theme {
         static let dropGuideFadeThreshold: CGFloat = 36
         static let dropGuideFadeDistance: CGFloat = 180
         static let bottomBarHeight: CGFloat = 39
+        /// The More Rounded look's bars: room for a floating capsule rather than a flat band.
+        static let roundedHeaderHeight: CGFloat = 44
+        static let roundedBottomBarHeight: CGFloat = 52
         /// A `BarButton`'s hover capsule, shared by the footer group and the header's filter.
         static let barButtonHeight: CGFloat = 28
         static let rowIcon: CGFloat = 24
@@ -399,6 +402,7 @@ enum Theme {
     enum Typography {
         /// One size, two frameworks: `TextTrailingDragHandle` measures what the field renders.
         static let searchFieldSize: CGFloat = 17
+        static let roundedSearchFieldSize: CGFloat = 20
         static let searchField = Font.system(size: searchFieldSize, weight: .regular)
         /// `NSFont` is not `Sendable`, hence the isolation; every reader is a view anyway.
         @MainActor static let searchFieldNSFont = NSFont.systemFont(
