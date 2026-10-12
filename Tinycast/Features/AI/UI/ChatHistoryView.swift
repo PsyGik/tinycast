@@ -98,7 +98,7 @@ private struct ChatHistoryRow: View {
 
     var body: some View {
         IconCache.observeStyle()
-        return HStack(spacing: metrics.spacing.xl) {
+        return HStack(spacing: metrics.spacing.paletteRowGap) {
             Image(nsImage: IconCache.symbolIcon(named: "bubble.left")).resizable()
                 .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
             VStack(alignment: .leading, spacing: metrics.spacing.xxs) {
@@ -118,7 +118,7 @@ private struct ChatHistoryRow: View {
                 .foregroundStyle(Theme.Colors.textSecondary)
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.paletteRowInset)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)

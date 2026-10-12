@@ -28,7 +28,8 @@ final class AppCore {
     let dictationAudioDucker = DictationAudioDucker()
     @ObservationIgnored private(set) lazy var dictationModels =
         DictationModelStore(idleRelease: settings.dictationIdleRelease)
-    let hyperKeyTap = HyperKeyTap()
+    @ObservationIgnored private(set) lazy var hyperKey = HyperKeyManager(
+        settings: settings, hotKeys: hotKeys)
     let windowMover = WindowMover()
     let spaceSwitcher = SpaceSwitcher()
     let inputSourceSwitcher = InputSourceSwitcher()
@@ -82,19 +83,16 @@ final class AppCore {
     let installedAI = InstalledAIManager()
     @ObservationIgnored private var appliedLaunchRevisions: [InstalledAIKind: Int] = [:]
 
-    /// Set when a quicklink editor should open with Settings; the pane consumes it.
-    var pendingQuicklinkEdit: QuicklinkEditRequest?
-    /// Set when a snippet editor should open with Settings; the pane consumes it.
-    var pendingSnippetEdit: SnippetEditRequest?
     /// Set when a layout editor should open with Settings; the pane consumes it.
     var pendingWindowLayoutEdit: WindowLayoutEditRequest?
+    var pendingExtensionStoreInstall: ExtensionDeepLink.StoreInstall?
 
     @ObservationIgnored private(set) lazy var snippetCoordinator = SnippetCoordinator(
         store: snippetsStore, listener: snippetListener, injector: textInjector,
         clipboardStore: clipboardStore, appIndex: appIndex, settings: settings,
         windowController: windowController, paletteCoordinator: paletteCoordinator,
-        settingsCoordinator: settingsCoordinator,
-        showMessage: { [unowned self] in self.showMessage($0) }, core: self)
+        palette: palette,
+        showMessage: { [unowned self] in self.showMessage($0, tone: $1) }, core: self)
     @ObservationIgnored private(set) lazy var dictationCoordinator = DictationCoordinator(
         settings: settings, hotKeys: hotKeys, models: dictationModels, injector: textInjector,
         audioDucker: dictationAudioDucker,
@@ -112,7 +110,7 @@ final class AppCore {
         appIndex: appIndex, injector: textInjector, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         windowController: windowController,
-        paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
+        paletteCoordinator: paletteCoordinator,
         clipboardHistory: { [unowned self] in self.snippetCoordinator.clipboardHistoryForExpansion() },
         core: self)
 
@@ -355,7 +353,7 @@ final class AppCore {
             supportReminders.onDue = { [weak self] in self?.supportCoordinator.presentIfDue() }
             supportReminders.start()
 
-            hyperKeyTap.healthTicker = healthTicker
+            hyperKey.healthTicker = healthTicker
             hotKeys.modifierTapMonitor.healthTicker = healthTicker
             snippetListener.healthTicker = healthTicker
 
@@ -383,7 +381,7 @@ final class AppCore {
                 self?.windowCommandCoordinator.runCustomWindowSize(id: id)
             }
             hotKeys.onOpenQuicklink = { [weak self] id in
-                self?.quicklinkCoordinator.openQuicklink(id: id)
+                self?.quicklinkCoordinator.openQuicklinkFromHotKey(id: id)
             }
             hotKeys.onRunQuickAction = { [weak self] id in
                 self?.quickActionCoordinator.run(id: id)
@@ -432,8 +430,9 @@ final class AppCore {
                 windowRoomIDs: Set(rooms.rooms.map(\.id)),
                 customWindowSizeIDs: Set(customWindowSizes.sizes.map(\.id)),
                 quickActionIDs: Set(customQuickActions.actions.map(\.id)))
-            // Keeps running while Carbon pauses: the recorder needs its rewritten flags.
-            hyperKeyTap.start(settings: settings)
+            // After `hotKeys.start`: Secure Input equivalents are built from the loaded bindings.
+            hyperKey.onProblem = { [weak self] in self?.showMessage($0, tone: .danger) }
+            hyperKey.start()
 
             snippetsStore.onSnapshot = { [weak self] snapshot in
                 guard let self else { return }
@@ -471,22 +470,17 @@ final class AppCore {
     }
 
     func handleOpenURL(_ url: URL) {
-        switch ExtensionOAuthSession.handleCallbackURL(url) {
-        case .delivered:
-            paletteCoordinator.showPalette(mode: .extensionCommand, restoreAnyMode: true)
-            return
-        case .expired:
-            showMessage("Sign-in expired — run the command again", tone: .danger)
-            return
-        case .ignored:
-            break
-        }
         guard ExtensionDeepLink.claims(url) else { return }
-        guard let link = ExtensionDeepLink.parse(url: url) else {
+        guard let route = ExtensionDeepLink.route(url: url) else {
             paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
             return
         }
-        extensionCoordinator.runDeepLink(link)
+        switch route {
+        case .command(let link):
+            extensionCoordinator.runDeepLink(link)
+        case .storeInstall(let install):
+            extensionCoordinator.showStoreInstall(install)
+        }
     }
 
     /// The store-backed half of the conflict message; `HotKeyManager` names the catalogs itself.
@@ -567,7 +561,7 @@ final class AppCore {
         settingsFile?.flush()
         clipboardTextIndexer?.stop()
         // Caps Lock first: its remap is the one teardown that outlives the process.
-        hyperKeyTap.prepareForTermination()
+        hyperKey.prepareForTermination()
         hotKeys.prepareForTermination()
         windowLayoutCoordinator.prepareForTermination()
         roomCoordinator.prepareForTermination()
@@ -740,6 +734,7 @@ final class AppCore {
             reproject: { $0.snippetCoordinator.applySnippetsLauncherPresence() })
         track({ _ = $0.appearance }, reproject: { $0.applyAppearance() })
         track({ _ = $0.interfaceSize }, reproject: { $0.windowController.applyInterfaceSize() })
+        track({ _ = $0.interfaceShape }, reproject: { $0.windowController.applyInterfaceSize() })
         // Settings panes did these on change; settings.json can change them with no pane open.
         track(
             { _ = $0.clipboardRetention },
@@ -941,11 +936,6 @@ final class AppCore {
     /// The volume slider, so `dialogs` stays the single owner of every prompt in the app.
     func pickVolume(current: Float32) async -> Float32? {
         await dialogs.pickVolume(current: current)
-    }
-
-    /// The new-event prompt, for the same reason.
-    func createEvent() async -> EventDraft? {
-        await dialogs.createEvent()
     }
 
     /// The snippet argument prompt, for the same reason.

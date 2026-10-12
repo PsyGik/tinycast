@@ -166,12 +166,24 @@ bottom with the model picker. ⌘J hands a Quick AI conversation to the window.
   search, so `boundedContext` can never separate a stored call from its result.
 - **Every HTTP request uses a private ephemeral `URLSession` with no URL cache.** Provider traffic must
   not create a second credential or response cache on disk.
+- **A refusal shows what the provider said.** `HTTPAIProvider` reads a non-200 body before the turn
+  fails, up to `AIProviderFailure.bodyLimit` (8,000 bytes) and for at most five seconds, and the
+  failed reply is the status's own line with the provider's message under it.
+  `AIProviderFailure.providerMessage` finds that message in OpenAI's shape and its copies',
+  Anthropic's, Gemini's array, vLLM's and OpenRouter's nested `metadata.raw`; a plain-text body is
+  shown as sent, an HTML error page is left out wherever it sits, and a JSON body the cap cut gives up
+  only a message that is still whole. The connection's key, bearer tokens and key-shaped strings are
+  replaced with `[redacted]`, and then the message is cut at `messageLimit` (600 characters). A key
+  under eight characters is redacted only as a whole word, so it cannot eat into a longer one; a
+  local server's placeholder key is redacted like any other. A mid-stream error is
+  treated the same way: the decoder is handed the key, an Anthropic `error` event shows its message
+  under its line, and an OpenAI-compatible one reads through `metadata.raw` too, or says the provider
+  stopped the response when there is no sentence to show.
 - **`Model/` stays Foundation-only.** `ai-provider-test` compiles the shipped provider models and pins
   endpoints, request bodies, stream parsing, persistence repair, Codex protocol framing and both
   CLI routes' MCP launch encodings. Request
   bodies are `AIRequestBody`'s, in `Model/`, precisely so a wrong shape fails a harness rather than a
-  conversation. `installed-ai-test` runs the Claude, Grok, OpenCode and Cursor adapters against real
-  subprocess stubs and pins their safety boundaries.
+  conversation.
 - **Grok, OpenCode and Cursor are text transports, not agents, and so is Claude with no server to
   run.** Claude runs one turn with no tools, browser integration, slash commands or persisted
   session — but never `--bare`, which reads neither
@@ -216,7 +228,7 @@ bottom with the model picker. ⌘J hands a Quick AI conversation to the window.
   shows its spinner meanwhile, and reopening it resumes the same live state. Only Stop, deleting the
   chat, turning AI off or quitting cut a reply short. A reply is the conversation's, which is
   `AppCore`'s, so closing the window cancels nothing either.
-  Codex chats run side by side too: each request gets its own ephemeral app-server thread, and
+  Codex chats run side by side too: each conversation keeps its own ephemeral app-server thread, and
   `CodexTurnRunner` routes every notification and every tool-call question to its turn by
   `threadId`, so a Stop ends only its own. The app-server's server list is fixed at launch, so a
   turn armed with a different one relaunches it and ends the other chats' live threads with a
@@ -393,13 +405,13 @@ already holds it, and Continue in AI Chat (`⌘J`) takes it to the window either
 ### AI Chat
 
 The `AI Chat` command (`command:ai-chat-window`, `HotKeyAction.command(.aiChat)`) opens a titled
-`AppWindowController` window owned by `AIChatCoordinator`, autosaved as `AIChatWindow`. It is built the
-way Settings is — an `AIChatSplitViewController` with a native sidebar item, here collapsible, and a
-unified toolbar whose title is the open chat's — so it takes the system's own sidebar, toolbar and
+`AppWindowController` window owned by `AIChatCoordinator`, autosaved as `AIChatWindow`, and closes it
+again when it is already key, the way Escape does. It is built the way Settings is — an
+`AIChatSplitViewController` with a native sidebar item, here collapsible, and a unified toolbar whose title is the open chat's — so it takes the system's own sidebar, toolbar and
 menus rather than the palette's scrim. `AIChatWindowChrome` owns the toolbar — the sidebar toggle
 and New Chat as two round buttons at the sidebar's trailing edge, then Find in Chat and Actions
-alone at the window's — the title, and one key monitor for ⌘V, ⌘F, ⌘G / ⇧⌘G, ⌘K and the Actions
-menu's own chords, and dies with the window.
+alone at the window's — the title, and one key monitor for ⌘V, ⌘B, ⌃⇥ / ⌃⇧⇥, ⌘F, ⌘G / ⇧⌘G, ⌘K
+and the Actions menu's own chords, and dies with the window.
 
 - **Find in Chat** (⌘F): the system's `NSSearchToolbarItem`, as is. `ChatFindState` is one per
   window and steps match by match, not message by message:
@@ -448,9 +460,10 @@ menu's own chords, and dies with the window.
   and leaves a reply streaming.
 
 - **Sidebar** (`AIChatSidebarView`): a filter field over a `List` of every saved chat, Pinned
-  first and then bucketed by day like Clipboard. The open chat is the selected row. A new chat has
-  none until its first message saves it, so starting one or leaving an empty one never adds or
-  drops a row under the pointer. A row shows a spinner while its reply streams, else a pin when
+  first and then bucketed by day like Clipboard. The open chat is the selected row; ⌃⇥ / ⌃⇧⇥ open
+  the next or previous one, wrapping, over every saved chat whatever the filter shows. ⌘B shows or
+  hides the sidebar. A new chat has none until its first message saves it, so starting one or
+  leaving an empty one never adds or drops a row under the pointer. A row shows a spinner while its reply streams, else a pin when
   pinned. Its content fills the whole cell, so hover — a fainter fill in the selection's own
   shape — never blinks off crossing between rows.
   The context menu pins, renames in place, copies or exports the chat as Markdown
@@ -600,26 +613,22 @@ window, and every chat action either surface sends — is the nineteenth feature
   long equation shrinks to fit rather than running off the edge.
 - Return sends, ⇧↩ breaks the line, and a Japanese IME's Return confirms its text without sending.
 - Drop a PDF on the pane with a text-only model selected: the HUD refuses it, as a paste would.
-- Collapse the sidebar with the toolbar button; ⌘N and ⌘Q (Close Window) still work, and ⌘Q with
+- Collapse the sidebar with the toolbar button or ⌘B; ⌘N and ⌘Q (Close Window) still work, and ⌘Q with
   Settings in front closes Settings instead.
 - Escape closes AI Chat with the composer focused, preserving its draft and any streaming reply.
   Menus and rename fields cancel first; the sidebar clears a nonempty filter, then closes on the
   next Escape. Find in Chat cancels before a second Escape closes the window.
-- Harnesses: `ai-provider-test` (endpoints, request bodies, stream decoding including leading
+- Harnesses: `ai-provider-test` (instruction composition and its enable/disable setting, endpoints,
+  request bodies, stream decoding including leading
   think tags across content and SSE splits, persistence repair,
   Codex framing, on-device routing, the two MCP launch encodings and the two consent channels, the
   shown-model and switched-off-route rules, and a tool's override from settings to launch),
   `ai-chat-test` (`ChatSession`, `MarkdownBlock` with its math delimiters, LaTeX subset and
   mid-stream hold-back, `ChatHistoryStore` with renames and pins,
   `AIToolLoopProvider`, regenerate, and `AIChatSurfacesState`'s one-live-place rule),
-  `codex-turn-test` (the Stop path, driven against a stub app-server stalled where Stop races the
-  turn ID, plus the MCP launch boundary, one launch for concurrent starts, the elicitation, the
-  rows, the call cap and a custom provider's access without an account),
-  `installed-ai-test` (Claude/Grok/OpenCode/Cursor flags, prompt
-  framing, streaming and cleanup, and Claude's private MCP configuration, control channel, round
-  cap and managed-policy branch, a reader's variables against Tinycast's own, and a set command
-  path that runs or fails) and `apple-intelligence-test` (status copy, snapshot deltas,
-  transcript assembly, error mapping, plus one real generation when this Mac can run one), all in
+  and `apple-intelligence-test` (status copy, snapshot deltas,
+  transcript assembly and error mapping, plus an optional real generation enabled with
+  `TINYCAST_TEST_APPLE_INTELLIGENCE=1` when this Mac can run one), all in
   `run-tests.sh`.
 
 ## Installed commands
@@ -671,10 +680,20 @@ was never the process's to begin with. See [MCP](mcp.md) for what goes on the la
 
 `CodexTurnRunner` is the generation half behind `CodexInstalledProvider`.
 
-It creates an ephemeral thread for each request, injects prior user/assistant messages, and
-streams agent-message deltas, plus `item/started` for the reasoning and web-search items that feed the
-bubble's status line. System messages become developer instructions alongside Tinycast's fixed
-boundary, which forbids every tool except the MCP tools an armed turn supplies. Cancellation interrupts the active turn, including one the server has started but
+It keeps an ephemeral thread per conversation while the helper stays running, preserving the web
+search context for follow-ups. A successful reply allows the next request to continue that thread
+only when its prior transcript, model, instructions and web-search permission still match. A
+regenerated, failed or cancelled reply, a trimmed transcript or a changed configuration starts a
+fresh thread and injects the supplied user/assistant history. Turns with attachments are not retained,
+so older attachments still leave the next request. Titles and Quick Actions have no conversation ID
+and always start fresh. Deleting a chat drops its retained context, and resetting or restarting the
+helper clears every retained thread.
+
+It streams agent-message deltas, plus `item/started` for the reasoning and web-search items that feed
+the bubble's status line. System messages become developer instructions alongside Tinycast's fixed
+boundary, which permits only enabled web search and the MCP tools an armed turn supplies.
+Follow-ups use existing sources and search for further detail or verification when needed.
+Cancellation interrupts the active turn, including one the server has started but
 not yet named: Stop arms that thread, and whichever of `turn/started` or the `turn/start` response
 names the turn first spends a single `turn/interrupt` on it.
 
@@ -722,7 +741,7 @@ transport code at all.
 | Cursor command | never | never | never | the global config still loads — ask mode and withheld approval refuse the call |
 | OpenRouter | `plugins: [{id: "web"}]` — OpenRouter's own layer, any model | `image_url` part, only for models whose catalog lists the `image` modality | never yet — its catalog publishes a `file` modality Tinycast does not read | `tools` + `role: "tool"` turns |
 | OpenAI | not offered | `image_url` part, assumed supported | `file` part with `filename` and a `file_data` data URL | `tools` + `role: "tool"` turns |
-| Gemini / compatible | not offered | `image_url` part, assumed supported | never — a gateway that has not implemented the part bills the upload before rejecting it | `tools` + `role: "tool"` turns |
+| Gemini / compatible | not offered | `image_url` part, assumed supported | never — a gateway that has not implemented the part bills the upload before rejecting it | `tools` + `role: "tool"` turns; a call's `extra_content.google.thought_signature` goes back unchanged, or Gemini 3 rejects the next turn |
 | Anthropic | not offered | base64 `image` block | base64 `document` block, ahead of the text block | `tools` + `tool_use` / `tool_result` blocks |
 
 A search is part of the reply, not a status: `item/started` for a `webSearch` item appends a

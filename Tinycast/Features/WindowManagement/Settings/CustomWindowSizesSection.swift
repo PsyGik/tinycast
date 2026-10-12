@@ -6,12 +6,14 @@ struct CustomWindowSizesSection: View {
 
     @Environment(CustomWindowSizeStore.self) private var store
     @Environment(CustomWindowSizeCoordinator.self) private var coordinator
+    @Environment(AppSettings.self) private var settings
 
     var body: some View {
         Section {
             ForEach(store.sizes) { size in
                 CustomWindowSizeRow(
                     size: size,
+                    showsInLauncher: settings.windowManagementShowInLauncher,
                     onEdit: { onEdit(size) },
                     onDelete: { delete(size) })
             }
@@ -30,20 +32,24 @@ struct CustomWindowSizesSection: View {
     }
 }
 
+/// One size's alias, shortcut, launcher checkbox and actions, shaped like the window-command row.
 private struct CustomWindowSizeRow: View {
     let size: CustomWindowSize
+    let showsInLauncher: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void
 
-    @Environment(AppSettings.self) private var settings
     @Environment(VisibilityStore.self) private var visibility
 
     var body: some View {
+        let entry = AppEntry(size)
+        let isVisible = visibility.isItemVisible(entry)
         SettingsRow(title: size.name, subtitle: size.summary) {
             Image(systemName: CustomWindowSize.sfSymbol)
         } trailing: {
             AliasField(entry: entry)
-                .settingsEnabled(isAliasEnabled)
+                .settingsEnabled(showsInLauncher && isVisible)
+
             ShortcutRecorder(action: .customWindowSize(id: size.id))
 
             Button(action: onEdit) {
@@ -61,25 +67,13 @@ private struct CustomWindowSizeRow: View {
             .help("Delete")
             .accessibilityLabel("Delete \(size.name)")
 
-            Toggle("", isOn: visibilityBinding)
-                .labelsHidden()
-                .toggleStyle(.checkbox)
-                .launcherVisibilityHelp()
-                .accessibilityLabel("Show \(size.name) in launcher")
+            Toggle(
+                "", isOn: Binding(get: { isVisible }, set: { visibility.setItemVisible($0, for: entry) })
+            )
+            .labelsHidden()
+            .toggleStyle(.checkbox)
+            .launcherVisibilityHelp()
+            .accessibilityLabel("Show \(size.name) in launcher")
         }
-    }
-
-    private var entry: AppEntry { AppEntry(size) }
-
-    private var isAliasEnabled: Bool {
-        settings.windowManagementEnabled
-            && settings.windowManagementShowInLauncher
-            && visibility.isItemVisible(entry)
-    }
-
-    private var visibilityBinding: Binding<Bool> {
-        Binding(
-            get: { visibility.isItemVisible(entry) },
-            set: { visibility.setItemVisible($0, for: entry) })
     }
 }

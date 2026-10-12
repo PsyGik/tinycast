@@ -127,6 +127,7 @@ struct CalcTests {
         expectDisplay("3X3", "9")
         expectDisplay("3 x -2", "-6")
         expectDisplay("2xpi", "6.283185307")
+        expectDisplay("2xsin(pi/2)", "2")
         expectDisplay("6/2x(1+2)", "9")
         expectDisplay("10 x", "10")
         expectDisplay("$5 x 2", "10.00 USD")
@@ -278,6 +279,7 @@ struct CalcTests {
         expectDisplay("256 >> 2", "64")
         expectDisplay("6 & 3", "2")
         expectDisplay("5 xor 3", "6")
+        expectDisplay("5 XOR 3", "6")
         expectDisplay("~1", "-2")
         expectDisplay("1 | 2 == 3", "true")
         expectDisplay("~1 == -2", "true")
@@ -685,10 +687,20 @@ struct CalcTests {
         // A slash date still reads as a date when the other side names a keyword
         expectDisplayAt("9/4 - today", "42 days")
         expectDisplayAt("today - 9/4", "-42 days")
-        // Bare date/unit words alone are app searches, not cards
-        expectNilAt("today")
+        // A lone word naming one moment answers; one that recurs is still an app search
+        expectDisplayAt("today", "24 July")
+        expectDisplayAt("tomorrow", "25 July")
+        expectDisplayAt("yesterday", "23 July")
+        expectDisplayAt("now", "24 July at 12:18 AM")
+        expectBadgesAt("tomorrow", source: "Friday, 24 July", target: "Saturday")
+        expectExpression("Today", "Today")
+        expectDisplayAt("time", "12:18 AM")
+        expectBadgesAt("time", source: "Friday, 24 July", target: "UTC")
         expectNilAt("july")
-        expectNilAt("tomorrow")
+        expectNilAt("monday")
+        expectNilAt("noon")
+        expectNilAt("todays")
+        expectNilAt("times")
 
         // Angle units (deg is a real unit now, not just a trig postfix)
         expectDisplay("1 deg", "0.01745329252 rad")
@@ -765,6 +777,25 @@ struct CalcTests {
         expectDisplay("1kUSD to EUR", "920.00 EUR")
         expectDisplay("£50 in dollars", "63.29 USD")
         expectDisplay("$100 to yen", "15,700.00 JPY")
+        expectDisplay("400K xof in €", "609.80 EUR")
+        expectDisplay("400K xof to €", "609.80 EUR")
+        expectDisplay("400K XOF in €", "609.80 EUR")
+        expectDisplay("400Kxof to eur", "609.80 EUR")
+        expectDisplay("400000 XoF to eur", "609.80 EUR")
+        expectDisplay("xof 400K to €", "609.80 EUR")
+        expectCopy("400K xof in €", "609.80 EUR")
+        expectBadges("400K xof in €", source: "West African CFA Franc", target: "Euro")
+        expectDisplay("100 xrp to usd", "50.00 USD")
+        expectDisplay("100XRP to usd", "50.00 USD")
+        expectDisplay("2 x 100xrp to usd", "100.00 USD")
+        expectDisplay("-100 xrp to usd", "-50.00 USD")
+        for code in ["XAF", "XPF", "XCD", "XCG", "XDR", "XAU", "XAG", "XLM", "XMR"] {
+            expectError("100 \(code.lowercased()) to usd", "No exchange rate for \(code).")
+            expectError("100\(code) in usd", "No exchange rate for \(code).")
+        }
+        expectErrorWithoutRates(
+            "400K xof in €", "Exchange rates unavailable — check your connection.")
+        expectNil("100 xofx to eur")
         // Sub-cent cross-rates widen instead of collapsing to 0.00
         expectDisplay("1 jpy to usd", "0.006369 USD")
         // …and stay in plain notation past 1e-5, where "%g" would flip to "5.539e-05"
@@ -1181,7 +1212,6 @@ struct CalcTests {
         expectDisplay("1 cup to ml", "236.5882365 mL")
         expectNil("time in xyzzy")
         expectNil("in tokyo")
-        expectNil("time")
 
         // IATA airport codes, which Foundation has no notion of
         expectDisplayAt("time in vie", "2:18 AM")
@@ -1314,11 +1344,9 @@ struct CalcTests {
         expectBadgesAt("25. aug", source: "Friday, 24 July", target: "Tuesday")
         // A bare date takes the year it is nearest, so it agrees with the same date plus a shift
         expectDisplayAt("25. aug + 3", "28 August")
-        // A month or a relative word alone is still an app search
+        // A month alone is still an app search
         expectNilAt("july")
         expectNilAt("aug")
-        expectNilAt("today")
-        expectNilAt("tomorrow")
 
         // Date arithmetic chains left to right, however many terms it carries
         expectDisplayAt("17.2.26 + 100 week days - 4 + 2", "5 July")
@@ -1534,9 +1562,6 @@ struct CalcTests {
         expectDisplayAt("1:00 - 3:00", "-2 hr", calendar: vienna)
         let springNow = clock.calendar.date(from: DateComponents(year: 2026, month: 3, day: 29))!
         expectNilAt("2:30am vienna in london", now: springNow, calendar: vienna)
-        // A lone date word is still an app search
-        expectNilAt("tomorrow")
-        expectNilAt("today")
 
         // Spoken function and operator names
         expectDisplay("square root of 625", "25")
@@ -1762,7 +1787,8 @@ struct CalcTests {
             check(query + " [chains]", expected: "true", got: chains(evaluate(query)))
         }
         for query in [
-            "now + 90 min", "now + 90 min +", "time in Tokyo", "3pm London in Tokyo", "5 > 3",
+            "now + 90 min", "now + 90 min +", "today", "time", "time in Tokyo", "3pm London in Tokyo",
+            "5 > 3",
             "ratio of 1920 to 1080"
         ] {
             check(query + " [chains]", expected: "false", got: chains(evaluate(query)))
@@ -1856,6 +1882,7 @@ struct CalcTests {
         rates: [
             "USD": 1, "EUR": 0.92, "GBP": 0.79, "JPY": 157, "INR": 83.5, "CAD": 1.36,
             "KRW": 1330, "IDR": 18053, "CHF": 0.81, "AED": 3.6725, "SGD": 1.35,
+            "XOF": 603.48, "XRP": 2,
             "BTC": 1.0 / 60_000, "ETH": 1.0 / 2_000, "SOL": 1.0 / 100, "DOGE": 10
         ],
         fetchedAt: Date(timeIntervalSince1970: 1_785_000_000))

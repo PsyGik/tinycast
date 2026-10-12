@@ -241,7 +241,7 @@ final class AppSettings {
         }
     }
 
-    /// The physical key remapped to the Hyper chord; `HyperKeyTap` reacts via its observer.
+    /// The physical key remapped to the Hyper chord; `HyperKeyManager` reacts via its observer.
     var hyperKey: HyperKeyPhysicalKey {
         didSet { defaults.set(hyperKey.rawValue, forKey: Key.hyperKey.rawValue) }
     }
@@ -254,6 +254,14 @@ final class AppSettings {
     var hyperKeyQuickPress: HyperKeyQuickPress {
         didSet {
             defaults.set(hyperKeyQuickPress.rawValue, forKey: Key.hyperKeyQuickPress.rawValue)
+        }
+    }
+
+    var hyperKeySecureInputCompatibility: Bool {
+        didSet {
+            defaults.set(
+                hyperKeySecureInputCompatibility,
+                forKey: Key.hyperKeySecureInputCompatibility.rawValue)
         }
     }
 
@@ -298,7 +306,15 @@ final class AppSettings {
         }
     }
 
-    /// Scales the palette and its floating siblings only. Read through `InterfaceSize.metrics`.
+    /// The palette's look: Less Rounded's flat bars and strips, or More Rounded's floating capsule.
+    var interfaceShape: InterfaceShape {
+        didSet { defaults.set(interfaceShape.rawValue, forKey: Key.interfaceShape.rawValue) }
+    }
+
+    /// The palette's geometry at the chosen size and shape, for every surface that floats with it.
+    var metrics: InterfaceMetrics { InterfaceMetrics(scale: interfaceSize.scale, shape: interfaceShape) }
+
+    /// Scales the palette and its floating siblings only. Read through `metrics`.
     var interfaceSize: InterfaceSize {
         didSet {
             defaults.set(interfaceSize.rawValue, forKey: Key.interfaceSize.rawValue)
@@ -586,6 +602,13 @@ final class AppSettings {
         didSet { defaults.set(autoJoinConfirms, forKey: Key.autoJoinConfirms.rawValue) }
     }
 
+    var autoJoinNamedProvidersOnly: Bool {
+        didSet {
+            defaults.set(
+                autoJoinNamedProvidersOnly, forKey: Key.autoJoinNamedProvidersOnly.rawValue)
+        }
+    }
+
     /// Doubles as camera consent, so only the Calendar pane's switch writes it.
     var cameraPreview: Bool {
         didSet { defaults.set(cameraPreview, forKey: Key.cameraPreview.rawValue) }
@@ -693,12 +716,10 @@ final class AppSettings {
         }
     }
 
-    /// What `{selection}` does when there is no readable selection to pass.
-    var quicklinkSelectionFallback: QuicklinkSelectionFallback {
+    var quicklinkPassesSelectedText: Bool {
         didSet {
             defaults.set(
-                quicklinkSelectionFallback.rawValue,
-                forKey: Key.quicklinkSelectionFallback.rawValue)
+                quicklinkPassesSelectedText, forKey: Key.quicklinkPassesSelectedText.rawValue)
         }
     }
 
@@ -754,6 +775,8 @@ final class AppSettings {
             defaults.string(forKey: Key.hyperKeyQuickPress.rawValue)
             .flatMap(HyperKeyQuickPress.init)
             ?? .none
+        hyperKeySecureInputCompatibility = defaults.bool(
+            forKey: Key.hyperKeySecureInputCompatibility.rawValue)
         emojiSkinTone =
             defaults.string(forKey: Key.emojiSkinTone.rawValue).flatMap(EmojiSkinTone.init) ?? .none
         emojiGridColumns =
@@ -774,6 +797,9 @@ final class AppSettings {
         interfaceSize =
             defaults.string(forKey: Key.interfaceSize.rawValue).flatMap(InterfaceSize.init)
             ?? .standard
+        interfaceShape =
+            defaults.string(forKey: Key.interfaceShape.rawValue).flatMap(InterfaceShape.init)
+            ?? .square
         compactMode = defaults.bool(forKey: Key.compactMode.rawValue)
         // Defaults to true, so absence must be distinguished from a stored `false`.
         showFavoritesInCompactMode =
@@ -910,6 +936,7 @@ final class AppSettings {
         autoJoinConfirms =
             defaults.object(forKey: Key.autoJoinConfirms.rawValue) == nil
             || defaults.bool(forKey: Key.autoJoinConfirms.rawValue)
+        autoJoinNamedProvidersOnly = defaults.bool(forKey: Key.autoJoinNamedProvidersOnly.rawValue)
         cameraPreview = defaults.bool(forKey: Key.cameraPreview.rawValue)
         meetingBrowserBundleID = defaults.string(forKey: Key.meetingBrowser.rawValue)
         // Both default to their zero case, so an unset key needs no presence check.
@@ -952,9 +979,8 @@ final class AppSettings {
             || defaults.bool(forKey: Key.quicklinksShowInLauncher.rawValue)
         appleShortcutsEnabled = defaults.bool(forKey: Key.appleShortcutsEnabled.rawValue)
         quicklinkOpensNewWindow = defaults.bool(forKey: Key.quicklinkOpensNewWindow.rawValue)
-        quicklinkSelectionFallback =
-            defaults.string(forKey: Key.quicklinkSelectionFallback.rawValue)
-            .flatMap(QuicklinkSelectionFallback.init) ?? .ask
+        quicklinkPassesSelectedText = defaults.bool(
+            forKey: Key.quicklinkPassesSelectedText.rawValue)
         quicklinkConfirmsBeforeDelete =
             defaults.object(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue) == nil
             || defaults.bool(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue)

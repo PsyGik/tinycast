@@ -82,7 +82,7 @@ private struct UninstallRow: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.spacing.xl) {
+        HStack(spacing: metrics.spacing.paletteRowGap) {
             // Smaller glyph, same result-row slot, so titles line up at one x across modes.
             SymbolImage(name: glyph, size: metrics.size.checkbox)
                 .foregroundStyle(candidate.isLocked ? Theme.Colors.textTertiary : .primary)
@@ -115,7 +115,7 @@ private struct UninstallRow: View {
         }
         .opacity(candidate.isLocked ? 0.55 : 1)
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.paletteRowInset)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)

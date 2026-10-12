@@ -145,7 +145,7 @@ private struct ClipboardRow: View {
 
     var body: some View {
         IconCache.observeStyle()
-        return HStack(spacing: metrics.spacing.xl) {
+        return HStack(spacing: metrics.spacing.paletteRowGap) {
             thumbnail(item.colorValue)
                 .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
             Text(previewText)
@@ -161,7 +161,7 @@ private struct ClipboardRow: View {
             }
         }
         .padding(.horizontal, metrics.spacing.md)
-        .padding(.vertical, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.paletteRowInset)
         .background(
             RoundedRectangle(cornerRadius: metrics.radius.paletteListRow, style: .continuous)
                 .fill(fill)

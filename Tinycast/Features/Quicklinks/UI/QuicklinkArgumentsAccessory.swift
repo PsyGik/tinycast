@@ -14,8 +14,8 @@ enum QuicklinkArgumentsAccessory {
         onSubmit: @escaping () -> Void
     ) -> PaletteHeaderAccessory? {
         guard let quicklink else { return nil }
-        let metrics = core.settings.interfaceSize.metrics
-        let arguments = core.quicklinkCoordinator.promptedArguments(for: quicklink).map {
+        let metrics = core.settings.metrics
+        let arguments = SnippetTemplateEngine.declaredArguments(in: quicklink.link).map {
             InlineArgument(
                 id: $0.name, title: $0.name, options: $0.options, isOptional: $0.isOptional)
         }
@@ -49,9 +49,9 @@ enum QuicklinkArgumentsAccessory {
     }
 
     /// The typed values for one quicklink, stripped of blanks — what the open funnel is handed.
-    static func values(for quicklink: Quicklink, core: AppCore, vm: PaletteState) -> [String: String] {
+    static func values(for quicklink: Quicklink, vm: PaletteState) -> [String: String] {
         var values: [String: String] = [:]
-        for argument in core.quicklinkCoordinator.promptedArguments(for: quicklink) {
+        for argument in SnippetTemplateEngine.declaredArguments(in: quicklink.link) {
             let typed =
                 vm.commandArguments[
                     PaletteState.argumentKey(quicklink.entryID, argument.name)] ?? ""

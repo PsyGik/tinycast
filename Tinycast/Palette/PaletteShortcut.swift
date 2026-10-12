@@ -44,6 +44,12 @@ enum PaletteShortcut: Equatable {
     case restart
     /// ⌘N, a new one of whatever the screen holds.
     case newItem
+    /// ⌘E, the row opened in its editor.
+    case edit
+    /// ⌘D.
+    case duplicate
+    /// ⌘F, for a screen whose ⌘↵ already does something else.
+    case showInFinder
     /// ⌥⌘,, the screen's own settings; ⌘, alone stays the app's.
     case settings
     /// ⌘J, Quick AI handing its conversation to the AI Chat window.
@@ -71,11 +77,13 @@ enum PaletteShortcut: Equatable {
         if command, matches("i") { return shift ? .showInfo : .showDetails }
         if command, !shift, matches("s") { return .saveAsQuicklink }
         if control, matches("x") { return shift ? .deleteAll : .delete }
-        if command, shift, matches("f") { return .toggleFavorite }
+        if command, matches("f") { return shift ? .toggleFavorite : .showInFinder }
         if command, shift, matches("h") { return .hideFromSearch }
         if control, shift, matches("q") { return option ? .forceQuit : .quit }
         if command, matches("r") { return .restart }
         if command, !shift, matches("n") { return .newItem }
+        if command, !shift, !option, !control, matches("e") { return .edit }
+        if command, !shift, matches("d") { return .duplicate }
         if command, option, matches(",") { return .settings }
         if command, matches("j") { return .continueInChat }
         return nil
@@ -84,9 +92,9 @@ enum PaletteShortcut: Equatable {
     /// The compact bar shows no selection, so a chord aimed at a highlighted row waits for the list.
     var requiresExpanded: Bool {
         switch self {
-        case .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInQuickLook, .openInApp,
-            .showDetails, .showInfo, .saveAsQuicklink, .toggleFavorite, .hideFromSearch, .quit,
-            .forceQuit, .restart:
+        case .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInQuickLook,
+            .openInApp, .showDetails, .showInfo, .saveAsQuicklink, .toggleFavorite, .hideFromSearch,
+            .quit, .forceQuit, .restart, .edit, .duplicate, .showInFinder:
             true
         case .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot, .continueInChat, .newItem,
             .settings, .copyCalculation:
@@ -97,8 +105,8 @@ enum PaletteShortcut: Equatable {
     var closesMenu: Bool {
         switch self {
         case .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
-            .quickLook, .openInQuickLook, .openInApp, .showDetails, .showInfo, .saveAsQuicklink, .toggleFavorite,
-            .hideFromSearch, .newItem, .settings:
+            .quickLook, .openInQuickLook, .openInApp, .showDetails, .showInfo, .saveAsQuicklink,
+            .toggleFavorite, .hideFromSearch, .newItem, .settings, .edit, .duplicate, .showInFinder:
             true
         case .commandDelete, .pasteFile, .quit, .forceQuit, .restart, .pin, .favoriteSlot,
             .continueInChat:
