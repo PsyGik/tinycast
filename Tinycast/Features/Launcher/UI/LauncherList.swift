@@ -11,7 +11,7 @@ struct LauncherList: View {
     let frequentCount: Int
     let suggestionCount: Int
     var recentCount = 0
-    let showSections: Bool
+    let matchCount: Int
     /// Changes only when the list should scroll, so mouse selection never yanks it.
     let scroll: ScrollIntent
     /// The card at flat index 0, when one leads. At most one ever does.
@@ -103,22 +103,17 @@ struct LauncherList: View {
     }
 
     private var rows: [Row] {
-        var cardRows: [Row] = categories.map { $0.pinned ? [] : [.categories] } ?? []
-        if let card { cardRows += [.header(card.sectionTitle), .card(card)] }
-        guard showSections else {
-            guard !results.isEmpty else { return cardRows + fallbackRows }
-            return cardRows + [.header("Results")] + results.map { .app($0, slot: nil) }
-                + fallbackRows
-        }
-        var rows: [Row] = cardRows
+        var rows: [Row] = categories.map { $0.pinned ? [] : [.categories] } ?? []
+        if let card { rows += [.header(card.sectionTitle), .card(card)] }
         let favorites = results.prefix(favoriteCount)
         let meetings = results.dropFirst(favoriteCount).prefix(meetingCount)
         let frequent = results.dropFirst(favoriteCount + meetingCount).prefix(frequentCount)
         let suggestions = results.dropFirst(favoriteCount + meetingCount + frequentCount)
             .prefix(suggestionCount)
         let pinnedCount = favoriteCount + meetingCount + frequentCount + suggestionCount
-        let recent = results.dropFirst(pinnedCount).prefix(recentCount)
-        let rest = results.dropFirst(pinnedCount + recentCount)
+        let matches = results.dropFirst(pinnedCount).prefix(matchCount)
+        let recent = results.dropFirst(pinnedCount + matchCount).prefix(recentCount)
+        let rest = results.dropFirst(pinnedCount + matchCount + recentCount)
         var grouped: [AppEntry.Kind: [AppEntry]] = [:]
         for app in rest { grouped[app.kind, default: []].append(app) }
         if !favorites.isEmpty {
@@ -139,6 +134,10 @@ struct LauncherList: View {
         if !suggestions.isEmpty {
             rows.append(.header("Suggestions"))
             rows.append(contentsOf: suggestions.map { .app($0, slot: nil) })
+        }
+        if !matches.isEmpty {
+            rows.append(.header("Results"))
+            rows.append(contentsOf: matches.map { .app($0, slot: nil) })
         }
         if !recent.isEmpty {
             rows.append(.header("Recently Used"))

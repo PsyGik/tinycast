@@ -42,6 +42,7 @@ enum Theme {
         static let paletteListRow: CGFloat = 6
         static let categoryChip: CGFloat = 7
         static let row: CGFloat = 10
+        static let formField: CGFloat = 12
         /// Emoji tiles are roomier than list rows, so their corners take one larger step.
         static let emojiCell: CGFloat = 12
         static let menu: CGFloat = 6
@@ -78,6 +79,8 @@ enum Theme {
         static let panelHeight: CGFloat = 475
         /// Opening size on a first run and the floor: below it the title bar's own parts collide.
         static let noteWindow = CGSize(width: 440, height: 180)
+        /// The tallest a note window grows to fit its text; past it the editor scrolls.
+        static let noteWindowMaxHeight: CGFloat = 860
         static let noteEditorInset: CGFloat = 16
         /// Shorter than the horizontal inset, so the first line sits close under the title bar.
         static let noteEditorTopInset: CGFloat = 6
@@ -173,6 +176,9 @@ enum Theme {
         static let emojiGridInset: CGFloat = 16
         static let emojiCell: CGFloat = 56
         static let menuWidth: CGFloat = 276
+        static let formMenuMinimumWidth: CGFloat = 200
+        static let formMenuExtraRowsHeight: CGFloat = 20
+        static let formFieldFocusStroke: CGFloat = 2
         static let actionMenuWidth: CGFloat = 320
         /// The clipboard type filter's menu; `menuWidth` is far too wide for six short rows.
         static let clipboardFilterMenuWidth: CGFloat = 200
@@ -186,6 +192,7 @@ enum Theme {
         static let menuSectionHeader: CGFloat = 16
         /// Five rows and half of the sixth, so a capped menu reads as scrollable, not clipped.
         static let menuVisibleRows: CGFloat = 5.5
+        static let appMenuVisibleRows: CGFloat = 4.5
         /// Rounded: a half-row of an odd pitch lands the glass edge on a half pixel.
         static var menuRowsMaxHeight: CGFloat {
             (menuVisibleRows * (menuRowHeight + menuRowSpacing)).rounded()

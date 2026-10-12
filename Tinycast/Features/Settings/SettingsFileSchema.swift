@@ -45,6 +45,8 @@ enum SettingsFileSchema {
         case .hyperKey: return bind(settings, \.hyperKey)
         case .hyperKeyIncludesShift: return bind(settings, \.hyperKeyIncludesShift)
         case .hyperKeyQuickPress: return bind(settings, \.hyperKeyQuickPress)
+        case .hyperKeySecureInputCompatibility:
+            return bind(settings, \.hyperKeySecureInputCompatibility)
         case .calcNumberStyle: return bind(settings, \.calcNumberStyle)
         case .calcDefaultCurrency:
             return bind(settings, \.calcDefaultCurrency) { code in
@@ -79,7 +81,7 @@ enum SettingsFileSchema {
         case .quicklinksEnabled: return bind(settings, \.quicklinksEnabled)
         case .quicklinksShowInLauncher: return bind(settings, \.quicklinksShowInLauncher)
         case .quicklinkOpensNewWindow: return bind(settings, \.quicklinkOpensNewWindow)
-        case .quicklinkSelectionFallback: return bind(settings, \.quicklinkSelectionFallback)
+        case .quicklinkPassesSelectedText: return bind(settings, \.quicklinkPassesSelectedText)
         case .quicklinkConfirmsBeforeDelete: return bind(settings, \.quicklinkConfirmsBeforeDelete)
         case .quicklinkCommands: return launcher.commandsBinding(for: key, owner: .quicklinks)
         case .appleShortcutsEnabled: return bind(settings, \.appleShortcutsEnabled)
@@ -158,6 +160,7 @@ enum SettingsFileSchema {
         case .calendarSpan: return bind(settings, \.calendarSpan)
         case .joinWindowMinutes: return bind(settings, \.joinWindowMinutes)
         case .autoJoinConfirms: return bind(settings, \.autoJoinConfirms)
+        case .autoJoinNamedProvidersOnly: return bind(settings, \.autoJoinNamedProvidersOnly)
         case .meetingBrowser: return bind(settings, \.meetingBrowserBundleID)
         case .calendarMenuBarDisplay: return bind(settings, \.calendarMenuBarDisplay)
         case .menuBarEvents: return bind(settings, \.menuBarEvents)
@@ -188,7 +191,6 @@ extension FileSearchResultLimit: SettingsFileRawValue {}
 extension AppUsageOrder: SettingsFileRawValue {}
 extension AppUsageWindow: SettingsFileRawValue {}
 extension AppUsageSectionSize: SettingsFileRawValue {}
-extension QuicklinkSelectionFallback: SettingsFileRawValue {}
 extension WindowCycle: SettingsFileRawValue {}
 extension ClipboardDefaultAction: SettingsFileRawValue {}
 extension EmojiSkinTone: SettingsFileRawValue {}
