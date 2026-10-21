@@ -1,7 +1,7 @@
 import Carbon.HIToolbox
 import CoreGraphics
+import Foundation
 
-/// The physical key remapped to the Hyper chord. See docs/features/hotkeys.md#the-hyper-key.
 enum HyperKeyPhysicalKey: String, CaseIterable, Identifiable, Sendable {
     case none
     case capsLock
@@ -10,21 +10,20 @@ enum HyperKeyPhysicalKey: String, CaseIterable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
-    /// The single glyph Hyper shortcuts collapse to.
     static let hyperGlyph = "✦"
 
     var title: String {
         switch self {
-        case .none: return "None"
-        case .capsLock: return "Caps Lock (⇪)"
-        case .leftControl: return "Left Control (⌃)"
-        case .leftShift: return "Left Shift (⇧)"
-        case .leftOption: return "Left Option (⌥)"
-        case .leftCommand: return "Left Command (⌘)"
-        case .rightControl: return "Right Control (⌃)"
-        case .rightShift: return "Right Shift (⇧)"
-        case .rightOption: return "Right Option (⌥)"
-        case .rightCommand: return "Right Command (⌘)"
+        case .none: return String(localized: "None")
+        case .capsLock: return String(localized: "Caps Lock (⇪)")
+        case .leftControl: return String(localized: "Left Control (⌃)")
+        case .leftShift: return String(localized: "Left Shift (⇧)")
+        case .leftOption: return String(localized: "Left Option (⌥)")
+        case .leftCommand: return String(localized: "Left Command (⌘)")
+        case .rightControl: return String(localized: "Right Control (⌃)")
+        case .rightShift: return String(localized: "Right Shift (⇧)")
+        case .rightOption: return String(localized: "Right Option (⌥)")
+        case .rightCommand: return String(localized: "Right Command (⌘)")
         }
     }
 
@@ -61,9 +60,8 @@ enum HyperKeyPhysicalKey: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Quick Press label for triggering the key's original function.
     var quickPressOriginalTitle: String? {
-        self == .capsLock ? "Trigger Caps Lock (⇪)" : nil
+        self == .capsLock ? String(localized: "Trigger Caps Lock (⇪)") : nil
     }
 
     func route(secureInputCompatible: Bool) -> HyperKeyRoute? {
@@ -71,7 +69,7 @@ enum HyperKeyPhysicalKey: String, CaseIterable, Identifiable, Sendable {
         guard self == .capsLock else {
             return HyperKeyRoute(key: self, tapKeyCode: keyCode, modifier: modifierKey, remap: nil)
         }
-        // Secure Input still delivers modifiers, so this variant sends Right Control instead of F18.
+        // Secure Input still delivers modifiers, so this variant sends Right Control, not F18.
         if secureInputCompatible {
             return HyperKeyRoute(
                 key: self, tapKeyCode: kVK_RightControl, modifier: .rightControl,

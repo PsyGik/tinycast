@@ -8,17 +8,7 @@ struct FileQuery: Equatable, Sendable {
     let extensions: [String]
 
     init(_ raw: String) {
-        var words: [String] = []
-        var extensions: [String] = []
-        for token in raw.split(whereSeparator: \.isWhitespace).map(String.init) {
-            if token.count > 1, token.hasPrefix("."), token.dropFirst().contains(where: \.isLetter) {
-                extensions.append(token.dropFirst().lowercased())
-            } else {
-                words.append(token)
-            }
-        }
-        self.words = words
-        self.extensions = extensions
+        (words, extensions) = FileSearchQuery.split(raw)
     }
 
     var isEmpty: Bool { words.isEmpty && extensions.isEmpty }

@@ -13,9 +13,7 @@ actor FileSearchProbe {
         pauseEnabled = query != nil
     }
 
-    func search(
-        query: String, filter: FileSearchFilter, policy: FileSearchPolicy
-    ) async -> [FileSearchResult] {
+    func search(query: String, filter: FileSearchFilter) async -> [FileSearchResult] {
         active += 1
         calls.append(filter == .all ? query : "\(query) [\(filter.title)]")
         maximumActive = max(maximumActive, active)
@@ -27,11 +25,8 @@ actor FileSearchProbe {
             try? await Task.sleep(for: .milliseconds(80))
         }
         active -= 1
-        return [
-            FileSearchResult(
-                url: policy.homeDirectory.appending(path: query), isDirectory: false,
-                homeDirectory: policy.homeDirectory)
-        ]
+        let home = URL(fileURLWithPath: "/Users/test")
+        return [FileSearchResult(url: home.appending(path: query), isDirectory: false, homeDirectory: home)]
     }
 
     func snapshot() -> (calls: [String], maximumActive: Int) {
@@ -64,17 +59,17 @@ actor ContentProbe {
 
     init(pausing: Bool) { pauseEnabled = pausing }
 
-    func search(
-        query: String, policy: FileSearchPolicy, names: [FileSearchResult]
-    ) async -> [FileSearchResult] {
+    func search(query: String) async -> [FileSearchResult] {
         calls += 1
         if pauseEnabled {
             await withCheckedContinuation { pausedContinuation = $0 }
         }
-        return names + [
+        let home = URL(fileURLWithPath: "/Users/test")
+        return [
             FileSearchResult(
-                url: policy.homeDirectory.appending(path: "\(query) (content)"), isDirectory: false,
-                homeDirectory: policy.homeDirectory)
+                url: home.appending(path: "\(query) (content)"), isDirectory: false, homeDirectory: home),
+            // Already a name match: the merge must not list it twice.
+            FileSearchResult(url: home.appending(path: query), isDirectory: false, homeDirectory: home),
         ]
     }
 
@@ -99,8 +94,6 @@ actor ContentProbe {
 @MainActor
 struct FileSearchSessionTests {
     nonisolated(unsafe) static var failures = 0
-    static let home = URL(fileURLWithPath: "/Users/test")
-
     static func expect(_ condition: @autoclosure () -> Bool, _ message: String) {
         if !condition() {
             failures += 1
@@ -109,11 +102,13 @@ struct FileSearchSessionTests {
     }
 
     static func main() async {
-        await coalescesDebouncingQueries()
+        await coalescesQueuedQueries()
         await serializesRunningQueries()
         await cancellationPreventsPendingWork()
-        await policyChangeDiscardsStaleResults()
-        await unchangedPolicyKeepsResults()
+        await idleCancellationKeepsTheSessionUsable()
+        await refreshRerunsThePublishedQuery()
+        await blankScreenOpensOnKeptRecents()
+        await recentRefreshLeavesTheOpenListAlone()
         await blankQueryLoadsRecents()
         await filterChangeRerunsTheQuery()
         await contentPassMergesAfterNames()
@@ -124,21 +119,23 @@ struct FileSearchSessionTests {
         exit(failures == 0 ? 0 : 1)
     }
 
-    static func coalescesDebouncingQueries() async {
-        let probe = FileSearchProbe()
-        let session = makeSession(probe: probe, debounce: .milliseconds(30))
+    static func coalescesQueuedQueries() async {
+        let probe = FileSearchProbe(pausing: "a")
+        let session = makeSession(probe: probe)
+        session.search("a")
+        guard await probe.waitUntilPaused() else { return expect(false, "the first query starts") }
+        session.search("an")
         session.search("annual")
-        session.search("annual report")
-        await waitUntil { session.state == .ready }
+        await probe.resumePausedSearch()
+        await waitUntil { session.state == .ready && session.results.first?.name == "annual" }
 
         let snapshot = await probe.snapshot()
-        expect(snapshot.calls == ["annual report"], "the debounce runs only the newest query")
-        expect(session.results.first?.name == "annual report", "the newest query publishes")
+        expect(snapshot.calls == ["a", "annual"], "keystrokes queued behind a search collapse")
     }
 
     static func serializesRunningQueries() async {
         let probe = FileSearchProbe(pausing: "first")
-        let session = makeSession(probe: probe, debounce: .milliseconds(10))
+        let session = makeSession(probe: probe)
         session.search("first")
         let firstStarted = await probe.waitUntilPaused()
         expect(firstStarted, "the first query starts")
@@ -149,55 +146,92 @@ struct FileSearchSessionTests {
 
         let snapshot = await probe.snapshot()
         expect(snapshot.calls == ["first", "second"], "the superseding query still runs")
-        expect(snapshot.maximumActive == 1, "Spotlight operations never overlap")
+        expect(snapshot.maximumActive == 1, "searches never overlap")
     }
 
     static func cancellationPreventsPendingWork() async {
-        let probe = FileSearchProbe()
-        let session = makeSession(probe: probe, debounce: .milliseconds(30))
-        session.search("cancelled")
+        let probe = FileSearchProbe(pausing: "running")
+        let session = makeSession(probe: probe)
+        session.search("running")
+        guard await probe.waitUntilPaused() else { return expect(false, "the query starts") }
+        session.search("queued")
         session.cancel()
+        await probe.resumePausedSearch()
         try? await Task.sleep(for: .milliseconds(60))
 
         let snapshot = await probe.snapshot()
-        expect(snapshot.calls.isEmpty, "cancelling during the debounce prevents the search")
+        expect(snapshot.calls == ["running"], "cancelling drops the queued search")
         expect(session.state == .idle && session.results.isEmpty, "cancellation clears the session")
     }
 
-    static func policyChangeDiscardsStaleResults() async {
-        let probe = FileSearchProbe(pausing: "report")
-        let session = makeSession(probe: probe, debounce: .milliseconds(10))
+    static func idleCancellationKeepsTheSessionUsable() async {
+        let probe = FileSearchProbe()
+        let session = makeSession(probe: probe)
+        session.cancel()
+        expect(session.state == .idle && session.results.isEmpty, "an idle cancel changes nothing")
         session.search("report")
-        let oldSearchStarted = await probe.waitUntilPaused()
-        expect(oldSearchStarted, "the old-policy query starts")
-        guard oldSearchStarted else { return }
-        session.apply(scopes: FileSearchScope.defaultScopes, ignorePatterns: ["*.log"])
-
-        expect(
-            session.state == .idle && session.results.isEmpty,
-            "a result found under the old rules never publishes")
-        session.search("report")
-        await probe.resumePausedSearch()
         await waitUntil { session.state == .ready && session.results.first?.name == "report" }
+        session.cancel()
+        session.cancel()
+        expect(session.state == .idle && session.results.isEmpty, "a repeated cancel stays idle")
+        session.search("report")
+        await waitUntil { session.state == .ready && session.results.first?.name == "report" }
+
         let snapshot = await probe.snapshot()
-        expect(snapshot.calls == ["report", "report"], "the same query re-runs under the new rules")
+        expect(snapshot.calls == ["report", "report"], "a cancelled query runs again when retyped")
     }
 
-    static func unchangedPolicyKeepsResults() async {
+    static func refreshRerunsThePublishedQuery() async {
         let probe = FileSearchProbe()
-        let session = makeSession(probe: probe, debounce: .milliseconds(10))
+        let session = makeSession(probe: probe)
+        session.refresh()
         session.search("report")
         await waitUntil { session.state == .ready }
-        session.apply(scopes: FileSearchScope.defaultScopes, ignorePatterns: [])
+        session.refresh()
+        await waitUntil { session.state == .ready }
+        try? await Task.sleep(for: .milliseconds(20))
 
+        let snapshot = await probe.snapshot()
         expect(
-            session.state == .ready && session.results.first?.name == "report",
-            "re-applying identical settings leaves the published results alone")
+            snapshot.calls == ["", "report", "report", ""],
+            "an idle session prepares recents, and an open one re-asks its query and refreshes them")
+    }
+
+    static func blankScreenOpensOnKeptRecents() async {
+        let probe = FileSearchProbe()
+        let session = makeSession(probe: probe)
+        session.refresh()
+        try? await Task.sleep(for: .milliseconds(150))
+        session.search("")
+        expect(
+            session.state == .ready && !session.results.isEmpty,
+            "prepared recents show before any search returns")
+        await waitUntil { session.state == .ready }
+        session.cancel()
+        session.search("")
+        expect(!session.results.isEmpty, "recents survive the palette closing")
+        session.search("report")
+        expect(
+            session.results.first?.name != "report",
+            "a typed query still waits for its own results")
+    }
+
+    static func recentRefreshLeavesTheOpenListAlone() async {
+        let probe = FileSearchProbe()
+        let session = makeSession(probe: probe)
+        session.search("report")
+        await waitUntil { session.state == .ready }
+        session.refreshRecent()
+        try? await Task.sleep(for: .milliseconds(150))
+        expect(session.results.first?.name == "report", "a Recent refresh leaves the open list alone")
+        session.cancel()
+        session.search("")
+        expect(!session.results.isEmpty, "the next blank screen opens on the refreshed rows")
     }
 
     static func blankQueryLoadsRecents() async {
         let probe = FileSearchProbe()
-        let session = makeSession(probe: probe, debounce: .milliseconds(10))
+        let session = makeSession(probe: probe)
         session.search("")
         await waitUntil { session.state == .ready }
         session.search("report")
@@ -211,7 +245,7 @@ struct FileSearchSessionTests {
 
     static func filterChangeRerunsTheQuery() async {
         let probe = FileSearchProbe()
-        let session = makeSession(probe: probe, debounce: .milliseconds(10))
+        let session = makeSession(probe: probe)
         session.search("report")
         await waitUntil { session.state == .ready }
         session.search("report", filter: .images)
@@ -228,7 +262,7 @@ struct FileSearchSessionTests {
     static func contentPassMergesAfterNames() async {
         let probe = FileSearchProbe()
         let content = ContentProbe(pausing: true)
-        let session = makeSession(probe: probe, content: content, debounce: .milliseconds(10))
+        let session = makeSession(probe: probe, content: content)
         session.search("budget")
         await waitUntil { session.state == .ready }
         expect(
@@ -240,13 +274,13 @@ struct FileSearchSessionTests {
         await waitUntil { session.results.count == 2 }
         expect(
             session.results.map(\.name) == ["budget", "budget (content)"],
-            "the content matches merge in under the name matches")
+            "the content matches append under the name matches")
     }
 
     static func newerQuerySkipsTheContentPass() async {
         let probe = FileSearchProbe()
         let content = ContentProbe(pausing: true)
-        let session = makeSession(probe: probe, content: content, debounce: .milliseconds(10))
+        let session = makeSession(probe: probe, content: content)
         session.search("budget")
         _ = await content.waitUntilPaused()
         session.search("invoice")
@@ -261,18 +295,10 @@ struct FileSearchSessionTests {
     static func contentPassOnlyWhenEnabled() async {
         let probe = FileSearchProbe()
         let content = ContentProbe(pausing: false)
-        let policy = FileSearchPolicy(
-            scopes: FileSearchScope.defaultScopes, ignorePatterns: [], homeDirectory: home)
-        let session = FileSearchSession(
-            policy: policy, debounce: .milliseconds(10),
-            contentOperation: { query, _, policy, names in
-                await content.search(query: query, policy: policy, names: names)
-            },
-            searchOperation: { query, filter, policy in
-                await probe.search(query: query, filter: filter, policy: policy)
-            })
+        let session = makeSession(probe: probe, content: content)
         session.search("")
         await waitUntil { session.state == .ready }
+        session.contentOperation = nil
         session.search("budget")
         await waitUntil { session.state == .ready && session.results.first?.name == "budget" }
         try? await Task.sleep(for: .milliseconds(40))
@@ -280,27 +306,15 @@ struct FileSearchSessionTests {
         expect(calls == 0, "with content search off, and on the blank screen, no content pass runs")
     }
 
-    static func makeSession(
-        probe: FileSearchProbe, content: ContentProbe, debounce: Duration
-    ) -> FileSearchSession {
-        let policy = FileSearchPolicy(
-            scopes: FileSearchScope.defaultScopes, ignorePatterns: [], homeDirectory: home,
-            includesContent: true)
-        return FileSearchSession(
-            policy: policy, debounce: debounce,
-            contentOperation: { query, _, policy, names in
-                await content.search(query: query, policy: policy, names: names)
-            },
-            searchOperation: { query, filter, policy in
-                await probe.search(query: query, filter: filter, policy: policy)
-            })
+    static func makeSession(probe: FileSearchProbe, content: ContentProbe) -> FileSearchSession {
+        let session = makeSession(probe: probe)
+        session.contentOperation = { query, _ in await content.search(query: query) }
+        return session
     }
 
-    static func makeSession(probe: FileSearchProbe, debounce: Duration) -> FileSearchSession {
-        let policy = FileSearchPolicy(
-            scopes: FileSearchScope.defaultScopes, ignorePatterns: [], homeDirectory: home)
-        return FileSearchSession(policy: policy, debounce: debounce) { query, filter, policy in
-            await probe.search(query: query, filter: filter, policy: policy)
+    static func makeSession(probe: FileSearchProbe) -> FileSearchSession {
+        FileSearchSession { query, filter in
+            await probe.search(query: query, filter: filter)
         }
     }
 

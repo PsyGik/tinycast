@@ -12,7 +12,8 @@ enum PopToRootTimeout: Int, CaseIterable, Identifiable, Sendable {
     var id: Int { rawValue }
 
     var title: String {
-        self == .immediately ? "Immediately" : "After \(rawValue) seconds"
+        self == .immediately
+            ? String(localized: "Immediately") : String(localized: "After \(rawValue) seconds")
     }
 
     var interval: TimeInterval { TimeInterval(rawValue) }
@@ -28,7 +29,7 @@ enum JoinWindow: Int, CaseIterable, Identifiable, Sendable {
 
     var id: Int { rawValue }
 
-    var title: String { rawValue == 1 ? "1 minute" : "\(rawValue) minutes" }
+    var title: String { String(localized: "\(rawValue) minutes") }
 }
 
 /// How early the calendar item picks the next event up. Zero, which `integer(forKey:)` also
@@ -42,7 +43,9 @@ enum MenuBarEvents: Int, CaseIterable, Identifiable, Sendable {
 
     var id: Int { rawValue }
 
-    var title: String { self == .today ? "Today" : "\(rawValue) minutes before" }
+    var title: String {
+        self == .today ? String(localized: "Today") : String(localized: "\(rawValue) minutes before")
+    }
 }
 
 /// The calendar's independent menu-bar presence. Zero matches an unset preference.
@@ -55,14 +58,13 @@ enum CalendarMenuBarDisplay: Int, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .disabled: "Disabled"
-        case .meetingIcon: "Meeting Icon"
-        case .meetingTitle: "Meeting Title"
+        case .disabled: String(localized: "Disabled")
+        case .meetingIcon: String(localized: "Meeting Icon")
+        case .meetingTitle: String(localized: "Meeting Title")
         }
     }
 }
 
-/// How long a started event holds the menu bar. Zero, the default, means it goes as it starts.
 enum CalendarLauncherLimit: Int, CaseIterable, Identifiable, Sendable {
     case one = 1
     case three = 3
@@ -73,10 +75,8 @@ enum CalendarLauncherLimit: Int, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .one: "1 next"
-        case .three: "3 next"
-        case .five: "5 next"
-        case .all: "All"
+        case .one, .three, .five: String(localized: "\(rawValue) next")
+        case .all: String(localized: "All")
         }
     }
 
@@ -95,9 +95,9 @@ enum HideCurrentEvent: Int, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .dontHide: "Keep visible — show time left"
-        case .automatically: "Automatically"
-        default: "After \(rawValue) minutes"
+        case .dontHide: String(localized: "Keep visible — show time left")
+        case .automatically: String(localized: "Automatically")
+        default: String(localized: "After \(rawValue) minutes")
         }
     }
 
@@ -246,7 +246,6 @@ final class AppSettings {
         didSet { defaults.set(hyperKey.rawValue, forKey: Key.hyperKey.rawValue) }
     }
 
-    /// Whether Hyper is ⌃⌥⇧⌘ (on) or ⌃⌥⌘ (off).
     var hyperKeyIncludesShift: Bool {
         didSet { defaults.set(hyperKeyIncludesShift, forKey: Key.hyperKeyIncludesShift.rawValue) }
     }
@@ -280,7 +279,6 @@ final class AppSettings {
         didSet { defaults.set(popToRootTimeout.rawValue, forKey: Key.popToRootTimeout.rawValue) }
     }
 
-    /// Whether Escape walks back through the screens the palette opened, or just closes it.
     var escapeKeyBehavior: EscapeKeyBehavior {
         didSet { defaults.set(escapeKeyBehavior.rawValue, forKey: Key.escapeKeyBehavior.rawValue) }
     }
@@ -288,6 +286,11 @@ final class AppSettings {
     /// Follow macOS, or pin Tinycast to one appearance. Applied by `AppCore.applyAppearance()`.
     var appearance: AppAppearance {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
+    }
+
+    /// The per-app key System Settings writes too, so the two never disagree.
+    var language: AppLanguage {
+        didSet { defaults.set([language.rawValue], forKey: Key.language.rawValue) }
     }
 
     /// Which separators the calculator reads and writes; `.system` follows Language & Region.
@@ -427,9 +430,22 @@ final class AppSettings {
         }
     }
 
-    var fileSearchResultLimit: FileSearchResultLimit {
+    var fileSearchRemovedDefaultPatterns: [String] {
         didSet {
-            defaults.set(fileSearchResultLimit.rawValue, forKey: Key.fileSearchResultLimit.rawValue)
+            defaults.set(
+                fileSearchRemovedDefaultPatterns,
+                forKey: Key.fileSearchRemovedDefaultPatterns.rawValue)
+        }
+    }
+
+    var fileSearchEffectiveIgnorePatterns: [String] {
+        FileSearchIgnoreList.patterns(
+            added: fileSearchIgnorePatterns, removedDefaults: fileSearchRemovedDefaultPatterns)
+    }
+
+    var fileSearchShowInLauncher: Bool {
+        didSet {
+            defaults.set(fileSearchShowInLauncher, forKey: Key.fileSearchShowInLauncher.rawValue)
         }
     }
 
@@ -462,6 +478,11 @@ final class AppSettings {
         didSet {
             defaults.set(dictationAdaptsCapitalization, forKey: Key.dictationAdaptsCapitalization.rawValue)
         }
+    }
+
+    /// Off by default: chunked transcription costs extra inference while recording.
+    var dictationLiveInsertion: Bool {
+        didSet { defaults.set(dictationLiveInsertion, forKey: Key.dictationLiveInsertion.rawValue) }
     }
 
     var dictationIdleRelease: DictationIdleRelease {
@@ -528,7 +549,6 @@ final class AppSettings {
         didSet { defaults.set(navigationEnabled, forKey: Key.navigationEnabled.rawValue) }
     }
 
-    /// Bundle IDs whose menu bar Search Menu Bar Items refuses to read at all.
     var menuSearchDisabledApps: [String] {
         didSet { defaults.set(menuSearchDisabledApps, forKey: Key.menuSearchDisabledApps.rawValue) }
     }
@@ -740,6 +760,19 @@ final class AppSettings {
         didSet { defaults.set(settingsFileEnabled, forKey: Key.settingsFileEnabled.rawValue) }
     }
 
+    /// With no per-app list the bundle follows macOS's languages, so this runs before any lookup.
+    static func pinLanguage() {
+        UserDefaults.standard.set([storedLanguage.rawValue], forKey: Key.language.rawValue)
+    }
+
+    /// The app's own domain only: a plain read falls through to the global list.
+    private static var storedLanguage: AppLanguage {
+        AppLanguage(
+            storedPreferences: Bundle.main.bundleIdentifier
+                .flatMap(UserDefaults.standard.persistentDomain(forName:))?[Key.language.rawValue]
+                as? [String])
+    }
+
     init() {
         // The only feature switch that defaults on, so absence has to outrank a stored `false`.
         clipboardEnabled =
@@ -790,6 +823,7 @@ final class AppSettings {
             ?? .navigateBackOrClose
         appearance =
             defaults.string(forKey: Key.appearance.rawValue).flatMap(AppAppearance.init) ?? .system
+        language = Self.storedLanguage
         calcNumberStyle =
             defaults.string(forKey: Key.calcNumberStyle.rawValue).flatMap(CalcNumberStyle.init)
             ?? .system
@@ -862,9 +896,9 @@ final class AppSettings {
         fileBrowserSpaceQuickLook =
             defaults.object(forKey: Key.fileBrowserSpaceQuickLook.rawValue) == nil
             || defaults.bool(forKey: Key.fileBrowserSpaceQuickLook.rawValue)
-        fileSearchResultLimit =
-            FileSearchResultLimit(rawValue: defaults.integer(forKey: Key.fileSearchResultLimit.rawValue))
-            ?? .standard
+        fileSearchRemovedDefaultPatterns =
+            defaults.stringArray(forKey: Key.fileSearchRemovedDefaultPatterns.rawValue) ?? []
+        fileSearchShowInLauncher = defaults.bool(forKey: Key.fileSearchShowInLauncher.rawValue)
         notesEnabled = defaults.bool(forKey: Key.notesEnabled.rawValue)
         dictationEnabled = defaults.bool(forKey: Key.dictationEnabled.rawValue)
         dictationMode =
@@ -880,6 +914,7 @@ final class AppSettings {
         dictationAdaptsCapitalization =
             defaults.object(forKey: Key.dictationAdaptsCapitalization.rawValue) == nil
             || defaults.bool(forKey: Key.dictationAdaptsCapitalization.rawValue)
+        dictationLiveInsertion = defaults.bool(forKey: Key.dictationLiveInsertion.rawValue)
         dictationIdleRelease =
             defaults.object(forKey: Key.dictationIdleRelease.rawValue)
             .flatMap { $0 as? Int }

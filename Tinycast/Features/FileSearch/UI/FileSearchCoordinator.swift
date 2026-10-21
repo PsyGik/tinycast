@@ -5,6 +5,7 @@ final class FileSearchCoordinator {
     private let settings: AppSettings
     private let appIndex: AppIndex
     private let session: FileSearchSession
+    private let indexer: FileIndexer
     private let palette: PaletteState
     private let paletteCoordinator: PaletteCoordinator
     private let windowController: PaletteWindowController
@@ -13,38 +14,85 @@ final class FileSearchCoordinator {
 
     init(
         settings: AppSettings, appIndex: AppIndex, session: FileSearchSession,
-        palette: PaletteState, paletteCoordinator: PaletteCoordinator,
+        indexer: FileIndexer, palette: PaletteState, paletteCoordinator: PaletteCoordinator,
         windowController: PaletteWindowController, core: AppCore
     ) {
         self.settings = settings
         self.appIndex = appIndex
         self.session = session
+        self.indexer = indexer
         self.palette = palette
         self.paletteCoordinator = paletteCoordinator
         self.windowController = windowController
         self.core = core
+        indexer.onIndexChanged = { [weak session] in session?.refresh() }
+        indexer.onRecentChanged = { [weak session] in session?.refreshRecent() }
     }
 
     func applyEnabled() {
         appIndex.setCommandsVisible([.searchFiles, .browseFiles], settings.fileSearchEnabled)
+        indexer.setEnabled(settings.fileSearchEnabled)
         guard !settings.fileSearchEnabled else { return }
         session.cancel()
         if palette.mode == .fileSearch { palette.prepare(mode: .launcher) }
     }
 
     func applyPolicy() {
-        session.apply(
-            scopes: settings.fileSearchScopes, ignorePatterns: settings.fileSearchIgnorePatterns,
-            includesContent: settings.fileSearchIncludesContent,
-            resultLimit: settings.fileSearchResultLimit.rawValue)
+        let policy = FileSearchPolicy(
+            scopes: settings.fileSearchScopes,
+            ignorePatterns: settings.fileSearchEffectiveIgnorePatterns,
+            homeDirectory: FileManager.default.homeDirectoryForCurrentUser)
+        indexer.apply(policy)
+        session.contentOperation = nil
+        if settings.fileSearchIncludesContent {
+            session.contentOperation = { query, filter in
+                await Task.detached(priority: .userInitiated) {
+                    FileContentSearch.search(query, filter: filter, policy: policy)
+                }.value
+            }
+        }
         core.fileBrowser.apply(
-            ignorePatterns: settings.fileSearchIgnorePatterns,
+            ignorePatterns: settings.fileSearchEffectiveIgnorePatterns,
             showsHidden: settings.fileBrowserShowsHidden)
+    }
+
+    var showsFilesInLauncher: Bool {
+        settings.fileSearchEnabled && settings.fileSearchShowInLauncher
+    }
+
+    /// Borrows the screen's session, so Search Files then opens on the request already answered.
+    func searchFromLauncher(_ query: String) {
+        guard showsFilesInLauncher, FileSearchQuery.answersLauncher(query) else {
+            session.cancel()
+            return
+        }
+        session.search(query)
+    }
+
+    /// Checks the switch before reading the session, so with it off the launcher observes nothing.
+    func launcherFiles(for query: String) -> [FileSearchResult] {
+        guard showsFilesInLauncher, FileSearchQuery.answersLauncher(query) else { return [] }
+        return Array(session.results.prefix(FileSearchQuery.launcherLimit))
+    }
+
+    func applyLauncherFiles() {
+        guard palette.mode == .launcher else { return }
+        searchFromLauncher(palette.query)
+    }
+
+    func rebuildIndex() {
+        indexer.rebuild()
+    }
+
+    func openFullDiskAccessSettings() {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        Permissions.openFullDiskAccessSettings()
     }
 
     /// `query` is the fallback row's: the screen opens already narrowed to what was typed.
     func show(query: String = "") {
         guard settings.fileSearchEnabled else { return }
+        indexer.refreshAccess()
         paletteCoordinator.togglePalette(mode: .fileSearch, seeding: query.isEmpty ? nil : query)
     }
 
@@ -76,7 +124,7 @@ final class FileSearchCoordinator {
                     result.url, configuration: NSWorkspace.OpenConfiguration())
             } catch {
                 await core.showNotice(
-                    title: "Couldn’t Open \(result.name)",
+                    title: String(localized: "Couldn’t Open \(result.name)"),
                     message: error.localizedDescription,
                     symbol: result.isDirectory ? "folder" : "doc", tone: .danger)
             }
@@ -89,6 +137,11 @@ final class FileSearchCoordinator {
         paletteCoordinator.hidePalette(restoreFocus: false)
         let index = rows.firstIndex(of: result) ?? 0
         core.systemQuickLook.show(rows.map(\.url), at: index, returningTo: returnTo)
+    }
+
+    /// From a menu, which knows the row: the session's list around it when the row is in it.
+    func openInQuickLook(_ result: FileSearchResult) {
+        openInQuickLook(result, among: session.results.contains(result) ? session.results : [result])
     }
 
     func showInFinder(_ result: FileSearchResult) {
@@ -130,18 +183,18 @@ final class FileSearchCoordinator {
 
     func copyPath(_ result: FileSearchResult) {
         Paster.copyPlainText(result.id)
-        core.showMessage("Copied path")
+        core.showMessage(String(localized: "Copied path"))
     }
 
     func copyName(_ result: FileSearchResult) {
         Paster.copyPlainText(result.name)
-        core.showMessage("Copied name")
+        core.showMessage(String(localized: "Copied name"))
     }
 
     /// The file itself rather than its path, so Finder and Mail paste a copy of it.
     func copyFile(_ result: FileSearchResult) {
         PasteboardFiles.write(result.url, to: .general)
-        core.showMessage("Copied file")
+        core.showMessage(String(localized: "Copied file"))
     }
 
     /// Into whichever app the palette was summoned over, which is what the row's title names.
@@ -158,10 +211,10 @@ final class FileSearchCoordinator {
                     try FileManager.default.trashItem(at: result.url, resultingItemURL: nil)
                 }.value
                 session.remove(result)
-                core.showMessage("Moved to Trash")
+                core.showMessage(String(localized: "Moved to Trash"))
             } catch {
                 await core.showNotice(
-                    title: "Couldn’t Move \(result.name) to Trash",
+                    title: String(localized: "Couldn’t Move \(result.name) to Trash"),
                     message: error.localizedDescription,
                     symbol: "trash", tone: .danger)
             }

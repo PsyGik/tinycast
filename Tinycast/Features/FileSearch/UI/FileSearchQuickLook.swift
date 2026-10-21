@@ -46,7 +46,7 @@ struct FileSearchQuickLook: View {
     }
 
     private var surface: some View {
-        FileSearchSurface(url: result.url, autoplays: true)
+        FileSearchSurface(url: result.url)
             .clipShape(RoundedRectangle(cornerRadius: surfaceRadius, style: .continuous))
     }
 }

@@ -18,19 +18,24 @@ struct AIProviderTests {
     static func instructionsFollowTheSetting() {
         for prompt in [nil, "", "   \n\t "] as [String?] {
             expect(
-                AIInstructions.compose(userPrompt: prompt, isEnabled: true) == AIPreamble.text,
-                "an absent or blank user prompt sends the preamble alone")
+                AIInstructions.compose(userPrompt: prompt, isEnabled: true, offersChoices: false)
+                    == AIPreamble.text,
+                "an absent or blank user prompt with choices off sends the preamble alone")
         }
         expect(
-            AIInstructions.compose(userPrompt: "  Answer only in haiku.  ", isEnabled: true)
-                == AIPreamble.text + "\n\nAnswer only in haiku.",
-            "instructions put the preamble before the trimmed user prompt with a blank line")
+            AIInstructions.compose(
+                userPrompt: "  Answer only in haiku.  ", isEnabled: true, offersChoices: true)
+                == AIPreamble.text + "\n\n" + AIPreamble.choices + "\n\nAnswer only in haiku.",
+            "instructions put the preamble and its choices before the trimmed user prompt")
         for prompt in [nil, "Answer only in haiku."] as [String?] {
             expect(
-                AIInstructions.compose(userPrompt: prompt, isEnabled: false) == nil,
-                "disabled instructions withhold both the preamble and the user prompt")
+                AIInstructions.compose(userPrompt: prompt, isEnabled: false, offersChoices: true)
+                    == nil,
+                "disabled instructions withhold the preamble, its choices and the user prompt")
         }
-        expect(AIPreamble.text.count < 1_800, "the preamble stays within its per-turn budget")
+        expect(
+            (AIPreamble.text + AIPreamble.choices).count < 1_800,
+            "the preamble stays within its per-turn budget")
     }
 
     /// A wrong document shape must fail here rather than mid-conversation.
@@ -100,6 +105,7 @@ struct AIProviderTests {
         modelCatalogBuildsProviderRequests()
         modelCatalogDecodesProviderResponses()
         modelCatalogSearchesWithoutRenderingEverything()
+        exactMatchNamesOnlyAWholeModel()
         endpointPolicyRejectsUnsafeRemoteURLs()
         storedKeysDoNotFollowARetargetedConnection()
         savingAConnectionDecidesItsKey()
@@ -134,6 +140,7 @@ struct AIProviderTests {
         codexElicitationsAreOnlyToolCalls()
         claudeControlFramesAnswerOneTool()
         aGatewayOffersNoneAsItsReasoningEffort()
+        declaredLevelsNeverReachAVendorOrOutliveTheirDeclaration()
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
@@ -368,7 +375,7 @@ struct AIProviderTests {
     /// A body that named the default would 400 on every endpoint without a thinking mode.
     static func aGatewayOffersNoneAsItsReasoningEffort() {
         let gateway = AIConnection(
-            provider: .openAI, baseURL: "https://api.fusioncode.app/v1", models: ["m"])
+            provider: .openAI, baseURL: "https://gateway.example/v1", models: ["m"])
         expect(
             gateway.reasoningOptions(for: "m")?.efforts == ["default", "none"],
             "a preset pointed away from its own API offers the one effort a gateway can honour")
@@ -391,7 +398,7 @@ struct AIProviderTests {
             "a published catalog always wins over the synthesized switch")
 
         let turn = AIRequest(messages: [AIMessage(role: .user, text: "hi")])
-        let url = URL(string: "https://api.fusioncode.app/v1")!
+        let url = URL(string: "https://gateway.example/v1")!
         let on = AIRequestBody.make(
             turn,
             configuration: AIHTTPConfiguration(provider: .openAI, baseURL: url, model: "m"))
@@ -405,6 +412,87 @@ struct AIProviderTests {
         expect(
             (off["thinking"] as? [String: String])?["type"] == "disabled",
             "None asks the endpoint to answer directly")
+        expect(off["reasoning_effort"] == nil, "None sends no effort field beside it")
+
+        var declared = AIConnection(
+            provider: .openAI, baseURL: "https://gateway.example/v1", models: ["m"])
+        declared.declareLevels(["high", "low", "bogus"], for: "m")
+        expect(
+            declared.reasoningOptions(for: "m")?.efforts == ["default", "low", "high", "none"],
+            "declared levels sit in ladder order between Default and None, and strangers drop")
+        expect(
+            declared.reasoningOptions(for: "m")?.resolvedEffort(nil) == "default",
+            "a declaration leaves reasoning alone until the reader picks a level")
+        expect(declared.declaredLevels(for: "m") == ["low", "high"], "the declaration reads back")
+        declared.declareLevels([], for: "m")
+        expect(
+            declared.reasoningOptions(for: "m")?.efforts == ["default", "none"],
+            "clearing it returns to the Default/None pair")
+
+        let level = AIRequestBody.make(
+            turn,
+            configuration: AIHTTPConfiguration(
+                provider: .openAI, baseURL: url, model: "m", effort: "low"))
+        expect(
+            level["reasoning_effort"] as? String == "low",
+            "a declared level goes out as OpenAI's own reasoning_effort")
+        expect(level["reasoning"] == nil, "and not as OpenRouter's reasoning object")
+        let unset = AIRequestBody.make(
+            turn,
+            configuration: AIHTTPConfiguration(
+                provider: .openAI, baseURL: url, model: "m", effort: "default"))
+        expect(unset["reasoning_effort"] == nil, "Default still sends no field")
+    }
+
+    static func declaredLevelsNeverReachAVendorOrOutliveTheirDeclaration() {
+        var gateway = AIConnection(
+            provider: .openAI, baseURL: "https://gateway.example/v1", models: ["m"])
+        gateway.declareLevels(["low", "high"], for: "m")
+        expect(gateway.offeredEffort("high", for: "m") == "high", "a declared level is sent")
+        expect(gateway.offeredEffort(nil, for: "m") == nil, "no saved effort sends none")
+
+        gateway.declareLevels(["low"], for: "m")
+        expect(
+            gateway.offeredEffort("high", for: "m") == nil,
+            "a chat still holding an unticked level stops sending it")
+
+        var vendor = gateway
+        vendor.baseURL = AIProviderKind.openAI.defaultBaseURL
+        expect(
+            vendor.reasoningOptions(for: "m") == nil,
+            "levels declared for a gateway are not offered once the URL is the vendor's own")
+        expect(vendor.offeredEffort("low", for: "m") == nil, "nor sent to the vendor")
+
+        let openRouter = AIConnection(
+            id: UUID(), provider: .openRouter, models: ["m"],
+            reasoningOptions: ["m": .init(efforts: ["high", "low"], defaultEffort: "high")])
+        expect(
+            openRouter.offeredEffort("high", for: "m") == "high",
+            "OpenRouter's own catalog still reaches its default URL")
+        expect(
+            openRouter.offeredEffort("xhigh", for: "m") == nil,
+            "a level its catalog dropped is not sent")
+        expect(
+            AIConnection(provider: .openAI, models: ["m"]).offeredEffort("high", for: "m") == nil,
+            "an old OpenRouter effort left on a vendor connection is not sent")
+
+        var retargeted = gateway
+        retargeted.dropDeclaredLevels()
+        expect(
+            retargeted.reasoningOptions == nil,
+            "levels declared for one gateway are dropped when the URL moves")
+        var movedOpenRouter = openRouter
+        movedOpenRouter.dropDeclaredLevels()
+        expect(
+            movedOpenRouter.reasoningOptions == openRouter.reasoningOptions,
+            "OpenRouter's catalog is no declaration, so a moved URL keeps it")
+
+        expect(gateway.takesDeclaredLevels, "a gateway takes declared levels")
+        expect(!vendor.takesDeclaredLevels, "a vendor URL does not")
+        expect(
+            !AIConnection(provider: .openRouter, baseURL: "https://proxy.example/v1")
+                .takesDeclaredLevels,
+            "OpenRouter at any URL does not, because its catalog names the levels")
     }
 
     static func providerPresetsResolveEndpoints() {
@@ -509,6 +597,26 @@ struct AIProviderTests {
             openAIModels?.last?.reasoningOptions?.resolvedEffort(nil) == "medium",
             "OpenRouter reasoning metadata keeps the model's advertised default")
 
+        let gateway = Data(
+            """
+            {"data":[
+                {"id":"model-c","name":"Model C","reasoning":true,
+                 "architecture":{"input_modalities":["text","image"]}},
+                {"id":"model-d","reasoning":"high"},
+                {"id":"model-e","reasoning":{"supported_efforts":["low"],"default_effort":"low"}}
+            ]}
+            """.utf8)
+        let gatewayModels = try? AIModelDiscovery.decode(gateway, shape: .openAI)
+        expect(
+            gatewayModels == [
+                .init(id: "model-c", name: "Model C", inputModalities: ["text", "image"]),
+                .init(id: "model-d", name: "model-d"),
+                .init(
+                    id: "model-e", name: "model-e",
+                    reasoningOptions: .init(efforts: ["low"], defaultEffort: "low"))
+            ],
+            "a reasoning field that is not an object is ignored, and the catalog still loads")
+
         let router = AIConnection(
             provider: .openRouter, models: ["model-a", "model-b"], visionModels: ["model-b"])
         expect(
@@ -560,6 +668,33 @@ struct AIProviderTests {
                 models, query: "gpt", excluding: ["openai/gpt-small"], limit: 1
             ).map(\.id) == ["openai/gpt-large"],
             "search excludes selected models and caps visible results")
+    }
+
+    static func exactMatchNamesOnlyAWholeModel() {
+        let models = [
+            AIModelDiscovery.Model(id: "gpt-5.4-mini", name: "GPT-5.4 Mini"),
+            AIModelDiscovery.Model(id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4")
+        ]
+        expect(
+            AIModelDiscovery.exactMatch(models, query: " GPT-5.4-MINI ")?.id == "gpt-5.4-mini",
+            "an exact ID matches regardless of case and surrounding spaces")
+        expect(
+            AIModelDiscovery.exactMatch(models, query: "claude sonnet 4")?.id
+                == "claude-sonnet-4-20250514",
+            "a display name resolves to its model ID")
+        expect(
+            AIModelDiscovery.exactMatch(models, query: "gpt-5") == nil,
+            "a short ID that a listed ID contains is not an exact match")
+        expect(
+            AIModelDiscovery.exactMatch(models, query: "  ") == nil,
+            "a blank query matches nothing")
+        let aliased = [
+            AIModelDiscovery.Model(id: "gateway-default", name: "gpt-5"),
+            AIModelDiscovery.Model(id: "gpt-5", name: "GPT-5")
+        ]
+        expect(
+            AIModelDiscovery.exactMatch(aliased, query: "gpt-5")?.id == "gpt-5",
+            "an exact ID wins over an earlier model whose display name matches")
     }
 
     static func endpointPolicyRejectsUnsafeRemoteURLs() {
@@ -1633,13 +1768,58 @@ struct AIProviderTests {
             InstalledAIStreamDecoder.decode(openCodeText, kind: .openCode)
                 == InstalledAIStreamFrame(events: [.text("Hello")], sessionID: "ses_1"),
             "OpenCode text and its cleanup session decode together")
-        let openCodeFinish = Data(
-            #"{"type":"step_finish","part":{"tokens":{"input":12,"output":4}}}"#.utf8)
-        let openCodeFrame = InstalledAIStreamDecoder.decode(openCodeFinish, kind: .openCode)
+        let openCodeReasoning = Data(
+            #"{"type":"reasoning","sessionID":"ses_1","part":{"text":"Weighing it"}}"#.utf8)
         expect(
-            openCodeFrame.events == [.usage(AIUsage(inputTokens: 12, outputTokens: 4))]
-                && openCodeFrame.completed,
-            "OpenCode completion reports usage and finishes")
+            InstalledAIStreamDecoder.decode(openCodeReasoning, kind: .openCode).events
+                == [.reasoning("\n\nWeighing it")],
+            "OpenCode reasoning opens its own block")
+        let openCodeStep = Data(
+            #"""
+            {"type":"step_finish","sessionID":"ses_1","part":{"cost":0.25,"tokens":{"input":12,
+            "output":4,"reasoning":3,"cache":{"read":5,"write":1}}}}
+            """#.utf8)
+        let openCodeFrame = InstalledAIStreamDecoder.decode(openCodeStep, kind: .openCode)
+        expect(
+            openCodeFrame.events == [
+                .usage(
+                    AIUsage(
+                        inputTokens: 12, outputTokens: 7, cachedInputTokens: 6,
+                        reasoningTokens: 3, costUSD: 0.25))
+            ] && !openCodeFrame.completed,
+            "an OpenCode step reports usage and leaves the finish to the clean exit")
+        let openCodeError = Data(
+            #"{"type":"error","sessionID":"","error":{"type":"unknown","message":"No provider"}}"#.utf8)
+        let openCodeErrorFrame = InstalledAIStreamDecoder.decode(openCodeError, kind: .openCode)
+        expect(
+            openCodeErrorFrame.error == "No provider" && openCodeErrorFrame.sessionID == nil,
+            "an OpenCode error before any session fails the turn with nothing to delete")
+        let openCodeModels = #"""
+            {"location":{"directory":"/w"},"data":[
+            {"id":"gpt-5","providerID":"openai","name":"GPT-5",
+            "capabilities":{"tools":true,"input":["text","image"],"output":["text"]},
+            "variants":[{"id":"high"},{"id":"low"},{"id":"minimal"}]},
+            {"id":"glm-4.6","providerID":"zai","name":"GLM 4.6",
+            "capabilities":{"tools":true,"input":["text"],"output":["text"]},"variants":[]},
+            {"id":"claude-sonnet-4-5","providerID":"anthropic","name":"Claude Sonnet 4.5",
+            "capabilities":{"tools":true,"input":["text","image","pdf"],"output":["text"]},
+            "variants":[]}]}
+            """#
+        let openCodeCatalog = InstalledAIModel.openCodeCatalog(openCodeModels)
+        expect(
+            openCodeCatalog.map(\.id) == [
+                "anthropic/claude-sonnet-4-5", "openai/gpt-5", "zai/glm-4.6"
+            ],
+            "OpenCode models are listed by their provider-qualified reference")
+        expect(
+            openCodeCatalog[1].efforts.map(\.id) == ["minimal", "low", "high"],
+            "OpenCode variants become efforts in reasoning order")
+        expect(
+            openCodeCatalog.map(\.acceptsImages) == [true, true, false],
+            "OpenCode takes images only where the model's input does")
+        expect(
+            InstalledAIModel.openCodeCatalog("Error: server failed to start").isEmpty,
+            "an OpenCode answer that is not the model list yields no models")
 
         let claudeText = Data(
             #"{"type":"stream_event","event":{"delta":{"type":"text_delta","text":"Hi"}}}"#.utf8)

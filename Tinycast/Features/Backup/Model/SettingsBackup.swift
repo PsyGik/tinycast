@@ -36,6 +36,7 @@ struct SettingsBackup: Codable {
         var popToRootSeconds: Int?
         var escapeKeyBehavior: String?
         var appearance: String?
+        var language: String?
         var calcNumberStyle: String?
         var calcDefaultCurrency: String?
         var interfaceSize: String?
@@ -64,7 +65,8 @@ struct SettingsBackup: Codable {
         var fileBrowserFromLauncher: Bool?
         var fileBrowserShowsHidden: Bool?
         var fileBrowserSpaceQuickLook: Bool?
-        var fileSearchResultLimit: Int?
+        var fileSearchRemovedDefaultPatterns: [String]?
+        var fileSearchShowInLauncher: Bool?
         var notesEnabled: Bool?
         var notesRendersMarkdown: Bool?
         var notesShowsFormattingBar: Bool?
@@ -109,7 +111,6 @@ struct SettingsBackup: Codable {
         var supportReminders: Bool?
     }
 
-    /// One entry per bindable action. docs/features/hotkeys.md#persistence
     struct HotkeyBackup: Codable {
         /// Named apart from `commands`: the launcher toggle is the one action with no command row.
         var togglePalette: HotKeyBinding?
@@ -125,7 +126,6 @@ struct SettingsBackup: Codable {
         var customWindowSizes: [String: HotKeyBinding]?
     }
 
-    /// A tally of what an import touched, for user-facing confirmation.
     struct ApplySummary {
         var settingsFields = 0
         var hotkeys = 0
@@ -165,6 +165,7 @@ extension SettingsBackup {
             popToRootSeconds: s.popToRootTimeout.rawValue,
             escapeKeyBehavior: s.escapeKeyBehavior.rawValue,
             appearance: s.appearance.rawValue,
+            language: s.language.rawValue,
             calcNumberStyle: s.calcNumberStyle.rawValue,
             calcDefaultCurrency: s.calcDefaultCurrency,
             interfaceSize: s.interfaceSize.rawValue,
@@ -192,7 +193,8 @@ extension SettingsBackup {
             fileBrowserFromLauncher: s.fileBrowserFromLauncher,
             fileBrowserShowsHidden: s.fileBrowserShowsHidden,
             fileBrowserSpaceQuickLook: s.fileBrowserSpaceQuickLook,
-            fileSearchResultLimit: s.fileSearchResultLimit.rawValue,
+            fileSearchRemovedDefaultPatterns: s.fileSearchRemovedDefaultPatterns,
+            fileSearchShowInLauncher: s.fileSearchShowInLauncher,
             notesEnabled: s.notesEnabled,
             notesRendersMarkdown: s.notesRendersMarkdown,
             notesShowsFormattingBar: s.notesShowsFormattingBar,
@@ -407,6 +409,10 @@ extension SettingsBackup {
             settings.appearance = appearance
             count += 1
         }
+        if let raw = s.language, let language = AppLanguage(rawValue: raw) {
+            settings.language = language
+            count += 1
+        }
         if let raw = s.calcNumberStyle, let style = CalcNumberStyle(rawValue: raw) {
             settings.calcNumberStyle = style
             count += 1
@@ -508,8 +514,12 @@ extension SettingsBackup {
             settings.fileBrowserSpaceQuickLook = flag
             count += 1
         }
-        if let raw = s.fileSearchResultLimit, let limit = FileSearchResultLimit(rawValue: raw) {
-            settings.fileSearchResultLimit = limit
+        if let patterns = s.fileSearchRemovedDefaultPatterns {
+            settings.fileSearchRemovedDefaultPatterns = patterns
+            count += 1
+        }
+        if let flag = s.fileSearchShowInLauncher {
+            settings.fileSearchShowInLauncher = flag
             count += 1
         }
         if let flag = s.notesEnabled {

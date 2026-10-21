@@ -39,7 +39,7 @@ struct FileSearchList: View {
                             .contentShape(Rectangle())
                             .onRowClick(
                                 select: { onSelect(result) }, activate: { onActivate(result) },
-                                drag: drag(for: result)
+                                drag: result.rowDrag(dropped: onDropped)
                             )
                             .onRightClick { onActions(result) }
                     }
@@ -57,12 +57,12 @@ struct FileSearchList: View {
         }
         .onDisappear { IconCache.purgeFitted() }
     }
+}
 
+extension FileSearchResult {
     /// The row's own fitted tile, which is warm by the time a pointer can reach it.
-    private func drag(for result: FileSearchResult) -> RowDrag {
-        RowDrag(
-            item: { .file(result.url, image: IconCache.cachedFitted(forFile: result.id)) },
-            dropped: onDropped)
+    func rowDrag(dropped: @escaping () -> Void) -> RowDrag {
+        RowDrag(item: { .file(url, image: IconCache.cachedFitted(forFile: id)) }, dropped: dropped)
     }
 }
 
@@ -129,21 +129,26 @@ private struct CrumbButton: View {
     }
 }
 
-private struct FileSearchRow: View {
+struct FileSearchRow: View {
 
     @Environment(\.metrics) private var metrics
     let result: FileSearchResult
     let selected: Bool
     let browsing: Bool
     let base: URL?
+    let showsLocation: Bool
     @State private var image: NSImage?
     @State private var hovered = false
 
-    init(result: FileSearchResult, selected: Bool, browsing: Bool, base: URL?) {
+    init(
+        result: FileSearchResult, selected: Bool, browsing: Bool = false, base: URL? = nil,
+        showsLocation: Bool = false
+    ) {
         self.result = result
         self.selected = selected
         self.browsing = browsing
         self.base = base
+        self.showsLocation = showsLocation
         _image = State(initialValue: IconCache.cachedFitted(forFile: result.id))
     }
 
@@ -159,8 +164,10 @@ private struct FileSearchRow: View {
             guard let between = FileBrowserPath.between(base, and: result.url) else { return Text(result.name) }
             return Text("\(Text("\(between)/").foregroundStyle(.secondary))\(result.name)")
         }
-        guard result.isDirectory, !result.parentName.isEmpty else { return Text(result.name) }
-        let parent = Text("\(result.parentName)/").foregroundStyle(.secondary)
+        guard !showsLocation, result.isDirectory, !result.parentName.isEmpty else {
+            return Text(result.name)
+        }
+        let parent = Text(verbatim: "\(result.parentName)/").foregroundStyle(.secondary)
         return Text("\(parent)\(result.name)")
     }
 
@@ -175,16 +182,28 @@ private struct FileSearchRow: View {
                 }
             }
             .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
-            // The column is too narrow for a path beside the name; the preview states it instead.
             label
                 .font(metrics.typography.paletteRowTitle)
                 .lineLimit(1)
                 .truncationMode(.middle)
+                .layoutPriority(1)
+            if showsLocation {
+                Text(result.parentPath)
+                    .font(metrics.typography.rowTrailing)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
             Spacer(minLength: 0)
             if browsing, result.isDirectory {
                 Image(systemName: "chevron.right")
                     .font(metrics.typography.rowTrailing)
                     .foregroundStyle(Theme.Colors.textTertiary)
+            }
+            if showsLocation {
+                Text(result.isDirectory ? "Folder" : "File")
+                    .font(metrics.typography.rowTrailing)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, metrics.spacing.md)

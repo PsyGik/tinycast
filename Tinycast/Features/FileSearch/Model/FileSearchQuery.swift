@@ -1,168 +1,170 @@
 import Foundation
 
 enum FileSearchQuery {
-    static let candidateLimit = 1_000
     static let resultLimit = 200
     /// A blank screen is a shortlist, not a browser: enough rows to reach, never to scroll far.
     static let recentLimit = 20
+    static let launcherLimit = 5
+    /// Category search's threshold too: below it a query matches too many names to be useful.
+    static let launcherMinimumLength = 3
+    static let priorWeight = 1_500
+    static let nonASCIIBit: UInt64 = 1 << 40
+
+    struct Prepared: Sendable {
+        let terms: [[UInt8]]
+        let whole: [UInt8]
+        let mask: UInt64
+        /// `.pdf` words, folded with their dot: a name must end in one, so no folder matches.
+        let extensions: [[UInt8]]
+
+        var excludesFolders: Bool { !extensions.isEmpty }
+    }
+
+    static func answersLauncher(_ query: String) -> Bool {
+        query.trimmingCharacters(in: .whitespacesAndNewlines).count >= launcherMinimumLength
+    }
 
     static func terms(in query: String) -> [String] {
         query.split(whereSeparator: \Character.isWhitespace).map(String.init)
     }
 
-    static func expression(
-        for query: String, excluding exclusions: [String] = [], filter: FileSearchFilter = .all
-    ) -> String? {
-        let parsed = FileQuery(query)
-        guard !parsed.isEmpty else { return nil }
-        var matches = parsed.words.map { "kMDItemFSName == \"*\(escape($0))*\"cd" }
-        if let types = extensionClause(parsed.extensions) { matches.append(types) }
-        // Excluding in the predicate keeps ignored files from consuming the candidate cap.
-        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
-        let types = filter.spotlightClause.map { [$0] } ?? []
-        return (matches + types + excludes).joined(separator: " && ")
-    }
-
-    /// Each word's letters in order, anywhere in the name, the words in any order: Spotlight's
-    /// nearest thing to fuzzy, with a `.ext` word anchored to the end.
-    static func subsequenceExpression(
-        for query: FileQuery, filter: FileSearchFilter = .all, excluding exclusions: [String] = []
-    ) -> String? {
-        var clauses = query.words.compactMap { word -> String? in
-            let letters = word.filter { !$0.isWhitespace }
-            guard !letters.isEmpty else { return nil }
-            return "kMDItemFSName == \"*" + letters.map { escape(String($0)) + "*" }.joined() + "\"cd"
-        }
-        if let types = extensionClause(query.extensions) { clauses.append(types) }
-        guard !clauses.isEmpty else { return nil }
-        let types = filter.spotlightClause.map { [$0] } ?? []
-        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
-        return (clauses + types + excludes).joined(separator: " && ")
-    }
-
-    static func subsequenceExpression(for query: String, excluding exclusions: [String] = []) -> String? {
-        subsequenceExpression(for: FileQuery(query), excluding: exclusions)
-    }
-
-    /// Any of the typed types, each as the end of the name.
-    private static func extensionClause(_ extensions: [String]) -> String? {
-        guard !extensions.isEmpty else { return nil }
-        let clauses = extensions.map { "kMDItemFSName == \"*.\(escape($0))\"cd" }
-        return clauses.count == 1 ? clauses[0] : "(" + clauses.joined(separator: " || ") + ")"
-    }
-
-    /// Word-prefix matches on what a file says rather than what it is called, one group per term.
-    static func contentExpression(
-        for query: String, excluding exclusions: [String] = [], filter: FileSearchFilter = .all
-    ) -> String? {
-        let terms = terms(in: query)
-        guard !terms.isEmpty else { return nil }
-        let matches = terms.map { term in
-            let clauses = contentAttributes.map { "\($0) == \"\(escape(term))*\"cdw" }
-            return "(" + clauses.joined(separator: " || ") + ")"
-        }
-        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
-        let types = filter.spotlightClause.map { [$0] } ?? []
-        return (matches + types + excludes).joined(separator: " && ")
-    }
-
-    private static let contentAttributes = [
-        "kMDItemTextContent", "kMDItemTitle", "kMDItemKeywords", "kMDItemDescription",
-    ]
-
-    /// Both, because macOS stamps `kMDItemLastUsedDate` on few opens now, and Spotlight sorts on one.
-    enum RecentStamp: String, CaseIterable, Sendable {
-        case changed = "kMDItemFSContentChangeDate"
-        case used = "kMDItemLastUsedDate"
-
-        /// Spotlight's own literal, so no clock is injected; editing is constant, so it is shorter.
-        var window: String {
-            switch self {
-            case .changed: return "$time.now(-259200)"
-            case .used: return "$time.now(-2592000)"
+    /// `.pdf invoice` is a file type and a word; a type is lowercased and loses its dot.
+    static func split(_ query: String) -> (words: [String], extensions: [String]) {
+        var words: [String] = []
+        var extensions: [String] = []
+        for token in terms(in: query) {
+            if token.count > 1, token.hasPrefix("."), token.dropFirst().contains(where: \.isLetter) {
+                extensions.append(token.dropFirst().lowercased())
+            } else {
+                words.append(token)
             }
         }
+        return (words, extensions)
     }
 
-    static func recentExpression(
-        stamp: RecentStamp, excluding exclusions: [String] = [], filter: FileSearchFilter = .all
-    ) -> String {
-        let touched = "\(stamp.rawValue) > \(stamp.window)"
-        let types = filter.spotlightClause.map { [$0] } ?? []
-        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
-        return ([touched] + types + excludes).joined(separator: " && ")
+    static func prepare(_ query: String) -> Prepared? {
+        let parsed = split(query)
+        let terms = parsed.words.map { Array(fold($0).utf8) }
+        let extensions = parsed.extensions.map { Array(fold("." + $0).utf8) }
+        guard !terms.isEmpty || !extensions.isEmpty else { return nil }
+        let whole = Array(terms.joined(separator: [0x20]))
+        // From the terms, not `whole`: its spaces are no letter a name has to contain. Several
+        // type words are alternatives, so only a lone one adds letters every name must hold.
+        let required = terms.joined() + (extensions.count == 1 ? extensions[0] : [])
+        return Prepared(terms: terms, whole: whole, mask: mask(of: required), extensions: extensions)
     }
 
-    static func rank(
-        _ results: [FileSearchResult], for query: String, ignoring ignore: FileSearchIgnoreList,
-        limit: Int = resultLimit
-    ) -> [FileSearchResult] {
-        let parsed = FileQuery(query)
-        guard !parsed.isEmpty else { return [] }
-        // A `.ext` word filtered the candidates already; only the words rank them.
-        let words = parsed.words.joined(separator: " ")
-        let terms = parsed.words
-        // Folded once each: a thousand candidates would otherwise re-fold every term per result.
-        let whole = FuzzyMatch.Query(words)
-        let folded = terms.map(FuzzyMatch.Query.init)
-        return results.filter { !isExcludedPath($0.id, ignoring: ignore) }.map { result in
-            let full = FuzzyMatch.score(whole, candidate: result.name)
-            let termScore = folded.compactMap { FuzzyMatch.score($0, candidate: result.name) }
-                .reduce(0, +)
-            return (result, full, termScore)
+    static func fold(_ text: String) -> String {
+        guard text.utf8.contains(where: { $0 >= 0x80 }) else { return text.lowercased() }
+        return text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+    }
+
+    /// A name's mask covers its folded spelling too, so `resume` still passes for `Résumé`.
+    static func nameMask(_ name: UnsafeBufferPointer<UInt8>) -> UInt64 {
+        let raw = mask(of: name)
+        guard raw & nonASCIIBit != 0 else { return raw }
+        return raw | mask(of: fold(String(decoding: name, as: UTF8.self)).utf8)
+    }
+
+    static func mask<Bytes: Sequence<UInt8>>(of bytes: Bytes) -> UInt64 {
+        var mask: UInt64 = 0
+        for byte in bytes { mask |= bit(byte) }
+        return mask
+    }
+
+    @inline(__always)
+    private static func bit(_ byte: UInt8) -> UInt64 {
+        switch byte {
+        case 0x61...0x7A: return 1 << UInt64(byte - 0x61)
+        case 0x41...0x5A: return 1 << UInt64(byte - 0x41)
+        case 0x30...0x39: return 1 << UInt64(26 + byte - 0x30)
+        case 0x2E: return 1 << 36
+        case 0x5F: return 1 << 37
+        case 0x2D: return 1 << 38
+        case 0x20: return 1 << 39
+        case 0x80...: return nonASCIIBit
+        default: return 0
         }
-        .sorted { left, right in
-            switch (left.1, right.1) {
-            case let (leftScore?, rightScore?) where leftScore != rightScore:
-                return leftScore > rightScore
-            case (_?, nil):
-                return true
-            case (nil, _?):
-                return false
-            default:
-                if left.2 != right.2 { return left.2 > right.2 }
-                let nameOrder = left.0.name.localizedCaseInsensitiveCompare(right.0.name)
-                if nameOrder != .orderedSame { return nameOrder == .orderedAscending }
-                return left.0.id.localizedCaseInsensitiveCompare(right.0.id) == .orderedAscending
+    }
+
+    static func score(
+        _ query: Prepared, name: UnsafeBufferPointer<UInt8>, mask: UInt64, prior: Int8
+    ) -> Int? {
+        guard mask & nonASCIIBit != 0 else { return score(query, folded: name, prior: prior) }
+        let folded = Array(fold(String(decoding: name, as: UTF8.self)).utf8)
+        return folded.withUnsafeBufferPointer { score(query, folded: $0, prior: prior) }
+    }
+
+    private static func score(
+        _ query: Prepared, folded name: UnsafeBufferPointer<UInt8>, prior: Int8
+    ) -> Int? {
+        guard query.extensions.isEmpty || query.extensions.contains(where: { hasSuffix(name, $0) })
+        else { return nil }
+        guard !query.terms.isEmpty else { return Int(prior) * priorWeight - 4 * name.count }
+        var first = 0
+        for (index, term) in query.terms.enumerated() {
+            guard let at = find(term, in: name) else { return nil }
+            if index == 0 { first = at }
+        }
+        let lead = query.terms[0]
+        let wholeAt = query.terms.count == 1 ? first : find(query.whole, in: name)
+        var score = Int(prior) * priorWeight - 4 * name.count
+        if wholeAt == 0, name.count == query.whole.count {
+            score += 4_000
+        } else if query.terms.count > 1, wholeAt != nil {
+            score += 1_500
+        }
+        if first == 0 {
+            score += 2_000
+        } else if isBoundary(name, at: first) {
+            score += 1_000
+        }
+        // `report` should find `report.pdf` ahead of `reporting.pdf`.
+        let end = first + lead.count
+        if end == name.count || !isAlphanumeric(name[end]) { score += 500 }
+        return score
+    }
+
+    static func find(_ needle: [UInt8], in haystack: UnsafeBufferPointer<UInt8>) -> Int? {
+        let count = needle.count
+        guard count > 0, count <= haystack.count else { return count == 0 ? 0 : nil }
+        return needle.withUnsafeBufferPointer { needle in
+            let head = needle[0]
+            var start = 0
+            while start <= haystack.count - count {
+                if lower(haystack[start]) == head {
+                    var offset = 1
+                    while offset < count, lower(haystack[start + offset]) == needle[offset] {
+                        offset += 1
+                    }
+                    if offset == count { return start }
+                }
+                start += 1
             }
-        }
-        .prefix(limit)
-        .map(\.0)
-    }
-
-    static func matches(filename: String, query: String, isDirectory: Bool = false) -> Bool {
-        let parsed = FileQuery(query)
-        guard parsed.admits(name: filename, isDirectory: isDirectory) else { return false }
-        return parsed.words.allSatisfy { term in
-            filename.range(of: term, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            return nil
         }
     }
 
-    /// Hidden paths and bundle contents are what keep File Search permission-free.
-    static func isExcludedPath(_ path: String, ignoring ignore: FileSearchIgnoreList) -> Bool {
-        let structural = path.split(separator: "/").contains { component in
-            (component.hasPrefix(".") && component != "." && component != "..")
-                || component.lowercased().hasSuffix(".app")
-        }
-        return structural || ignore.excludes(path: path)
+    /// `.zshrc` ends `.zshrc`, so a type word finds the dotfile it names as well.
+    private static func hasSuffix(_ name: UnsafeBufferPointer<UInt8>, _ suffix: [UInt8]) -> Bool {
+        guard suffix.count <= name.count else { return false }
+        let start = name.count - suffix.count
+        return suffix.indices.allSatisfy { lower(name[start + $0]) == suffix[$0] }
     }
 
-    /// A typed term is literal, so its wildcards are neutralized along with the string delimiters.
-    private static func escape(_ term: String) -> String {
-        quoting(term, escaping: ["\\", "\"", "*", "?"])
+    @inline(__always)
+    private static func lower(_ byte: UInt8) -> UInt8 {
+        byte &- 0x41 < 26 ? byte | 0x20 : byte
     }
 
-    /// A user pattern keeps its `*`, since that is the one wildcard Spotlight evaluates.
-    private static func escapeGlob(_ pattern: String) -> String {
-        quoting(pattern, escaping: ["\\", "\""])
+    @inline(__always)
+    private static func isAlphanumeric(_ byte: UInt8) -> Bool {
+        byte &- 0x61 < 26 || byte &- 0x41 < 26 || byte &- 0x30 < 10 || byte >= 0x80
     }
 
-    private static func quoting(_ text: String, escaping characters: Set<Character>) -> String {
-        var escaped = ""
-        for character in text {
-            if characters.contains(character) { escaped.append("\\") }
-            escaped.append(character)
-        }
-        return escaped
+    private static func isBoundary(_ name: UnsafeBufferPointer<UInt8>, at index: Int) -> Bool {
+        let previous = name[index - 1]
+        guard isAlphanumeric(previous) else { return true }
+        return previous &- 0x61 < 26 && name[index] &- 0x41 < 26
     }
 }

@@ -14,7 +14,7 @@ struct LauncherCategoryChips: View {
                     chip(nil, title: "All", symbol: "rectangle.stack")
                     ForEach(kinds, id: \.self) { kind in
                         chip(
-                            kind, title: kind.descriptor.sectionTitle,
+                            kind, title: String(localized: kind.descriptor.sectionTitle),
                             symbol: kind.descriptor.categorySymbol)
                     }
                 }

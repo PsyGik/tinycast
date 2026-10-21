@@ -2,7 +2,6 @@ import AppKit
 import Carbon.HIToolbox
 import SwiftUI
 
-/// Borderless floating panel that hosts the SwiftUI command palette.
 final class PalettePanel: NSPanel {
     enum HeaderFieldBoundary {
         case leading
@@ -13,7 +12,7 @@ final class PalettePanel: NSPanel {
     var onBareBackspace: (() -> Bool)?
     /// Bare Space, which the field editor would type before `onKeyPress` could see it.
     var onBareSpace: (() -> Bool)?
-    /// Escape, which an `AVPlayerView` in the preview answers before `onKeyPress` could see it.
+    /// Escape, which a focused form field answers before `onKeyPress` could see it.
     var onEscape: (() -> Bool)?
     /// Command chords the field editor swallows, plus the ones no main menu handles.
     var onCommandShortcut: ((NSEvent) -> Bool)?
@@ -281,7 +280,7 @@ final class PalettePanel: NSPanel {
         isOpaque = false
         backgroundColor = .clear
         hasShadow = true
-        animationBehavior = .none
+        animationBehavior = .documentWindow
         isReleasedWhenClosed = false
 
         let hosting = NSHostingView(rootView: rootView)
@@ -295,6 +294,15 @@ final class PalettePanel: NSPanel {
     override func resignKey() {
         super.resignKey()
         paletteState?.noteCommandHeld(false)
+    }
+
+    /// A child hidden with its parent skips its next open animation.
+    override func orderOut(_ sender: Any?) {
+        for child in childWindows ?? [] {
+            removeChildWindow(child)
+            child.orderOut(nil)
+        }
+        super.orderOut(sender)
     }
 
     override var canBecomeKey: Bool { true }

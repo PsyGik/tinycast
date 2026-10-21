@@ -36,7 +36,7 @@ struct FileBrowserListing: Equatable, Sendable {
                 excluded += 1
                 guard showsExcluded else { continue }
             }
-            guard filter.isEmpty || FileSearchQuery.matches(filename: entry.name, query: filter) else {
+            guard filter.isEmpty || Self.matches(entry.name, filter) else {
                 continue
             }
             if !entry.isDirectory || type == .folders,
@@ -57,6 +57,14 @@ struct FileBrowserListing: Equatable, Sendable {
 
     /// By its own name only: a folder the user walked into on purpose lists everything inside it.
     static func isExcluded(_ name: String, ignore: FileSearchIgnoreList) -> Bool {
-        alwaysExcluded.contains(name) || ignore.excludes(path: name)
+        alwaysExcluded.contains(name) || ignore.excludes(name: name, path: name)
+    }
+
+    /// Every word, as typed, anywhere in the name: a filter narrows a listing, it does not rank.
+    private static func matches(_ name: String, _ filter: String) -> Bool {
+        let query = FileQuery(filter)
+        return query.admits(name: name, isDirectory: false) && query.words.allSatisfy {
+            name.range(of: $0, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        }
     }
 }

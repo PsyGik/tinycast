@@ -59,7 +59,6 @@ final class HotKeyManager {
     }
 
     let modifierTapMonitor = ModifierTapMonitor()
-    /// Live state of the open recorder, read by its callout.
     let capture = ShortcutCaptureSession()
 
     private let defaults: UserDefaults
@@ -72,10 +71,10 @@ final class HotKeyManager {
     private var secureInputPressedActions: [String: HotKeyAction] = [:]
     private var secureInputHint: KeyShortcut?
     private static let secureInputHintID = "secureInputHint"
-    /// Every binding, loaded once in `start()` and written through on change.
     private var bindings: [HotKeyAction: HotKeyBinding] = [:]
     /// Part of `AppIndex`'s cache key: a bound entry leaves the launcher's Suggestions.
     private(set) var revision = 0
+    var bindsDictationKey: Bool { bindings.values.contains { $0.shortcut?.isDictationKey == true } }
     @ObservationIgnored private var candidateActionsCache: [HotKeyAction]?
     // Reused: the startup load decodes once per candidate action.
     private let decoder = JSONDecoder()
@@ -141,7 +140,6 @@ final class HotKeyManager {
         defaults.stringArray(forKey: boundKey) ?? []
     }
 
-    /// Settings-pane bundle IDs with a hotkey — same role as `boundBundleIDs`, own namespace.
     var boundPaneBundleIDs: [String] {
         defaults.stringArray(forKey: boundPaneKey) ?? []
     }
@@ -149,7 +147,6 @@ final class HotKeyManager {
     /// Custom-command UUIDs with a binding, indexed separately so startup can re-register them.
     var boundCustomCommandIDs: [UUID] { boundIDs(key: boundCustomCommandKey) }
 
-    /// Quicklink UUIDs with a binding — the same index, its own namespace.
     var boundQuicklinkIDs: [UUID] { boundIDs(key: boundQuicklinkKey) }
 
     /// Window-layout UUIDs with a binding; authored records, so they need an index of their own.
@@ -190,7 +187,6 @@ final class HotKeyManager {
     func binding(for action: HotKeyAction) -> HotKeyBinding? { bindings[action] }
 
     private func storedBinding(for action: HotKeyAction) -> HotKeyBinding? {
-        // The stored value is a JSON string; anything else reads as unbound.
         guard
             let json = defaults.string(forKey: action.defaultsKey),
             let data = json.data(using: .utf8)
@@ -198,7 +194,6 @@ final class HotKeyManager {
         return try? decoder.decode(HotKeyBinding.self, from: data)
     }
 
-    /// Persists or clears the binding and swaps live registration.
     func setBinding(_ binding: HotKeyBinding?, for action: HotKeyAction) {
         if action == .dictation, binding != self.binding(for: action) { onDictationCancelled?() }
         let previous = bindings[action]
@@ -370,35 +365,35 @@ final class HotKeyManager {
     private func displayName(of action: HotKeyAction) -> String {
         switch action {
         case .togglePalette:
-            return "App Launcher"
+            return String(localized: "App Launcher")
         case .dictation:
-            return "Dictation"
+            return String(localized: "Dictation")
         case .command(let id):
             return id.name
         case .app(let bundleID), .settingsPane(let bundleID):
             return displayName?(action) ?? bundleID
         case .customCommand:
-            return displayName?(action) ?? "Custom Command"
+            return displayName?(action) ?? String(localized: "Custom Command")
         case .systemAction(let id):
             return SystemActionCatalog.action(id: id).name
         case .windowCommand(let id):
-            return WindowCommandCatalog.command(id: id)?.name ?? "Window Command"
+            return WindowCommandCatalog.command(id: id)?.name ?? String(localized: "Window Command")
         case .windowLayout:
-            return displayName?(action) ?? "Window Layout"
+            return displayName?(action) ?? String(localized: "Window Layout")
         case .windowRoom:
-            return displayName?(action) ?? "Room"
+            return displayName?(action) ?? String(localized: "Room")
         case .customWindowSize:
-            return displayName?(action) ?? "Custom Size"
+            return displayName?(action) ?? String(localized: "Custom Size")
         case .quicklink:
-            return displayName?(action) ?? "Quicklink"
+            return displayName?(action) ?? String(localized: "Quicklink")
         case .quickAction:
-            return displayName?(action) ?? "Quick Action"
+            return displayName?(action) ?? String(localized: "Quick Action")
         case .appleShortcut:
-            return displayName?(action) ?? "Apple Shortcut"
+            return displayName?(action) ?? String(localized: "Apple Shortcut")
         case .snippet:
-            return displayName?(action) ?? "Snippet"
+            return displayName?(action) ?? String(localized: "Snippet")
         case .extensionCommand:
-            return displayName?(action) ?? "Extension Command"
+            return displayName?(action) ?? String(localized: "Extension Command")
         }
     }
 

@@ -16,7 +16,7 @@ final class FileBrowserSession {
     private(set) var directory: URL
     private(set) var state: State = .loading
     private(set) var listing = FileBrowserListing(
-        [], filter: "", showsHidden: false, showsExcluded: false, ignore: FileSearchIgnoreList(patterns: []))
+        [], filter: "", showsHidden: false, showsExcluded: false, ignore: FileSearchIgnoreList(patterns: [], homeDirectory: URL(filePath: "/")))
     /// What the list shows: the folder itself, or with text typed, the matches below it.
     private(set) var rows: [FileSearchResult] = []
     /// Bumped with every new `rows`, so the palette lands the highlight once per new list.
@@ -44,21 +44,33 @@ final class FileBrowserSession {
     let home: URL
     @ObservationIgnored private var read: [FileBrowserEntry] = []
     @ObservationIgnored private var showsHidden = false
-    @ObservationIgnored private var ignore = FileSearchIgnoreList(patterns: FileSearchIgnoreList.defaults)
+    @ObservationIgnored private var ignore: FileSearchIgnoreList
+    /// Search Files' disk index, which answers below a folder without a walk when it holds it.
+    @ObservationIgnored private let fileIndex: FileIndex?
     /// A read that finishes after the user has moved on must not replace the folder they moved to.
     @ObservationIgnored private var generation = 0
     /// The names below `directory`, built on the first keystroke and dropped the moment it changes.
-    @ObservationIgnored private var index: FileTreeIndex?
-    @ObservationIgnored private var indexTask: Task<FileTreeIndex, Never>?
+    @ObservationIgnored private var index: Source?
+    @ObservationIgnored private var indexTask: Task<Source, Never>?
     @ObservationIgnored private var searchTask: Task<Void, Never>?
 
     nonisolated static let searchLimit = 200
     /// One keystroke's pause; the folder's own matches cover it, so typing never waits on a walk.
     private static let debounce: Duration = .milliseconds(80)
 
-    init(home: URL = FileManager.default.homeDirectoryForCurrentUser) {
+    /// Where a search below the folder finds its names.
+    private enum Source: Sendable {
+        case tree(FileTreeIndex)
+        /// Too many names for a tree: the disk index searches the subtree itself.
+        case wide
+        case none
+    }
+
+    init(home: URL = FileManager.default.homeDirectoryForCurrentUser, index: FileIndex? = nil) {
         self.home = home.standardizedFileURL
         directory = self.home
+        fileIndex = index
+        ignore = FileSearchIgnoreList(patterns: FileSearchIgnoreList.defaults, homeDirectory: home)
     }
 
     var displayPath: String { FileBrowserPath.display(directory, home: home) }
@@ -67,7 +79,7 @@ final class FileBrowserSession {
     var canGoUp: Bool { directory.path != "/" }
 
     func apply(ignorePatterns: [String], showsHidden: Bool) {
-        let ignore = FileSearchIgnoreList(patterns: FileSearchIgnoreList.defaults + ignorePatterns)
+        let ignore = FileSearchIgnoreList(patterns: ignorePatterns, homeDirectory: home)
         guard ignore != self.ignore || showsHidden != self.showsHidden else { return }
         self.ignore = ignore
         self.showsHidden = showsHidden
@@ -199,14 +211,17 @@ final class FileBrowserSession {
         let home = home
         let ignore = ignore
         let type = typeFilter
-        let walks = FileTreeIndexer.walks(folder, home: home)
+        let showsHidden = showsHidden
+        let fileIndex = fileIndex
         searchTask = Task { [weak self] in
             try? await Task.sleep(for: Self.debounce)
             guard !Task.isCancelled, let self else { return }
-            let tree = walks ? await treeIndex(for: folder) : nil
+            let source = await treeIndex(for: folder)
             guard !Task.isCancelled else { return }
             let results = await Task.detached(priority: .userInitiated) {
-                Self.results(query, in: folder, tree: tree, type: type, home: home, ignore: ignore)
+                Self.results(
+                    query, in: folder, source: source, fileIndex: fileIndex, type: type, home: home,
+                    showsHidden: showsHidden, ignore: ignore)
             }.value
             guard !Task.isCancelled, searchQuery == query, directory == folder else { return }
             isSearching = false
@@ -215,16 +230,19 @@ final class FileBrowserSession {
     }
 
     /// Read once per folder visit, then every keystroke ranks what is already in memory.
-    private func treeIndex(for folder: URL) async -> FileTreeIndex {
-        if let index, index.root == folder.path { return index }
+    private func treeIndex(for folder: URL) async -> Source {
+        if let index { return index }
         let task =
             indexTask
             ?? {
                 let home = home
                 let showsHidden = showsHidden
                 let ignore = ignore
+                let fileIndex = fileIndex
                 let task = Task.detached(priority: .userInitiated) {
-                    FileTreeIndexer.build(root: folder, home: home, showsHidden: showsHidden, ignore: ignore)
+                    Self.source(
+                        for: folder, fileIndex: fileIndex, home: home, showsHidden: showsHidden,
+                        ignore: ignore)
                 }
                 indexTask = task
                 return task
@@ -237,7 +255,27 @@ final class FileBrowserSession {
         return built
     }
 
-    /// The folder's own items, instantly, while the subtree is still being asked.
+    /// The disk index first, since it reads nothing; a walk only for a folder it does not hold.
+    private nonisolated static func source(
+        for folder: URL, fileIndex: FileIndex?, home: URL, showsHidden: Bool,
+        ignore: FileSearchIgnoreList
+    ) -> Source {
+        let indexed = fileIndex?.tree(
+            under: folder.path,
+            include: { name, isDirectory in
+                (showsHidden || !name.hasPrefix("."))
+                    && !(isDirectory && FileBrowserListing.isExcluded(name, ignore: ignore))
+            },
+            descends: { !FileSearchPolicy.bundleExtensions.contains(($0 as NSString).pathExtension.lowercased()) })
+        switch indexed {
+        case .tree(let tree): return .tree(tree)
+        case .tooLarge: return .wide
+        case .uncovered, nil:
+            guard FileTreeIndexer.walks(folder, home: home) else { return .none }
+            return .tree(FileTreeIndexer.build(root: folder, home: home, showsHidden: showsHidden, ignore: ignore))
+        }
+    }
+
     /// The folder's own items, instantly, while the subtree is still being asked.
     private static func rankFolder(
         _ entries: [FileBrowserEntry], _ text: String, type: FileSearchFilter, home: URL
@@ -264,16 +302,16 @@ final class FileBrowserSession {
         }
     }
 
-    /// The index answers what it read; Spotlight answers for a tree too wide, or one it cut short.
+    /// A tree answers what it holds; past its size the disk index searches the subtree itself.
     private nonisolated static func results(
-        _ text: String, in folder: URL, tree: FileTreeIndex?, type: FileSearchFilter, home: URL,
-        ignore: FileSearchIgnoreList
+        _ text: String, in folder: URL, source: Source, fileIndex: FileIndex?, type: FileSearchFilter,
+        home: URL, showsHidden: Bool, ignore: FileSearchIgnoreList
     ) -> [FileSearchResult] {
         let query = FileQuery(text)
         let folded = FileQuery.Folded(query)
         var types: [String: Bool] = [:]
         var found: [(result: FileSearchResult, score: Int)] = []
-        if let tree {
+        if case .tree(let tree) = source {
             let hits = tree.search(query, limit: searchLimit) { name, isDirectory in
                 type.accepts(name: name, isDirectory: isDirectory, cache: &types)
             }
@@ -285,13 +323,17 @@ final class FileBrowserSession {
                 return (result, FileQuery.score(folded, result.name) ?? FileQuery.typoScore(for: result.name))
             }
         }
-        if tree?.isTruncated ?? true {
-            let seen = Set(found.map(\.result.id))
-            let spotlight =
-                (try? FileSearchService.subtree(
-                    query, in: folder, filter: type, ignore: ignore, homeDirectory: home)) ?? []
-            for result in spotlight where !seen.contains(result.id) {
-                guard query.admits(name: result.name, isDirectory: result.isDirectory),
+        if case .wide = source, let fileIndex, let prepared = FileSearchQuery.prepare(text) {
+            let base = folder.path.split(separator: "/").count
+            for result in fileIndex.search(prepared, filter: type, under: folder.path) {
+                let below = result.url.path.split(separator: "/").dropFirst(base)
+                // Hidden and excluded folders hold as much here as in a walk, which skips them.
+                guard
+                    !below.dropLast().contains(where: {
+                        (!showsHidden && $0.hasPrefix("."))
+                            || FileBrowserListing.isExcluded(String($0), ignore: ignore)
+                    }),
+                    showsHidden || !result.name.hasPrefix("."),
                     let score = FileQuery.score(folded, result.name)
                 else { continue }
                 found.append((result, score))

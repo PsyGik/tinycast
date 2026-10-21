@@ -67,7 +67,7 @@ struct FileBrowserTest {
             entry("README.md"), entry(".git", folder: true), entry(".zshrc"), entry("dist", folder: true),
             entry("Item 10.txt"), entry("Item 2.txt"), entry("beta", folder: true),
         ]
-        let ignore = FileSearchIgnoreList(patterns: FileSearchIgnoreList.defaults + ["*.log"])
+        let ignore = FileSearchIgnoreList(patterns: FileSearchIgnoreList.defaults + ["*.log"], homeDirectory: home)
         func names(
             filter: String = "", hidden: Bool = false, excluded: Bool = false, _ entries: [FileBrowserEntry]? = nil
         ) -> [String] {
@@ -158,22 +158,13 @@ struct FileBrowserTest {
             "a direct child names none",
             FileBrowserPath.between(base, and: base.appending(path: "README.md")) == nil)
         check(
-            "only a strict subtree is walked; home, the root and their ancestors go to Spotlight",
+            "only a strict subtree is walked; home, the root and their ancestors are too wide",
             FileTreeIndexer.walks(base, home: home) && !FileTreeIndexer.walks(home, home: home)
                 && !FileTreeIndexer.walks(URL(fileURLWithPath: "/"), home: home)
                 && !FileTreeIndexer.walks(URL(fileURLWithPath: "/Users"), home: home))
         check(
             "the folders macOS guards are never entered from above",
             FileTreeIndexer.protectedFolders(home: home).contains("/Users/test/Documents"))
-        check(
-            "Spotlight gets each word's letters in order, the words in any order",
-            FileSearchQuery.subsequenceExpression(for: "ab cd")
-                == "kMDItemFSName == \"*a*b*\"cd && kMDItemFSName == \"*c*d*\"cd")
-        check(
-            "a type word reaches Spotlight as the end of the name, with the header's filter",
-            FileSearchQuery.subsequenceExpression(for: FileQuery(".pdf inv"), filter: .images)
-                == "kMDItemFSName == \"*i*n*v*\"cd && kMDItemFSName == \"*.pdf\"cd && "
-                + FileSearchFilter.images.spotlightClause!)
 
         let parsed = FileQuery("  .pdf  annual .TAR.gz report . ")
         check(

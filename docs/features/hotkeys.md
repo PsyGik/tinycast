@@ -311,6 +311,13 @@ Carbon hotkeys still fire inside Secure Input, and both remedies are built on th
   Rebuilding or pausing registrations cancels an outstanding hold. Carbon reserves these Control
   combinations during Secure Input even when Left Control has no Tinycast binding.
 
+The tap still sees a modifier's `flagsChanged` inside Secure Input, but never the key pressed between
+them. So **Quick Press never fires there**: every quick Hyper combo would read as a lone press and
+toggle Caps Lock. And the **recorder reads the Hyper key itself** — F18's press and release, or the
+route modifier's device bit — from `ShortcutCaptureSession.hyperRoute`, which `HyperKeyManager` sets
+alongside the tap's route. Left to the tap, a recording made inside Secure Input saved bare F18, or ⌃
+plus the key.
+
 ### ✦ is the notation, not a preference
 
 Any combo whose modifiers are a superset of the chord renders with the Hyper set replaced by a single
@@ -332,6 +339,9 @@ a chord another action already holds is skipped rather than clobbering it; that 
 keycaps. `retargetingHyper` is idempotent, which is what makes a settings import a no-op rather than a
 corruption. Nothing is re-pointed while the Hyper key is `.none` — and the Settings row is disabled
 there, so the toggle cannot move without a chord to mean.
+
+Include Shift costs one chord: macOS consumes ⌃⌥⇧⌘Q as a system shortcut before any app or Carbon sees
+it, so ✦Q can be neither recorded nor fired while it is on.
 
 ### Lifecycle
 
@@ -355,13 +365,21 @@ capturing, so ⌘⇥ can be recorded at all; every register, unregister and paus
 whatever a crashed or force-quit process left off before re-claiming what is still bound. Between a
 crash and the next launch, ⌘⇥ does nothing.
 
+## The Dictation key
+
+Apple's 🎤 key (Consumer `0xC000000CF`) can't be recorded. While a recorder is open or a binding uses
+F20, `DictationKeyManager` remaps it to **F20**, a bare F-key Carbon fires on press and release, even
+in Secure Input, with no tap or permission. Otherwise, and in other users' sessions, macOS Dictation
+keeps it. F20 keycaps draw as `mic`.
+
 ## Recorder
 
 The settings recorder (`Features/HotKeys/UI/ShortcutRecorder.swift`) is deliberately **not** a focusable
 control: the active recorder is `HotKeyManager.recordingAction` state, and keys are captured by local
 NSEvent monitors while both engines are paused. It records combos and single or double modifier taps,
 including their reported side, by feeding its `.flagsChanged` / `.keyDown` monitors into the same pure detectors
-as the global monitor, so recording needs no event tap and no permission.
+as the global monitor, so recording needs no event tap and no permission. Its `.keyUp` monitor only
+tracks the Hyper key's F18 release; see [Secure Input](#secure-input).
 
 Setting `recordingAction` is what starts and stops the capture, so there is exactly **one**
 `ShortcutCaptureSession` (`HotKeys/Service/`) for the app rather than one per row — which is what lets the

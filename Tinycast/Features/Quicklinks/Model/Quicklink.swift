@@ -1,6 +1,5 @@
 import Foundation
 
-/// A user-authored URL, search, file, folder or deeplink, surfaced as a launcher command.
 struct Quicklink: Codable, Hashable, Identifiable, Sendable {
     static let entryIDPrefix = "quicklink:"
     /// Fallback glyph when there is no icon and the destination can't be detected.
@@ -39,7 +38,6 @@ struct Quicklink: Codable, Hashable, Identifiable, Sendable {
 
     var isPinned: Bool { pinnedAt != nil }
 
-    /// The one glyph rule: the override, else what the detected destination suggests.
     var symbol: String {
         iconSymbol ?? QuicklinkDestination.detect(link)?.defaultSymbol ?? Self.sfSymbol
     }
@@ -97,14 +95,15 @@ enum QuicklinkError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .emptyName: return "Enter a name for the quicklink."
-        case .emptyLink: return "Enter a link to open."
-        case .duplicateName: return "A quicklink with this name already exists."
+        case .emptyName: return String(localized: "Enter a name for the quicklink.")
+        case .emptyLink: return String(localized: "Enter a link to open.")
+        case .duplicateName: return String(localized: "A quicklink with this name already exists.")
         case .unresolvableLink:
-            return "This doesn't look like a URL, file path, or deeplink."
-        case .invalidCharacter: return "Names and links cannot contain null characters."
+            return String(localized: "This doesn't look like a URL, file path, or deeplink.")
+        case .invalidCharacter: return String(localized: "Names and links cannot contain null characters.")
         case .storageUnavailable:
-            return "The quicklinks database could not be opened, so changes can't be saved."
+            return String(
+                localized: "The quicklinks database could not be opened, so changes can't be saved.")
         }
     }
 }
