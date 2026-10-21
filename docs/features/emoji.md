@@ -18,7 +18,7 @@ A palette sub-screen (reached like Clipboard / Calculator History) presenting a 
 | `Model/EmojiCatalog.swift`                          | The catalog model — groups, names, keywords |
 | `Model/EmojiGridGeometry.swift`                     | Pure grid math — columns, item sizing       |
 | `Model/EmojiData.generated.swift`                   | The dataset                                 |
-| `Resources/EmojiKeywords/<language>.txt`            | CLDR keyword packs, `glyph\|terms` per line |
+| `Resources/EmojiKeywords/<language>.txt`            | CLDR keyword packs, `glyph\|terms` per line; this fork's build drops them |
 | `Service/EmojiIndex.swift`                          | Search index over the catalog               |
 | `Service/FrequentEmojiStore.swift`                  | Persisted emoji history and usage counts    |
 | `Service/PinnedEmojiStore.swift`                    | Persisted pins, in the order the user set   |

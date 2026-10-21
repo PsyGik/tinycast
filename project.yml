@@ -28,6 +28,8 @@ settings:
       ENABLE_HARDENED_RUNTIME: YES
       # Strip the shipped binary (dSYM is still generated first) and drop unused code.
       DEPLOYMENT_POSTPROCESSING: YES
+      # Measured 12% smaller for 1-6% slower search; the index and dictation helpers pin -O.
+      SWIFT_OPTIMIZATION_LEVEL: -Osize
       STRIP_INSTALLED_PRODUCT: YES
       STRIP_SWIFT_SYMBOLS: YES
       DEAD_CODE_STRIPPING: YES
@@ -51,6 +53,14 @@ targets:
       # The MIT mark's licence asks the notice to travel with the binary, not just the repo.
       - path: NOTICE.md
         buildPhase: resources
+    postBuildScripts:
+      # This fork ships to one English-speaking user; the catalogs stay so upstream merges stay clean.
+      - name: Keep English Only
+        basedOnDependencyAnalysis: false
+        script: |
+          cd "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}" || exit 1
+          find . -maxdepth 1 -name '*.lproj' ! -name en.lproj ! -name Base.lproj -exec rm -rf {} +
+          rm -rf EmojiKeywords
     dependencies:
       - target: DictationHelper
         link: false

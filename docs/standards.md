@@ -244,6 +244,12 @@ English source text; the compiler extracts the keys, and `./Scripts/sync-strings
 the catalog (Xcode's own build does the same in the IDE). The six privacy prompts live in
 `InfoPlist.xcstrings`, keyed by their `Info.plist` key.
 
+**This fork's build ships English alone.** The Tinycast target's **Keep English Only** build phase
+deletes every other `.lproj` and the emoji keyword packs from the built bundle, and General hides the
+Language picker once `Bundle.main.localizations` holds one language. The catalogs stay in the repo and
+localized code stays the rule, so upstream merges never conflict over strings. Release builds the app
+with `-Osize`: measured 12% smaller for 1–6% slower search; the index and dictation helpers pin `-O`.
+
 - **SwiftUI's own initializers localize literals already** — `Text("…")`, `Button("…")`, `.help("…")`
   and the rest take a `LocalizedStringKey`. A `String` *variable* passed to them is shown verbatim, so
   the place that wrote the English is the place that localizes it.

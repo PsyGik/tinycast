@@ -19,12 +19,15 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                Picker(selection: $settings.language) {
-                    ForEach(AppLanguage.allCases) { language in
-                        Text(verbatim: language.title).tag(language)
+                // The build keeps English alone, so a picker would offer languages with nothing behind them.
+                if Bundle.main.localizations.count > 1 {
+                    Picker(selection: $settings.language) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(verbatim: language.title).tag(language)
+                        }
+                    } label: {
+                        SettingsRowTitle(.generalGeneral, "Language")
                     }
-                } label: {
-                    SettingsRowTitle(.generalGeneral, "Language")
                 }
                 Toggle(isOn: $settings.launchAtLogin) {
                     SettingsRowTitle(.generalGeneral, "Launch at login")

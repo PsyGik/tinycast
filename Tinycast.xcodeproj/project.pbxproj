@@ -3957,6 +3957,7 @@
 				6E13E657DC484EA7935E1C3A /* Sources */,
 				0E8F5C3C217EFF5576B2CB4F /* Resources */,
 				4AAF1BA4D980892A8FDF2D3E /* Embed Dependencies */,
+				46A34C78C0347E43ACE87E3E /* Keep English Only */,
 			);
 			buildRules = (
 			);
@@ -4045,6 +4046,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		46A34C78C0347E43ACE87E3E /* Keep English Only */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Keep English Only";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\" || exit 1\nfind . -maxdepth 1 -name '*.lproj' ! -name en.lproj ! -name Base.lproj -exec rm -rf {} +\nrm -rf EmojiKeywords\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		385BC383D52E5167B280638A /* Sources */ = {
@@ -5225,7 +5248,7 @@
 				STRIP_INSTALLED_PRODUCT = YES;
 				STRIP_SWIFT_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_OPTIMIZATION_LEVEL = "-Osize";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 				TINYCAST_BUNDLE_IDENTIFIER = com.tinycast.app;
