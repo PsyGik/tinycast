@@ -84,7 +84,7 @@ function rejectingNamespace(name, members) {
 }
 
 const AI = {
-  ...rejectingNamespace("AI", ["ask"]),
+  ...rejectingNamespace("AI", ["ask", "experimental_decide", "refreshModels"]),
   Model: Object.freeze({}),
   Creativity: Object.freeze({}),
 };
