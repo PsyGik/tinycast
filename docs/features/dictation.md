@@ -55,6 +55,16 @@ compilation of its 2-bit weights; Ultra's encoder and both variants' decoder/joi
   Relaunch restores the original device only if its volume still matches that record, including
   when Dictation is disabled. An unavailable device keeps its record for a later attempt; new ducking
   waits for that recovery. File writes run off-main and finish before the hardware changes.
+- Play sounds is on by default. When on, a rising chime plays on the microphone's first samples and a
+  falling one when recording stops (release, toggle, Return or the length limit); cancelling stays
+  silent. Both are synthesized by `Scripts/gen-dictation-sounds.js`, so no third-party audio ships.
+  A Bluetooth headset drops output while it switches to its microphone, sometimes after the first
+  samples arrive, so with a Bluetooth microphone the start cue waits half a second more. Ducking
+  then starts with the start cue instead of at the press, and never for a session cancelled
+  meanwhile. On stop the volume is restored at once instead of faded, so the cue plays at full
+  volume before the microphone closes and the headset switches back. Ducking is device-wide, so
+  media at full volume can mask the start cue. Through speakers a cue can reach the recording; it is
+  not removed.
 - The microphone, waveform, permissions and insertion stay in Tinycast. Model loading, audio
   features and decoding run in `Tinycast Dictation` (`Tinycast Dev Dictation` in Debug), started
   only for transcription. Main-app state never retains Core ML models or imports the adapters.
@@ -103,7 +113,8 @@ compilation of its 2-bit weights; Ultra's encoder and both variants' decoder/joi
 
 ## Validation
 
-`dictation-field-test` checks composer switching and teardown, scoped cancellation and delayed insertion
+`dictation-field-test` checks composer switching and teardown, scoped cancellation, delayed insertion and
+the order of sound cues against ducking
 with synthetic capture and real AppKit editors, without recording audio or touching the shared clipboard.
 `dictation-test` checks formatting and model options; `dictation-inference-test` checks score selection,
 byte BPE, Fourier/mel features, listening bands and audio partitioning without downloading a model. `dictation-worker-test`

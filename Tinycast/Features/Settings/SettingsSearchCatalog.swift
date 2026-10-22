@@ -369,6 +369,7 @@ enum SettingsSearchCatalog {
         .init(.dictationDictation, "Enable Dictation"),
         .init(.dictationCommands, "Shortcut behavior"),
         .init(.dictationCommands, "Shortcut"),
+        .init(.dictationCommands, "Play sounds", keywords: ["sound", "chime", "beep", "audio", "feedback"]),
         .init(.dictationModel, "Model"),
         .init(.dictationModel, "Engine", keywords: ["parakeet", "redux", "ultra", "qwen"]),
         .init(.dictationModel, "Language"),
