@@ -50,6 +50,13 @@ final class KeyboardRemapper {
         return system.keyboards.filter { system.keyMappings(of: $0).contains(mapping) }.map(\.name)
     }
 
+    var overriddenKeyboardNames: [String] {
+        guard let mapping, let system else { return [] }
+        return system.keyboards.filter { keyboard in
+            system.keyMappings(of: keyboard).contains { $0.source == mapping.source && $0 != mapping }
+        }.map(\.name)
+    }
+
     @discardableResult
     func apply(_ mapping: HIDKeyMapping?) -> Bool {
         self.mapping = mapping
@@ -63,10 +70,9 @@ final class KeyboardRemapper {
         reconcileAll()
     }
 
-    func repair() -> Bool {
-        guard mapping != nil else { return false }
-        let result = reconcileAll()
-        return result.succeeded && result.changed
+    func repair() -> (succeeded: Bool, changed: Bool) {
+        guard mapping != nil else { return (true, false) }
+        return reconcileAll()
     }
 
     private func makeSystem() -> HIDEventSystem? {
