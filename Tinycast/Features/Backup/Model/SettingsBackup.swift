@@ -70,6 +70,7 @@ struct SettingsBackup: Codable {
         var notesEnabled: Bool?
         var notesRendersMarkdown: Bool?
         var notesShowsFormattingBar: Bool?
+        var notesShowsInMenuBar: Bool?
         // `snippetsEnabled` is absent: an import must not enable keystroke listening.
         var customCommandsEnabled: Bool?
         var customCommandsShowInLauncher: Bool?
@@ -198,6 +199,7 @@ extension SettingsBackup {
             notesEnabled: s.notesEnabled,
             notesRendersMarkdown: s.notesRendersMarkdown,
             notesShowsFormattingBar: s.notesShowsFormattingBar,
+            notesShowsInMenuBar: s.notesShowsInMenuBar,
             customCommandsEnabled: s.customCommandsEnabled,
             customCommandsShowInLauncher: s.customCommandsShowInLauncher,
             snippetsShowInLauncher: s.snippetsShowInLauncher,
@@ -532,6 +534,10 @@ extension SettingsBackup {
         }
         if let flag = s.notesShowsFormattingBar {
             settings.notesShowsFormattingBar = flag
+            count += 1
+        }
+        if let flag = s.notesShowsInMenuBar {
+            settings.notesShowsInMenuBar = flag
             count += 1
         }
         if let flag = s.customCommandsEnabled {
