@@ -44,6 +44,9 @@ They cover shipped CommonJS packages, exports maps, relative directories, nested
 cycles, failed-load retries and the extension-root boundary. The runtime fixture suite includes the
 same checks.
 
+`ext-test` exercises `SharedArrayBuffer` allocation at command load and finite waits in JavaScriptCore
+through the shipped synchronous host bridge.
+
 The suite runs four harnesses at a time by default to reduce CPU usage. `TINYCAST_TEST_JOBS` overrides
 that limit; `TINYCAST_TEST_JOBS=1` runs one at a time. Each result is numbered
 against the total and shows its run and compile time, a quiet stretch names the harnesses still running, and a harness that runs longer
