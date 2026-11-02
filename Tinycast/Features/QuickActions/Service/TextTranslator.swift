@@ -52,6 +52,7 @@ enum TextTranslator {
             let session = TranslationSession(installedSource: source, target: target)
             return try await session.translate(text).targetText
         } catch {
+            try Task.checkCancellation()
             throw Failure.failed
         }
     }
