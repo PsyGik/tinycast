@@ -64,7 +64,8 @@ struct AIToolLoopProvider: AIProvider {
                 continuation.yield(
                     .toolCall(
                         id: call.id, origin: tool?.origin ?? "", title: tool?.title ?? call.name))
-                let result = await bounded(invoke(call), spent: &spent)
+                let result = await Self.bounded(invoke(call), spent: &spent)
+                try Task.checkCancellation()
                 continuation.yield(.toolResult(id: call.id, isError: result.isError))
                 carried += result.content.utf8.count
                 messages.append(AIMessage(role: .tool, text: "", toolResult: result))
@@ -98,7 +99,7 @@ struct AIToolLoopProvider: AIProvider {
         return (text, calls)
     }
 
-    private func bounded(_ result: AIToolResult, spent: inout Int) -> AIToolResult {
+    static func bounded(_ result: AIToolResult, spent: inout Int) -> AIToolResult {
         guard spent < Self.maxTurnResultBytes else {
             return .failure(result.callID, "This turn's tool output budget is used up.")
         }
