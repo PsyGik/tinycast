@@ -83,6 +83,8 @@ struct SettingsBackup: Codable {
         var windowManagementShowInLauncher: Bool?
         var windowGap: Int?
         var windowCycle: String?
+        var windowWrapsDisplays: Bool?
+        var windowKeepsProportions: Bool?
         var windowLayoutsShowInLauncher: Bool?
         var windowRoomsShowInLauncher: Bool?
         // Carried, unlike `snippetsEnabled`: opening a link grants no permission class of its own.
@@ -210,6 +212,8 @@ extension SettingsBackup {
             windowManagementShowInLauncher: s.windowManagementShowInLauncher,
             windowGap: s.windowGap,
             windowCycle: s.windowCycle.rawValue,
+            windowWrapsDisplays: s.windowWrapsDisplays,
+            windowKeepsProportions: s.windowKeepsProportions,
             windowLayoutsShowInLauncher: s.windowLayoutsShowInLauncher,
             windowRoomsShowInLauncher: s.windowRoomsShowInLauncher,
             quicklinksEnabled: s.quicklinksEnabled,
@@ -578,6 +582,14 @@ extension SettingsBackup {
         }
         if let raw = s.windowCycle, let cycle = WindowCycle(rawValue: raw) {
             settings.windowCycle = cycle
+            count += 1
+        }
+        if let flag = s.windowWrapsDisplays {
+            settings.windowWrapsDisplays = flag
+            count += 1
+        }
+        if let flag = s.windowKeepsProportions {
+            settings.windowKeepsProportions = flag
             count += 1
         }
         if let flag = s.windowLayoutsShowInLauncher {
