@@ -397,6 +397,16 @@
         }
       }
     },
+    "%@ and %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ and %2$@"
+          }
+        }
+      }
+    },
     "%@ and %lld more" : {
       "localizations" : {
         "de" : {
@@ -3260,6 +3270,16 @@
         }
       }
     },
+    "%@ – %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ – %2$@"
+          }
+        }
+      }
+    },
     "%@ — %@ not open" : {
       "localizations" : {
         "de" : {
@@ -3884,6 +3904,9 @@
           }
         }
       }
+    },
+    "%@/" : {
+
     },
     "%@/%@ has no %@ folder at %@." : {
       "localizations" : {
@@ -15493,6 +15516,9 @@
         }
       }
     },
+    "(±1 day)" : {
+
+    },
     "1 Day" : {
       "localizations" : {
         "de" : {
@@ -16741,6 +16767,9 @@
         }
       }
     },
+    "A section of your apps while the search field is empty." : {
+
+    },
     "A tiny, native macOS launcher." : {
       "localizations" : {
         "de" : {
@@ -16841,58 +16870,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已存在同名的窗口布局。"
-          }
-        }
-      }
-    },
-    "Add Header" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Header hinzufügen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir encabezado"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajouter un en-tête"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘッダを追加"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "헤더 추가"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionar cabeçalho"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Добавить заголовок"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "添加标头"
           }
         }
       }
@@ -17154,162 +17131,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 命令"
-          }
-        }
-      }
-    },
-    "Allows dictating text." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ermöglicht die Texteingabe per Diktat."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite dictar texto."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permet de dicter du texte."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "音声でのテキスト入力を許可します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "텍스트를 받아쓸 수 있습니다."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite ditar texto."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Позволяет вводить текст под диктовку."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "允许听写文本。"
-          }
-        }
-      }
-    },
-    "Allows File Search and finding protected app leftovers." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ermöglicht die Dateisuche und das Finden geschützter App-Reste."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite buscar archivos y encontrar archivos residuales protegidos de las apps."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permet la recherche de fichiers et la détection des fichiers résiduels protégés des apps."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ファイル検索と、保護されたアプリの残存ファイルの検出を許可します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파일 검색과 보호된 앱 잔여 파일 찾기를 허용합니다."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite pesquisar arquivos e encontrar arquivos residuais protegidos de apps."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Позволяет искать файлы и находить защищённые остаточные файлы приложений."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "允许文件搜索和查找受保护的应用残留文件。"
-          }
-        }
-      }
-    },
-    "Allows joining your next meeting." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ermöglicht den Beitritt zu deinem nächsten Meeting."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite unirte a tu próxima reunión."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permet de rejoindre votre prochaine réunion."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "次のミーティングへの参加を許可します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "다음 미팅에 참가할 수 있습니다."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite entrar na sua próxima reunião."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Позволяет присоединиться к следующей встрече."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "允许加入你的下一场会议。"
           }
         }
       }
@@ -19081,6 +18902,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加文件夹…"
+          }
+        }
+      }
+    },
+    "Add Header" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Header hinzufügen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir encabezado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un en-tête"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘッダを追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "헤더 추가"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar cabeçalho"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить заголовок"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加标头"
           }
         }
       }
@@ -21368,54 +21241,158 @@
         }
       }
     },
-    "Allows pasting clipboard items and expanded snippets into active apps." : {
+    "Allows File Search and finding protected app leftovers." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erlaubt das Einsetzen von Objekten aus der Zwischenablage und erweiterten Textbausteinen in aktive Apps."
+            "value" : "Ermöglicht die Dateisuche und das Finden geschützter App-Reste."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permite pegar elementos del portapapeles y fragmentos expandidos en las apps activas."
+            "value" : "Permite buscar archivos y encontrar archivos residuales protegidos de las apps."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permet de coller les éléments du presse-papiers et d’insérer des extraits dans l’app active."
+            "value" : "Permet la recherche de fichiers et la détection des fichiers résiduels protégés des apps."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "クリップボードの項目や展開したスニペットを、使用中のAppにペーストできるようにします。"
+            "value" : "ファイル検索と、保護されたアプリの残存ファイルの検出を許可します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "클립보드 항목과 확장된 스니펫을 활성 앱에 붙여넣을 수 있습니다."
+            "value" : "파일 검색과 보호된 앱 잔여 파일 찾기를 허용합니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permite colar itens da área de transferência e trechos expandidos em apps ativos."
+            "value" : "Permite pesquisar arquivos e encontrar arquivos residuais protegidos de apps."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Позволяет вставлять объекты из буфера обмена и раскрытые сниппеты в активные приложения."
+            "value" : "Позволяет искать файлы и находить защищённые остаточные файлы приложений."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "允许将剪贴板项目和展开的文本片段粘贴到活跃的 App 中。"
+            "value" : "允许文件搜索和查找受保护的应用残留文件。"
+          }
+        }
+      }
+    },
+    "Allows dictating text." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ermöglicht die Texteingabe per Diktat."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite dictar texto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet de dicter du texte."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声でのテキスト入力を許可します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트를 받아쓸 수 있습니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite ditar texto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Позволяет вводить текст под диктовку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许听写文本。"
+          }
+        }
+      }
+    },
+    "Allows joining your next meeting." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ermöglicht den Beitritt zu deinem nächsten Meeting."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite unirte a tu próxima reunión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet de rejoindre votre prochaine réunion."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次のミーティングへの参加を許可します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음 미팅에 참가할 수 있습니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite entrar na sua próxima reunião."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Позволяет присоединиться к следующей встрече."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许加入你的下一场会议。"
           }
         }
       }
@@ -21468,6 +21445,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许粘贴内容和管理窗口。"
+          }
+        }
+      }
+    },
+    "Allows pasting clipboard items and expanded snippets into active apps." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaubt das Einsetzen von Objekten aus der Zwischenablage und erweiterten Textbausteinen in aktive Apps."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite pegar elementos del portapapeles y fragmentos expandidos en las apps activas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet de coller les éléments du presse-papiers et d’insérer des extraits dans l’app active."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリップボードの項目や展開したスニペットを、使用中のAppにペーストできるようにします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "클립보드 항목과 확장된 스니펫을 활성 앱에 붙여넣을 수 있습니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite colar itens da área de transferência e trechos expandidos em apps ativos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Позволяет вставлять объекты из буфера обмена и раскрытые сниппеты в активные приложения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许将剪贴板项目和展开的文本片段粘贴到活跃的 App 中。"
           }
         }
       }
@@ -21628,6 +21657,9 @@
         }
       }
     },
+    "Also match text, titles and tags, listed after filename matches." : {
+
+    },
     "Always Allow" : {
       "comment" : "MCP trust level",
       "localizations" : {
@@ -21733,6 +21765,12 @@
         }
       }
     },
+    "Among equally good matches, the app you use more comes first." : {
+
+    },
+    "Amount of Substance" : {
+
+    },
     "Angle" : {
       "localizations" : {
         "de" : {
@@ -21836,6 +21874,12 @@
           }
         }
       }
+    },
+    "Annual Interest" : {
+
+    },
+    "Annual Payment" : {
+
     },
     "Another app now remaps Caps Lock on %@." : {
       "localizations" : {
@@ -22096,6 +22140,9 @@
           }
         }
       }
+    },
+    "App Usage" : {
+
     },
     "App · Opens with the room" : {
       "localizations" : {
@@ -25767,6 +25814,9 @@
         }
       }
     },
+    "Back to Search" : {
+
+    },
     "Background refresh" : {
       "localizations" : {
         "de" : {
@@ -26130,6 +26180,9 @@
           }
         }
       }
+    },
+    "Base %lld" : {
+
     },
     "Base URL" : {
       "localizations" : {
@@ -27383,6 +27436,9 @@
         }
       }
     },
+    "Browse Files" : {
+
+    },
     "Browse Notes" : {
       "localizations" : {
         "de" : {
@@ -27486,6 +27542,12 @@
           }
         }
       }
+    },
+    "Browse from the launcher" : {
+
+    },
+    "Browsing" : {
+
     },
     "Building…" : {
       "localizations" : {
@@ -27954,6 +28016,12 @@
           }
         }
       }
+    },
+    "CPU in use" : {
+
+    },
+    "CPU, memory and network in the launcher footer, read only while it is open." : {
+
     },
     "Calculator" : {
       "comment" : "Section header above the calculator result; also a settings section",
@@ -29966,6 +30034,9 @@
         }
       }
     },
+    "Capacitance" : {
+
+    },
     "Caps Lock (⇪)" : {
       "localizations" : {
         "de" : {
@@ -30225,6 +30296,9 @@
           }
         }
       }
+    },
+    "Categories" : {
+
     },
     "Center" : {
       "comment" : "Window anchor position",
@@ -32934,6 +33008,9 @@
         }
       }
     },
+    "Clamped" : {
+
+    },
     "Claude could not finish the response." : {
       "localizations" : {
         "de" : {
@@ -34601,6 +34678,9 @@
         }
       }
     },
+    "Close Resource Widgets" : {
+
+    },
     "Close Tinycast's window first." : {
       "localizations" : {
         "de" : {
@@ -36007,6 +36087,9 @@
         }
       }
     },
+    "Combinations" : {
+
+    },
     "Command" : {
       "comment" : "MCP connection kind: a local executable, as opposed to HTTP",
       "localizations" : {
@@ -36685,6 +36768,9 @@
           }
         }
       }
+    },
+    "Conductance" : {
+
     },
     "Configure %@" : {
       "localizations" : {
@@ -39718,6 +39804,9 @@
         }
       }
     },
+    "Corners" : {
+
+    },
     "Cost" : {
       "localizations" : {
         "de" : {
@@ -40764,58 +40853,6 @@
         }
       }
     },
-    "Couldn’t save the clipboard entry" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Eintrag im Zwischenablageverlauf konnte nicht gespeichert werden"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo guardar la entrada del portapapeles"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible d’enregistrer l’entrée du presse-papiers"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "クリップボードの項目を保存できませんでした"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "클립보드 항목을 저장할 수 없습니다"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível salvar a entrada da área de transferência"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не удалось сохранить запись буфера обмена"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法保存剪贴板条目"
-          }
-        }
-      }
-    },
     "Couldn't save Emoji & Symbols pins" : {
       "localizations" : {
         "de" : {
@@ -41855,6 +41892,64 @@
           }
         }
       }
+    },
+    "Couldn’t save the clipboard entry" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Eintrag im Zwischenablageverlauf konnte nicht gespeichert werden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar la entrada del portapapeles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’enregistrer l’entrée du presse-papiers"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリップボードの項目を保存できませんでした"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "클립보드 항목을 저장할 수 없습니다"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível salvar a entrada da área de transferência"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить запись буфера обмена"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存剪贴板条目"
+          }
+        }
+      }
+    },
+    "Count" : {
+
+    },
+    "Count usage from" : {
+
     },
     "Crawls every scope again from scratch." : {
       "localizations" : {
@@ -43682,6 +43777,12 @@
         }
       }
     },
+    "Day of the Month" : {
+
+    },
+    "Day of the Week" : {
+
+    },
     "Day of the Year" : {
       "comment" : "Calculator answer badge",
       "localizations" : {
@@ -44101,6 +44202,9 @@
         }
       }
     },
+    "Default currency" : {
+
+    },
     "Default model" : {
       "localizations" : {
         "de" : {
@@ -44204,6 +44308,9 @@
           }
         }
       }
+    },
+    "Degrees, Minutes, Seconds" : {
+
     },
     "Delete" : {
       "comment" : "Destructive confirm button",
@@ -45037,6 +45144,9 @@
           }
         }
       }
+    },
+    "Density" : {
+
     },
     "Description" : {
       "comment" : "Meeting notes section header",
@@ -46507,6 +46617,9 @@
           }
         }
       }
+    },
+    "Dotfiles and other hidden items, while browsing." : {
+
     },
     "Download" : {
       "localizations" : {
@@ -54718,6 +54831,9 @@
         }
       }
     },
+    "Filter, or type a path…" : {
+
+    },
     "Filter…" : {
       "localizations" : {
         "de" : {
@@ -55497,6 +55613,9 @@
           }
         }
       }
+    },
+    "Flat bars and strips, or rounded rows and a floating footer." : {
+
     },
     "Focus" : {
       "comment" : "Room layout name",
@@ -56339,6 +56458,9 @@
         }
       }
     },
+    "Fraction" : {
+
+    },
     "Free and open source, funded out of pocket." : {
       "localizations" : {
         "de" : {
@@ -56858,6 +56980,9 @@
           }
         }
       }
+    },
+    "Future Value" : {
+
     },
     "Gaming" : {
       "localizations" : {
@@ -57641,6 +57766,9 @@
           }
         }
       }
+    },
+    "Growth Rate" : {
+
     },
     "H" : {
       "comment" : "One-letter Height field label",
@@ -58479,6 +58607,58 @@
         }
       }
     },
+    "Hidden" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeblendet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqué"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가려짐"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыто"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已隐藏"
+          }
+        }
+      }
+    },
     "Hidden Files Hidden" : {
       "localizations" : {
         "de" : {
@@ -58683,58 +58863,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已隐藏。快捷键仍然有效。"
-          }
-        }
-      }
-    },
-    "Hidden" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ausgeblendet"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oculto"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Masqué"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "非表示"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "가려짐"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oculto"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скрыто"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已隐藏"
           }
         }
       }
@@ -60039,6 +60167,9 @@
           }
         }
       }
+    },
+    "Hours, Minutes, Seconds" : {
+
     },
     "Hyper Key" : {
       "localizations" : {
@@ -63376,6 +63507,9 @@
         }
       }
     },
+    "Increased" : {
+
+    },
     "Index" : {
       "localizations" : {
         "de" : {
@@ -63739,6 +63873,9 @@
           }
         }
       }
+    },
+    "Inductance" : {
+
     },
     "Information" : {
       "localizations" : {
@@ -65093,6 +65230,9 @@
         }
       }
     },
+    "Interest" : {
+
+    },
     "Interface size" : {
       "localizations" : {
         "de" : {
@@ -65196,6 +65336,9 @@
           }
         }
       }
+    },
+    "Investment" : {
+
     },
     "It closed before the switch landed. Search again and retry." : {
       "localizations" : {
@@ -66394,6 +66537,12 @@
         }
       }
     },
+    "Keep aspect ratio" : {
+
+    },
+    "Keep categories visible while scrolling" : {
+
+    },
     "Keep conversations" : {
       "localizations" : {
         "de" : {
@@ -67180,6 +67329,9 @@
           }
         }
       }
+    },
+    "Lap Time" : {
+
     },
     "Large" : {
       "localizations" : {
@@ -69474,6 +69626,9 @@
         }
       }
     },
+    "Live while this panel is open" : {
+
+    },
     "Load shell environment" : {
       "localizations" : {
         "de" : {
@@ -69994,6 +70149,9 @@
         }
       }
     },
+    "Logarithm" : {
+
+    },
     "Logging out and back in turns off Secure Input." : {
       "localizations" : {
         "de" : {
@@ -70358,6 +70516,12 @@
           }
         }
       }
+    },
+    "Magnetic Flux" : {
+
+    },
+    "Magnetic Flux Density" : {
+
     },
     "Make Concise" : {
       "localizations" : {
@@ -71244,6 +71408,9 @@
           }
         }
       }
+    },
+    "Median" : {
+
     },
     "Medium" : {
       "comment" : "How loose fuzzy matching is in launcher search",
@@ -72291,6 +72458,9 @@
         }
       }
     },
+    "Midpoint" : {
+
+    },
     "Minimal" : {
       "localizations" : {
         "de" : {
@@ -72501,6 +72671,7 @@
     },
     "Mirror" : {
       "comment" : "Toggles a mirrored camera preview",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -73126,6 +73297,12 @@
           }
         }
       }
+    },
+    "Monthly Interest" : {
+
+    },
+    "Monthly Payment" : {
+
     },
     "More languages, but slower" : {
       "localizations" : {
@@ -73855,58 +74032,6 @@
         }
       }
     },
-    "Move to Left Edge" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "An den linken Rand bewegen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mover al borde izquierdo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déplacer vers le bord gauche"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "左端へ移動"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "왼쪽 가장자리로 이동"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mover para a borda esquerda"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Переместить к левому краю"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "移到左边缘"
-          }
-        }
-      }
-    },
     "Move to Bottom Edge" : {
       "localizations" : {
         "de" : {
@@ -73955,6 +74080,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移到下边缘"
+          }
+        }
+      }
+    },
+    "Move to Left Edge" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An den linken Rand bewegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover al borde izquierdo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer vers le bord gauche"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左端へ移動"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "왼쪽 가장자리로 이동"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover para a borda esquerda"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переместить к левому краю"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移到左边缘"
           }
         }
       }
@@ -74657,6 +74834,9 @@
         }
       }
     },
+    "Moving past the last display returns to the first." : {
+
+    },
     "Multiplication of these unit values is not supported." : {
       "localizations" : {
         "de" : {
@@ -74708,6 +74888,9 @@
           }
         }
       }
+    },
+    "Multiplier" : {
+
     },
     "Muted" : {
       "comment" : "Volume HUD readout",
@@ -75750,6 +75933,9 @@
           }
         }
       }
+    },
+    "Network download and upload" : {
+
     },
     "Never" : {
       "localizations" : {
@@ -80380,6 +80566,9 @@
         }
       }
     },
+    "No results in %@" : {
+
+    },
     "No snippets yet" : {
       "localizations" : {
         "de" : {
@@ -84131,6 +84320,9 @@
         }
       }
     },
+    "Off keeps a window's size when it moves to another display." : {
+
+    },
     "Offer %@ as a fallback" : {
       "localizations" : {
         "de" : {
@@ -86578,6 +86770,9 @@
         }
       }
     },
+    "Open in Quick Look" : {
+
+    },
     "Open in a new window" : {
       "localizations" : {
         "de" : {
@@ -87877,6 +88072,9 @@
           }
         }
       }
+    },
+    "Order" : {
+
     },
     "Organizer" : {
       "localizations" : {
@@ -89444,6 +89642,9 @@
         }
       }
     },
+    "Percent Change" : {
+
+    },
     "Percentage" : {
       "localizations" : {
         "de" : {
@@ -89547,6 +89748,9 @@
           }
         }
       }
+    },
+    "Permutations" : {
+
     },
     "Photo copied" : {
       "localizations" : {
@@ -89703,6 +89907,9 @@
           }
         }
       }
+    },
+    "Pills under the search field that narrow the launcher to one kind." : {
+
     },
     "Pin %@" : {
       "localizations" : {
@@ -90120,6 +90327,9 @@
           }
         }
       }
+    },
+    "Pitch" : {
+
     },
     "Pixel Area" : {
       "localizations" : {
@@ -90850,6 +91060,9 @@
           }
         }
       }
+    },
+    "Present Value" : {
+
     },
     "Press %@ anytime to start using Tinycast." : {
       "localizations" : {
@@ -91706,6 +91919,9 @@
         }
       }
     },
+    "Prime Number" : {
+
+    },
     "Privacy & Security" : {
       "localizations" : {
         "de" : {
@@ -91809,6 +92025,9 @@
           }
         }
       }
+    },
+    "Proportion" : {
+
     },
     "Provider" : {
       "localizations" : {
@@ -93448,6 +93667,12 @@
         }
       }
     },
+    "Rank results by app usage" : {
+
+    },
+    "Rate" : {
+
+    },
     "Rate limit reached — retry after %lld seconds." : {
       "localizations" : {
         "de" : {
@@ -94250,6 +94475,9 @@
           }
         }
       }
+    },
+    "Reads what Spotlight records about the apps you open, from anywhere." : {
+
     },
     "Ready" : {
       "comment" : "A provider is usable",
@@ -96046,6 +96274,12 @@
           }
         }
       }
+    },
+    "Remainder" : {
+
+    },
+    "Remaining" : {
+
     },
     "Remapped Keyboards" : {
       "localizations" : {
@@ -98828,6 +99062,9 @@
         }
       }
     },
+    "Resource Widgets" : {
+
+    },
     "Response interrupted." : {
       "localizations" : {
         "de" : {
@@ -99350,6 +99587,9 @@
           }
         }
       }
+    },
+    "Return" : {
+
     },
     "Return to Tinycast. You can close this tab." : {
       "localizations" : {
@@ -100081,6 +100321,9 @@
           }
         }
       }
+    },
+    "Root" : {
+
     },
     "Rose" : {
       "localizations" : {
@@ -101593,6 +101836,9 @@
         }
       }
     },
+    "Save as Quicklink" : {
+
+    },
     "Saved %@." : {
       "localizations" : {
         "de" : {
@@ -101696,6 +101942,9 @@
           }
         }
       }
+    },
+    "Scientific" : {
+
     },
     "Screen locking is unavailable on this Mac." : {
       "localizations" : {
@@ -101853,6 +102102,9 @@
           }
         }
       }
+    },
+    "Search %@…" : {
+
     },
     "Search Custom Commands" : {
       "localizations" : {
@@ -103101,6 +103353,9 @@
           }
         }
       }
+    },
+    "Search file contents" : {
+
     },
     "Search files and folders…" : {
       "localizations" : {
@@ -107422,6 +107677,9 @@
         }
       }
     },
+    "Show categories" : {
+
+    },
     "Show confirmation" : {
       "localizations" : {
         "de" : {
@@ -107525,6 +107783,9 @@
           }
         }
       }
+    },
+    "Show hidden files" : {
+
     },
     "Show in Finder" : {
       "localizations" : {
@@ -108149,6 +108410,9 @@
           }
         }
       }
+    },
+    "Show system stats" : {
+
     },
     "Show the meeting card" : {
       "localizations" : {
@@ -110814,6 +111078,9 @@
         }
       }
     },
+    "Space opens Quick Look" : {
+
+    },
     "Spaces" : {
       "comment" : "Window command group: macOS Spaces (Mission Control desktops)",
       "localizations" : {
@@ -111075,6 +111342,9 @@
           }
         }
       }
+    },
+    "Standard Deviation" : {
+
     },
     "Start" : {
       "comment" : "Field in the Create Event form",
@@ -112767,6 +113037,7 @@
       }
     },
     "Switch Camera" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -113808,6 +114079,12 @@
         }
       }
     },
+    "System region (%@)" : {
+
+    },
+    "System stats" : {
+
+    },
     "Tags" : {
       "comment" : "Accessibility label for an untitled tag picker (noun)",
       "localizations" : {
@@ -113862,6 +114139,7 @@
       }
     },
     "Take Photo" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -114016,6 +114294,9 @@
           }
         }
       }
+    },
+    "Tax" : {
+
     },
     "Teal" : {
       "localizations" : {
@@ -115493,58 +115774,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Codex 连接已中断。"
-          }
-        }
-      }
-    },
-    "The header “%@” is listed more than once." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Header „%@“ ist mehrfach aufgeführt."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El encabezado “%@” aparece más de una vez."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’en-tête « %@ » figure plusieurs fois."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘッダ“%@”が複数回指定されています。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "헤더 “%@”이(가) 두 번 이상 지정되었습니다."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O cabeçalho “%@” aparece mais de uma vez."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Заголовок «%@» указан несколько раз."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "标头“%@”出现了多次。"
           }
         }
       }
@@ -117163,6 +117392,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文件夹“%@”已不存在。"
+          }
+        }
+      }
+    },
+    "The header “%@” is listed more than once." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Header „%@“ ist mehrfach aufgeführt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El encabezado “%@” aparece más de una vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’en-tête « %@ » figure plusieurs fois."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘッダ“%@”が複数回指定されています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "헤더 “%@”이(가) 두 번 이상 지정되었습니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O cabeçalho “%@” aparece mais de uma vez."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заголовок «%@» указан несколько раз."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标头“%@”出现了多次。"
           }
         }
       }
@@ -123459,6 +123740,9 @@
         }
       }
     },
+    "Time Saved" : {
+
+    },
     "Timed out." : {
       "comment" : "Shown after “Last error:”",
       "localizations" : {
@@ -124604,6 +124888,9 @@
           }
         }
       }
+    },
+    "Tinycast menu" : {
+
     },
     "Tinycast needs OpenCode 2. Update OpenCode, then Check Again." : {
       "localizations" : {
@@ -126696,6 +126983,9 @@
         }
       }
     },
+    "Torque" : {
+
+    },
     "Total" : {
       "comment" : "Calculator answer badge",
       "localizations" : {
@@ -126748,6 +127038,12 @@
           }
         }
       }
+    },
+    "Total Interest" : {
+
+    },
+    "Total Payment" : {
+
     },
     "Transcribe speech on your Mac with a local model." : {
       "localizations" : {
@@ -128643,6 +128939,9 @@
           }
         }
       }
+    },
+    "Typing ~ or / opens Browse Files at that path." : {
+
     },
     "URL" : {
       "comment" : "Subtitle on the Open in Browser row for a typed web address",
@@ -130635,6 +130934,9 @@
         }
       }
     },
+    "Use macOS app usage" : {
+
+    },
     "Use one key to hold %@ together." : {
       "localizations" : {
         "de" : {
@@ -131790,58 +132092,6 @@
         }
       }
     },
-    "Waiting for a snippet to finish expanding." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Warten auf den Abschluss einer Textbausteinerweiterung."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esperando a que termine de expandirse un fragmento."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En attente de la fin de l’insertion d’un extrait."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スニペットの展開が完了するのを待っています。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "스니펫 확장이 끝나기를 기다리는 중입니다."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aguardando um trecho terminar de expandir."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ожидание завершения развертывания сниппета."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在等待文本片段展开完成。"
-          }
-        }
-      }
-    },
     "Waiting for a shortcut…" : {
       "localizations" : {
         "de" : {
@@ -131890,6 +132140,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在聆听…"
+          }
+        }
+      }
+    },
+    "Waiting for a snippet to finish expanding." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warten auf den Abschluss einer Textbausteinerweiterung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperando a que termine de expandirse un fragmento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente de la fin de l’insertion d’un extrait."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スニペットの展開が完了するのを待っています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스니펫 확장이 끝나기를 기다리는 중입니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando um trecho terminar de expandir."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожидание завершения развертывания сниппета."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待文本片段展开完成。"
           }
         }
       }
@@ -132310,6 +132612,9 @@
         }
       }
     },
+    "Week of the Month" : {
+
+    },
     "Week of the Year" : {
       "comment" : "Calculator answer badge",
       "localizations" : {
@@ -132570,6 +132875,9 @@
           }
         }
       }
+    },
+    "What an amount with no target converts into." : {
+
     },
     "What doesn't, yet" : {
       "localizations" : {
@@ -133560,6 +133868,9 @@
         }
       }
     },
+    "With the field empty, or after moving the highlight, as in Finder." : {
+
+    },
     "Words" : {
       "localizations" : {
         "de" : {
@@ -133663,6 +133974,9 @@
           }
         }
       }
+    },
+    "Wrap around displays" : {
+
     },
     "Yellow" : {
       "localizations" : {
@@ -138701,6 +139015,9 @@
           }
         }
       }
+    },
+    "· %@" : {
+
     },
     "“%@/%@” is unavailable in the Raycast Store." : {
       "localizations" : {
