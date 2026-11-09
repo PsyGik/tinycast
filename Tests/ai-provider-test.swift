@@ -535,8 +535,8 @@ struct AIProviderTests {
                     model: "m", effort: effort))
         }
         expect(
-            (body(.openAI, effort: "high")["reasoning"] as? [String: String])?["effort"] == "high",
-            "Responses carries the effort in its reasoning object")
+            body(.openAI, effort: "high")["reasoning_effort"] as? String == "high",
+            "Chat Completions carries the effort as reasoning_effort")
         expect(
             (body(.anthropic, effort: "max")["output_config"] as? [String: String])?["effort"]
                 == "max",
